@@ -1,0 +1,15355 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "JustWave API",
+    "version": "1.0.0",
+    "description": "Generated API reference for mobile and system integrations."
+  },
+  "servers": [
+    {
+      "url": "https://simbaa.zynapte.in"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Mobile token authentication endpoints."
+    },
+    {
+      "name": "Customer Auth",
+      "description": "Customer signup and OTP login endpoints."
+    },
+    {
+      "name": "Parent",
+      "description": "Authenticated parent profile endpoints."
+    },
+    {
+      "name": "Children",
+      "description": "Authenticated child profile endpoints."
+    },
+    {
+      "name": "Booking Catalog",
+      "description": "Booking discovery and availability endpoints."
+    },
+    {
+      "name": "Bookings",
+      "description": "Booking creation, update, guests, and customisation endpoints."
+    },
+    {
+      "name": "Entry Exit",
+      "description": "Entry pass, live occupancy, billing, and guardian verification endpoints."
+    },
+    {
+      "name": "Restaurant Ops - Tables",
+      "description": "Restaurant table and table status endpoints."
+    },
+    {
+      "name": "Restaurant Ops - Menu",
+      "description": "Restaurant menu item and category endpoints."
+    },
+    {
+      "name": "Restaurant Ops - Ordering",
+      "description": "Food ordering and active order endpoints."
+    },
+    {
+      "name": "Restaurant Ops - Kitchen",
+      "description": "KOT queue and kitchen dashboard endpoints."
+    },
+    {
+      "name": "Restaurant Ops - Display Board",
+      "description": "Customer-facing display board endpoints."
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Token"
+      }
+    },
+    "schemas": {
+      "ApiMessage": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Operation completed successfully."
+          }
+        }
+      },
+      "BookingGuardianVerificationRequest": {
+        "type": "object",
+        "required": [
+          "entry_exit_log_id"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "entry_exit_log_id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "550e8400-e29b-41d4-a716-446655440041"
+          },
+          "mode": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "otp",
+              "id"
+            ],
+            "example": "otp"
+          },
+          "verification_code": {
+            "type": "string",
+            "nullable": true,
+            "example": "123456"
+          }
+        }
+      },
+      "BookingGuardianVerificationResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Guardian verification done."
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "child_id": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "child_name": {
+                "type": "string",
+                "nullable": true,
+                "example": "Aarav"
+              },
+              "booking_id": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "guardian_verification_mode": {
+                "type": "string",
+                "example": "otp"
+              },
+              "guardian_verified_by": {
+                "type": "string",
+                "format": "uuid",
+                "example": "550e8400-e29b-41d4-a716-446655440111"
+              }
+            }
+          }
+        },
+        "example": {
+          "message": "Guardian verification done.",
+          "data": {
+            "id": "550e8400-e29b-41d4-a716-446655440041",
+            "child_id": "550e8400-e29b-41d4-a716-446655440003",
+            "child_name": "Aarav",
+            "booking_id": "550e8400-e29b-41d4-a716-446655440010",
+            "guardian_verification_mode": "otp",
+            "guardian_verified_by": "550e8400-e29b-41d4-a716-446655440111"
+          }
+        }
+      },
+      "BookingPayment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "booking_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "type": "string",
+            "example": "razorpay"
+          },
+          "payment_type": {
+            "type": "string",
+            "enum": [
+              "full",
+              "deposit",
+              "balance"
+            ],
+            "example": "full"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "paid",
+              "failed"
+            ],
+            "example": "pending"
+          },
+          "currency": {
+            "type": "string",
+            "example": "INR"
+          },
+          "amount": {
+            "type": "number",
+            "example": 82600
+          },
+          "razorpay_order_id": {
+            "type": "string",
+            "nullable": true,
+            "example": "order_NX1234567890AB"
+          },
+          "razorpay_payment_id": {
+            "type": "string",
+            "nullable": true,
+            "example": "pay_NX1234567890AB"
+          },
+          "paid_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "BookingRazorpayOrderResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Razorpay order created successfully."
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "example": "rzp_test_xxxxxxxxxxxxxx"
+              },
+              "amount": {
+                "type": "integer",
+                "example": 8260000,
+                "description": "Amount in currency subunits."
+              },
+              "currency": {
+                "type": "string",
+                "example": "INR"
+              },
+              "order_id": {
+                "type": "string",
+                "example": "order_NX1234567890AB"
+              },
+              "name": {
+                "type": "string",
+                "example": "Starter"
+              },
+              "description": {
+                "type": "string",
+                "example": "Booking payment"
+              },
+              "prefill": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "Gaurav Kumar"
+                  },
+                  "email": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "gaurav@example.com"
+                  },
+                  "contact": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "+919876543210"
+                  }
+                }
+              },
+              "theme": {
+                "type": "object",
+                "properties": {
+                  "color": {
+                    "type": "string",
+                    "example": "#0891b2"
+                  }
+                }
+              }
+            }
+          },
+          "payment": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "booking_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "provider": {
+                "type": "string",
+                "example": "razorpay"
+              },
+              "payment_type": {
+                "type": "string",
+                "enum": [
+                  "full",
+                  "deposit",
+                  "balance"
+                ],
+                "example": "full"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "paid",
+                  "failed"
+                ],
+                "example": "pending"
+              },
+              "currency": {
+                "type": "string",
+                "example": "INR"
+              },
+              "amount": {
+                "type": "number",
+                "example": 82600
+              },
+              "razorpay_order_id": {
+                "type": "string",
+                "nullable": true,
+                "example": "order_NX1234567890AB"
+              },
+              "razorpay_payment_id": {
+                "type": "string",
+                "nullable": true,
+                "example": "pay_NX1234567890AB"
+              },
+              "paid_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              }
+            }
+          }
+        },
+        "example": {
+          "message": "Razorpay order created successfully.",
+          "data": {
+            "key": "rzp_test_xxxxxxxxxxxxxx",
+            "amount": 8260000,
+            "currency": "INR",
+            "order_id": "order_NX1234567890AB",
+            "name": "Starter",
+            "description": "Booking payment",
+            "prefill": {
+              "name": "Gaurav Kumar",
+              "email": "gaurav@example.com",
+              "contact": "+919876543210"
+            },
+            "theme": {
+              "color": "#0891b2"
+            }
+          },
+          "payment": {
+            "id": "550e8400-e29b-41d4-a716-446655440099",
+            "booking_id": "550e8400-e29b-41d4-a716-446655440010",
+            "provider": "razorpay",
+            "payment_type": "full",
+            "status": "pending",
+            "currency": "INR",
+            "amount": "82600.00",
+            "razorpay_order_id": "order_NX1234567890AB",
+            "razorpay_payment_id": null,
+            "paid_at": null
+          }
+        }
+      },
+      "BookingRazorpayVerifyRequest": {
+        "type": "object",
+        "required": [
+          "razorpay_order_id",
+          "razorpay_payment_id",
+          "razorpay_signature"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "razorpay_order_id": {
+            "type": "string",
+            "example": "order_NX1234567890AB"
+          },
+          "razorpay_payment_id": {
+            "type": "string",
+            "example": "pay_NX1234567890AB"
+          },
+          "razorpay_signature": {
+            "type": "string",
+            "example": "9ef4dffbfd84f1318f6739a3ce19f9d85851857ae648f114332d8401e0949a3d"
+          }
+        }
+      },
+      "BookingRazorpayVerifyResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Payment verified and booking confirmed successfully."
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "status": {
+                "type": "string",
+                "example": "confirmed"
+              },
+              "deposit_status": {
+                "type": "string",
+                "example": "paid"
+              },
+              "amount_paid": {
+                "type": "number",
+                "example": 82600
+              },
+              "balance_due": {
+                "type": "number",
+                "example": 0
+              }
+            }
+          },
+          "payment": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "booking_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "provider": {
+                "type": "string",
+                "example": "razorpay"
+              },
+              "payment_type": {
+                "type": "string",
+                "enum": [
+                  "full",
+                  "deposit",
+                  "balance"
+                ],
+                "example": "full"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "paid",
+                  "failed"
+                ],
+                "example": "pending"
+              },
+              "currency": {
+                "type": "string",
+                "example": "INR"
+              },
+              "amount": {
+                "type": "number",
+                "example": 82600
+              },
+              "razorpay_order_id": {
+                "type": "string",
+                "nullable": true,
+                "example": "order_NX1234567890AB"
+              },
+              "razorpay_payment_id": {
+                "type": "string",
+                "nullable": true,
+                "example": "pay_NX1234567890AB"
+              },
+              "paid_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              }
+            }
+          },
+          "calculation_breakdown": {
+            "type": "object",
+            "properties": {
+              "adult_pax_count": {
+                "type": "integer",
+                "example": 2
+              },
+              "child_pax_count": {
+                "type": "integer",
+                "example": 3
+              },
+              "adult_buffet_unit_price": {
+                "type": "number",
+                "example": 700
+              },
+              "child_buffet_unit_price": {
+                "type": "number",
+                "example": 400
+              },
+              "adult_buffet_total": {
+                "type": "number",
+                "example": 1400
+              },
+              "child_buffet_total": {
+                "type": "number",
+                "example": 1200
+              },
+              "buffet_subtotal": {
+                "type": "number",
+                "example": 2600
+              },
+              "base_amount": {
+                "type": "number",
+                "example": 2600
+              },
+              "customisation_amount": {
+                "type": "number",
+                "example": 1500
+              },
+              "subtotal": {
+                "type": "number",
+                "example": 4100
+              },
+              "gst_rate": {
+                "type": "number",
+                "example": 0.18
+              },
+              "gst_amount": {
+                "type": "number",
+                "example": 738
+              },
+              "overtime_amount": {
+                "type": "number",
+                "example": 0
+              },
+              "discount_amount": {
+                "type": "number",
+                "example": 0
+              },
+              "total_amount": {
+                "type": "number",
+                "example": 4838
+              },
+              "amount_paid": {
+                "type": "number",
+                "example": 0
+              },
+              "balance_due": {
+                "type": "number",
+                "example": 4838
+              }
+            }
+          }
+        },
+        "example": {
+          "message": "Payment verified and booking confirmed successfully.",
+          "data": {
+            "id": "550e8400-e29b-41d4-a716-446655440010",
+            "status": "confirmed",
+            "deposit_status": "paid",
+            "amount_paid": "82600.00",
+            "balance_due": "0.00"
+          },
+          "payment": {
+            "id": "550e8400-e29b-41d4-a716-446655440099",
+            "booking_id": "550e8400-e29b-41d4-a716-446655440010",
+            "provider": "razorpay",
+            "payment_type": "full",
+            "status": "paid",
+            "currency": "INR",
+            "amount": "82600.00",
+            "razorpay_order_id": "order_NX1234567890AB",
+            "razorpay_payment_id": "pay_NX1234567890AB",
+            "paid_at": "2026-05-07T09:30:00.000000Z"
+          }
+        }
+      },
+      "ChildProfile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "parent_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "dob": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "age": {
+            "type": "integer"
+          },
+          "gender": {
+            "type": "string",
+            "nullable": true
+          },
+          "photo": {
+            "type": "string",
+            "nullable": true
+          },
+          "school": {
+            "type": "string",
+            "nullable": true
+          },
+          "medical_notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "dietary_restrictions": {
+            "type": "string",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "EntryExitContact": {
+        "type": "object",
+        "properties": {
+          "record_type": {
+            "type": "string",
+            "example": "parent"
+          },
+          "customer": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              },
+              "phone": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          },
+          "parent": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              },
+              "phone": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "age": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "active_sessions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "child_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "nullable": true
+                },
+                "child_name": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "entry_time": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                },
+                "booked_exit_time": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "EntryExitLog": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "location_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "location_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "customer_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "customer_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "parent_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "parent_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "child_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "child_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "booking_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "entry_type": {
+            "type": "string",
+            "nullable": true
+          },
+          "pass_lifecycle_status": {
+            "type": "string",
+            "enum": [
+              "payment_pending",
+              "issued_not_scanned",
+              "claimed_inside",
+              "used_checked_out",
+              "expired"
+            ],
+            "example": "issued_not_scanned"
+          },
+          "pass_lifecycle_label": {
+            "type": "string",
+            "example": "Issued / Not scanned"
+          },
+          "entry_time": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "booked_exit_time": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "actual_exit_time": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "guardian_verification_mode": {
+            "type": "string",
+            "nullable": true
+          },
+          "guardian_verified_by": {
+            "type": "string",
+            "nullable": true
+          },
+          "expected_duration_minutes": {
+            "type": "integer",
+            "nullable": true
+          },
+          "pass_price": {
+            "type": "number"
+          },
+          "bill_base_amount": {
+            "type": "number"
+          },
+          "bill_overtime_amount": {
+            "type": "number"
+          },
+          "bill_total_amount": {
+            "type": "number"
+          },
+          "payment_status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "paid"
+            ]
+          },
+          "payment_mode": {
+            "type": "string",
+            "nullable": true
+          },
+          "razorpay_order_id": {
+            "type": "string",
+            "nullable": true,
+            "example": "order_NX1234567890AB"
+          },
+          "razorpay_payment_id": {
+            "type": "string",
+            "nullable": true,
+            "example": "pay_NX1234567890AB"
+          },
+          "razorpay_signature": {
+            "type": "string",
+            "nullable": true
+          },
+          "paid_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "issued_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "print_count": {
+            "type": "integer"
+          },
+          "overtime_minutes": {
+            "type": "number"
+          },
+          "overtime_charge": {
+            "type": "number"
+          },
+          "overtime_paid": {
+            "type": "boolean"
+          },
+          "overtime_payment_mode": {
+            "type": "string",
+            "nullable": true
+          },
+          "overtime_razorpay_order_id": {
+            "type": "string",
+            "nullable": true,
+            "example": "order_OT1234567890AB"
+          },
+          "overtime_razorpay_payment_id": {
+            "type": "string",
+            "nullable": true,
+            "example": "pay_OT1234567890AB"
+          },
+          "overtime_razorpay_signature": {
+            "type": "string",
+            "nullable": true
+          },
+          "overtime_paid_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "overtime_amount_paid": {
+            "type": "number"
+          },
+          "pass_expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "EntryExitOvertimeRazorpayVerifyResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Payment verified. Overtime bill settled. QR can now be scanned at the gate to complete checkout."
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "location_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "location_name": {
+                "type": "string",
+                "nullable": true
+              },
+              "customer_id": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "customer_name": {
+                "type": "string",
+                "nullable": true
+              },
+              "parent_id": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "parent_name": {
+                "type": "string",
+                "nullable": true
+              },
+              "child_id": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "child_name": {
+                "type": "string",
+                "nullable": true
+              },
+              "booking_id": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "entry_type": {
+                "type": "string",
+                "nullable": true
+              },
+              "pass_lifecycle_status": {
+                "type": "string",
+                "enum": [
+                  "payment_pending",
+                  "issued_not_scanned",
+                  "claimed_inside",
+                  "used_checked_out",
+                  "expired"
+                ],
+                "example": "issued_not_scanned"
+              },
+              "pass_lifecycle_label": {
+                "type": "string",
+                "example": "Issued / Not scanned"
+              },
+              "entry_time": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              },
+              "booked_exit_time": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              },
+              "actual_exit_time": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              },
+              "guardian_verification_mode": {
+                "type": "string",
+                "nullable": true
+              },
+              "guardian_verified_by": {
+                "type": "string",
+                "nullable": true
+              },
+              "expected_duration_minutes": {
+                "type": "integer",
+                "nullable": true
+              },
+              "pass_price": {
+                "type": "number"
+              },
+              "bill_base_amount": {
+                "type": "number"
+              },
+              "bill_overtime_amount": {
+                "type": "number"
+              },
+              "bill_total_amount": {
+                "type": "number"
+              },
+              "payment_status": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "paid"
+                ]
+              },
+              "payment_mode": {
+                "type": "string",
+                "nullable": true
+              },
+              "razorpay_order_id": {
+                "type": "string",
+                "nullable": true,
+                "example": "order_NX1234567890AB"
+              },
+              "razorpay_payment_id": {
+                "type": "string",
+                "nullable": true,
+                "example": "pay_NX1234567890AB"
+              },
+              "razorpay_signature": {
+                "type": "string",
+                "nullable": true
+              },
+              "paid_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              },
+              "issued_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              },
+              "print_count": {
+                "type": "integer"
+              },
+              "overtime_minutes": {
+                "type": "number"
+              },
+              "overtime_charge": {
+                "type": "number"
+              },
+              "overtime_paid": {
+                "type": "boolean"
+              },
+              "overtime_payment_mode": {
+                "type": "string",
+                "nullable": true
+              },
+              "overtime_razorpay_order_id": {
+                "type": "string",
+                "nullable": true,
+                "example": "order_OT1234567890AB"
+              },
+              "overtime_razorpay_payment_id": {
+                "type": "string",
+                "nullable": true,
+                "example": "pay_OT1234567890AB"
+              },
+              "overtime_razorpay_signature": {
+                "type": "string",
+                "nullable": true
+              },
+              "overtime_paid_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              },
+              "overtime_amount_paid": {
+                "type": "number"
+              },
+              "pass_expires_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              },
+              "created_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              },
+              "updated_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              },
+              "chargeable_minutes": {
+                "type": "number",
+                "example": 30
+              },
+              "grace_minutes": {
+                "type": "integer",
+                "example": 10
+              },
+              "can_retry_exit": {
+                "type": "boolean",
+                "example": true
+              },
+              "can_scan_exit": {
+                "type": "boolean",
+                "example": true
+              }
+            }
+          },
+          "payment": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "provider": {
+                "type": "string",
+                "example": "razorpay"
+              },
+              "payment_type": {
+                "type": "string",
+                "enum": [
+                  "entry_pass",
+                  "overtime"
+                ],
+                "example": "overtime"
+              },
+              "status": {
+                "type": "string",
+                "example": "paid"
+              },
+              "currency": {
+                "type": "string",
+                "example": "INR"
+              },
+              "amount": {
+                "type": "number",
+                "example": 500
+              },
+              "razorpay_order_id": {
+                "type": "string",
+                "nullable": true,
+                "example": "order_NX1234567890AB"
+              },
+              "razorpay_payment_id": {
+                "type": "string",
+                "nullable": true,
+                "example": "pay_NX1234567890AB"
+              },
+              "chargeable_minutes": {
+                "type": "number",
+                "nullable": true,
+                "example": 30
+              },
+              "grace_minutes": {
+                "type": "integer",
+                "nullable": true,
+                "example": 10
+              }
+            }
+          }
+        }
+      },
+      "EntryExitPassRazorpayVerifyResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Payment verified. Passes issued and ready to print."
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "location_id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "location_name": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "customer_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "nullable": true
+                },
+                "customer_name": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "parent_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "nullable": true
+                },
+                "parent_name": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "child_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "nullable": true
+                },
+                "child_name": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "booking_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "nullable": true
+                },
+                "entry_type": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "pass_lifecycle_status": {
+                  "type": "string",
+                  "enum": [
+                    "payment_pending",
+                    "issued_not_scanned",
+                    "claimed_inside",
+                    "used_checked_out",
+                    "expired"
+                  ],
+                  "example": "issued_not_scanned"
+                },
+                "pass_lifecycle_label": {
+                  "type": "string",
+                  "example": "Issued / Not scanned"
+                },
+                "entry_time": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                },
+                "booked_exit_time": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                },
+                "actual_exit_time": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                },
+                "guardian_verification_mode": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "guardian_verified_by": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "expected_duration_minutes": {
+                  "type": "integer",
+                  "nullable": true
+                },
+                "pass_price": {
+                  "type": "number"
+                },
+                "bill_base_amount": {
+                  "type": "number"
+                },
+                "bill_overtime_amount": {
+                  "type": "number"
+                },
+                "bill_total_amount": {
+                  "type": "number"
+                },
+                "payment_status": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "paid"
+                  ]
+                },
+                "payment_mode": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "razorpay_order_id": {
+                  "type": "string",
+                  "nullable": true,
+                  "example": "order_NX1234567890AB"
+                },
+                "razorpay_payment_id": {
+                  "type": "string",
+                  "nullable": true,
+                  "example": "pay_NX1234567890AB"
+                },
+                "razorpay_signature": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "paid_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                },
+                "issued_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                },
+                "print_count": {
+                  "type": "integer"
+                },
+                "overtime_minutes": {
+                  "type": "number"
+                },
+                "overtime_charge": {
+                  "type": "number"
+                },
+                "overtime_paid": {
+                  "type": "boolean"
+                },
+                "overtime_payment_mode": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "overtime_razorpay_order_id": {
+                  "type": "string",
+                  "nullable": true,
+                  "example": "order_OT1234567890AB"
+                },
+                "overtime_razorpay_payment_id": {
+                  "type": "string",
+                  "nullable": true,
+                  "example": "pay_OT1234567890AB"
+                },
+                "overtime_razorpay_signature": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "overtime_paid_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                },
+                "overtime_amount_paid": {
+                  "type": "number"
+                },
+                "pass_expires_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                },
+                "updated_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "payment": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "provider": {
+                "type": "string",
+                "example": "razorpay"
+              },
+              "payment_type": {
+                "type": "string",
+                "enum": [
+                  "entry_pass",
+                  "overtime"
+                ],
+                "example": "entry_pass"
+              },
+              "status": {
+                "type": "string",
+                "example": "paid"
+              },
+              "currency": {
+                "type": "string",
+                "example": "INR"
+              },
+              "amount": {
+                "type": "number",
+                "example": 500
+              },
+              "razorpay_order_id": {
+                "type": "string",
+                "nullable": true,
+                "example": "order_NX1234567890AB"
+              },
+              "razorpay_payment_id": {
+                "type": "string",
+                "nullable": true,
+                "example": "pay_NX1234567890AB"
+              },
+              "chargeable_minutes": {
+                "type": "number",
+                "nullable": true,
+                "example": 30
+              },
+              "grace_minutes": {
+                "type": "integer",
+                "nullable": true,
+                "example": 10
+              }
+            }
+          }
+        }
+      },
+      "EntryExitRazorpayOrderResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Razorpay order created successfully."
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "example": "rzp_test_xxxxxxxxxxxxxx"
+              },
+              "amount": {
+                "type": "integer",
+                "example": 50000,
+                "description": "Amount in currency subunits."
+              },
+              "currency": {
+                "type": "string",
+                "example": "INR"
+              },
+              "order_id": {
+                "type": "string",
+                "example": "order_NX1234567890AB"
+              },
+              "name": {
+                "type": "string",
+                "example": "Simbaa Playzone"
+              },
+              "description": {
+                "type": "string",
+                "example": "Entry pass payment"
+              },
+              "prefill": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "Gaurav Kumar"
+                  },
+                  "email": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "gaurav@example.com"
+                  },
+                  "contact": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "+919876543210"
+                  }
+                }
+              },
+              "theme": {
+                "type": "object",
+                "properties": {
+                  "color": {
+                    "type": "string",
+                    "example": "#0891b2"
+                  }
+                }
+              }
+            }
+          },
+          "payment": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "provider": {
+                "type": "string",
+                "example": "razorpay"
+              },
+              "payment_type": {
+                "type": "string",
+                "enum": [
+                  "entry_pass",
+                  "overtime"
+                ],
+                "example": "entry_pass"
+              },
+              "status": {
+                "type": "string",
+                "example": "pending"
+              },
+              "currency": {
+                "type": "string",
+                "example": "INR"
+              },
+              "amount": {
+                "type": "number",
+                "example": 500
+              },
+              "razorpay_order_id": {
+                "type": "string",
+                "nullable": true,
+                "example": "order_NX1234567890AB"
+              },
+              "razorpay_payment_id": {
+                "type": "string",
+                "nullable": true,
+                "example": "pay_NX1234567890AB"
+              },
+              "chargeable_minutes": {
+                "type": "number",
+                "nullable": true,
+                "example": 30
+              },
+              "grace_minutes": {
+                "type": "integer",
+                "nullable": true,
+                "example": 10
+              }
+            }
+          }
+        }
+      },
+      "EntryPassDurationPrice": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "price_type": {
+            "type": "string",
+            "enum": [
+              "standard",
+              "overtime"
+            ]
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "example": 30
+          },
+          "duration_label": {
+            "type": "string",
+            "example": "30 mins (0.5 hr)"
+          },
+          "price": {
+            "type": "number",
+            "example": 250
+          },
+          "is_active": {
+            "type": "boolean"
+          },
+          "sort_order": {
+            "type": "integer"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "PaginatedEntryExitLogs": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntryExitLog"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "current_page": {
+                "type": "integer"
+              },
+              "from": {
+                "type": "integer",
+                "nullable": true
+              },
+              "last_page": {
+                "type": "integer"
+              },
+              "per_page": {
+                "type": "integer"
+              },
+              "to": {
+                "type": "integer",
+                "nullable": true
+              },
+              "total": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "PaginatedRestaurantOrders": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RestaurantOrder"
+            }
+          },
+          "links": {
+            "type": "object",
+            "properties": {
+              "first": {
+                "type": "string",
+                "nullable": true
+              },
+              "last": {
+                "type": "string",
+                "nullable": true
+              },
+              "prev": {
+                "type": "string",
+                "nullable": true
+              },
+              "next": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "current_page": {
+                "type": "integer"
+              },
+              "from": {
+                "type": "integer",
+                "nullable": true
+              },
+              "last_page": {
+                "type": "integer"
+              },
+              "per_page": {
+                "type": "integer"
+              },
+              "to": {
+                "type": "integer",
+                "nullable": true
+              },
+              "total": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "ParentProfile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "customer_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "emergency_contact_name": {
+            "type": "string"
+          },
+          "emergency_contact_phone": {
+            "type": "string"
+          },
+          "customer": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "name": {
+                "type": "string",
+                "nullable": true
+              },
+              "phone": {
+                "type": "string",
+                "nullable": true
+              },
+              "whatsapp_number": {
+                "type": "string",
+                "nullable": true
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "nullable": true
+              }
+            }
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "parent_id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "dob": {
+                  "type": "string",
+                  "format": "date",
+                  "nullable": true
+                },
+                "age": {
+                  "type": "integer"
+                },
+                "gender": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "photo": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "school": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "medical_notes": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "dietary_restrictions": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                },
+                "updated_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "rewards_profile": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "waiver_signed": {
+                "type": "boolean"
+              },
+              "waiver_signed_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              },
+              "loyalty_points": {
+                "type": "integer"
+              },
+              "loyalty_tier": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "PatchBookingCustomisationsUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "item_name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200
+          },
+          "unit_price": {
+            "type": "number",
+            "minimum": 0
+          },
+          "addons_total": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0
+          },
+          "food_total": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0
+          },
+          "cake_total": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 600
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "photo_url": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "maxLength": 1024
+          }
+        },
+        "required": [
+          "type",
+          "item_name",
+          "quantity",
+          "unit_price"
+        ]
+      },
+      "PatchBookingGuestsRsvpRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rsvp_status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "rsvp_status"
+        ]
+      },
+      "PatchBookingGuestsUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 20
+          },
+          "adult_count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200
+          },
+          "child_count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200
+          }
+        },
+        "required": [
+          "name",
+          "adult_count",
+          "child_count"
+        ]
+      },
+      "PatchBookingUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "parent_id": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "location_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "package_id": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "child_id": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "event_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "slot_start": {
+            "type": "string"
+          },
+          "slot_end": {
+            "type": "string"
+          },
+          "adult_pax_count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200
+          },
+          "child_pax_count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200
+          },
+          "pax_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200
+          },
+          "initial_requirements": {
+            "type": "string",
+            "nullable": true
+          },
+          "customisations": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "type": "string"
+                },
+                "item_name": {
+                  "type": "string",
+                  "maxLength": 191
+                },
+                "quantity": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "unit_price": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "duration_minutes": {
+                  "type": "integer",
+                  "nullable": true,
+                  "minimum": 1
+                },
+                "notes": {
+                  "type": "string",
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "guests": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "maxLength": 191
+                },
+                "phone": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "adult_count": {
+                  "type": "integer",
+                  "nullable": true,
+                  "minimum": 0,
+                  "maximum": 200
+                },
+                "child_count": {
+                  "type": "integer",
+                  "nullable": true,
+                  "minimum": 0,
+                  "maximum": 200
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "location_id",
+          "event_date",
+          "slot_start",
+          "slot_end",
+          "adult_pax_count",
+          "child_pax_count",
+          "pax_count"
+        ]
+      },
+      "PatchCustomerParentChildrenUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 191
+          },
+          "dob": {
+            "type": "string",
+            "format": "date"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "photo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2048
+          },
+          "school": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 191
+          },
+          "medical_notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "dietary_restrictions": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "name",
+          "dob",
+          "gender"
+        ]
+      },
+      "PatchCustomerUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 191
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 30
+          },
+          "whatsapp_number": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 30
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "format": "email",
+            "maxLength": 191
+          }
+        },
+        "required": [
+          "name",
+          "phone"
+        ]
+      },
+      "PatchIdentityaccessUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "location_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string"
+          },
+          "joining_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string"
+          },
+          "remember_token": {
+            "type": "string"
+          }
+        }
+      },
+      "PostAuthLoginRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string"
+          },
+          "device_name": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "PostBookingConfirmRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "location_id": {
+            "type": "string"
+          },
+          "parent_id": {
+            "type": "string"
+          },
+          "event_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "slot_start": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "slot_end": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "pax_count": {
+            "type": "integer"
+          },
+          "adult_pax_count": {
+            "type": "integer"
+          },
+          "child_pax_count": {
+            "type": "integer"
+          },
+          "base_amount": {
+            "type": "number"
+          },
+          "package_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "deposit_status": {
+            "type": "string"
+          },
+          "overtime_amount": {
+            "type": "number"
+          },
+          "discount_amount": {
+            "type": "number"
+          },
+          "gst_amount": {
+            "type": "number"
+          },
+          "total_amount": {
+            "type": "number"
+          },
+          "amount_paid": {
+            "type": "number"
+          },
+          "balance_due": {
+            "type": "number"
+          },
+          "estimate_pdf_url": {
+            "type": "string"
+          },
+          "estimate_status": {
+            "type": "string"
+          },
+          "initial_requirements": {
+            "type": "string"
+          },
+          "cancellation_reason": {
+            "type": "string"
+          },
+          "cancelled_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "refund_amount": {
+            "type": "number"
+          },
+          "quote_terms": {
+            "type": "string"
+          },
+          "quote_sent_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_by_staff_id": {
+            "type": "string"
+          }
+        }
+      },
+      "PostBookingCustomisationsStoreRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "item_name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200
+          },
+          "unit_price": {
+            "type": "number",
+            "minimum": 0
+          },
+          "addons_total": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0
+          },
+          "food_total": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0
+          },
+          "cake_total": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 600
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "photo_url": {
+            "type": "string",
+            "nullable": true,
+            "format": "uri",
+            "maxLength": 1024
+          }
+        },
+        "required": [
+          "type",
+          "item_name",
+          "quantity",
+          "unit_price"
+        ]
+      },
+      "PostBookingGuardianVerificationUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "entry_exit_log_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mode": {
+            "type": "string",
+            "nullable": true
+          },
+          "verification_code": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 20
+          }
+        },
+        "required": [
+          "entry_exit_log_id"
+        ]
+      },
+      "PostBookingGuestsStoreRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 20
+          },
+          "adult_count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200
+          },
+          "child_count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200
+          }
+        },
+        "required": [
+          "name",
+          "adult_count",
+          "child_count"
+        ]
+      },
+      "PostBookingRazorpayVerifyRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "razorpay_order_id": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "razorpay_payment_id": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "razorpay_signature": {
+            "type": "string",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "razorpay_order_id",
+          "razorpay_payment_id",
+          "razorpay_signature"
+        ]
+      },
+      "PostBookingStoreRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "parent_id": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "location_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "package_id": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "child_id": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "event_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "slot_start": {
+            "type": "string"
+          },
+          "slot_end": {
+            "type": "string"
+          },
+          "adult_pax_count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200
+          },
+          "child_pax_count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200
+          },
+          "pax_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200
+          },
+          "initial_requirements": {
+            "type": "string",
+            "nullable": true
+          },
+          "customisations": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "type": "string"
+                },
+                "item_name": {
+                  "type": "string",
+                  "maxLength": 191
+                },
+                "quantity": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "unit_price": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "duration_minutes": {
+                  "type": "integer",
+                  "nullable": true,
+                  "minimum": 1
+                },
+                "notes": {
+                  "type": "string",
+                  "nullable": true
+                }
+              }
+            }
+          },
+          "guests": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "maxLength": 191
+                },
+                "phone": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "adult_count": {
+                  "type": "integer",
+                  "nullable": true,
+                  "minimum": 0,
+                  "maximum": 200
+                },
+                "child_count": {
+                  "type": "integer",
+                  "nullable": true,
+                  "minimum": 0,
+                  "maximum": 200
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "location_id",
+          "event_date",
+          "slot_start",
+          "slot_end",
+          "adult_pax_count",
+          "child_pax_count",
+          "pax_count"
+        ]
+      },
+      "PostCoreLocationsStoreRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 191
+          },
+          "address": {
+            "type": "string"
+          },
+          "mall": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 191
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "operating_hours": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "gstin": {
+            "type": "string",
+            "nullable": true
+          },
+          "manager_staff_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "image": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 3072
+          }
+        },
+        "required": [
+          "name",
+          "address",
+          "capacity",
+          "operating_hours"
+        ]
+      },
+      "PostCustomerLoginRequestOtpRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "phone": {
+            "type": "string",
+            "maxLength": 30
+          }
+        },
+        "required": [
+          "phone"
+        ]
+      },
+      "PostCustomerLoginStoreRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "phone": {
+            "type": "string",
+            "maxLength": 30
+          },
+          "password": {
+            "type": "string"
+          },
+          "device_name": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "phone",
+          "password"
+        ]
+      },
+      "PostCustomerLoginVerifyOtpRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "phone": {
+            "type": "string",
+            "maxLength": 30
+          },
+          "otp": {
+            "type": "string"
+          },
+          "device_name": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "phone",
+          "otp"
+        ]
+      },
+      "PostCustomerParentChildrenStoreRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 191
+          },
+          "dob": {
+            "type": "string",
+            "format": "date"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "photo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2048
+          },
+          "school": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 191
+          },
+          "medical_notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "dietary_restrictions": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "name",
+          "dob",
+          "gender"
+        ]
+      },
+      "PostCustomerSignupRequestOtpRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 191
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 30
+          }
+        },
+        "required": [
+          "phone"
+        ]
+      },
+      "PostCustomerSignupStoreRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 191
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 30
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "format": "email",
+            "maxLength": 191
+          },
+          "emergency_contact_name": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 191
+          },
+          "emergency_contact_phone": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 30
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "otp": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string",
+            "nullable": true,
+            "minLength": 8
+          }
+        },
+        "required": [
+          "phone",
+          "otp"
+        ]
+      },
+      "PostEmailConfigStoreRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "provider": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "port": {
+            "type": "integer",
+            "nullable": true
+          },
+          "encryption": {
+            "type": "string",
+            "nullable": true
+          },
+          "username": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "from_address": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 255
+          },
+          "from_name": {
+            "type": "string",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "provider",
+          "username",
+          "password",
+          "from_address",
+          "from_name"
+        ]
+      },
+      "PostEntryexitDurationPricesStoreRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "price_type": {
+            "type": "string"
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4320
+          },
+          "price": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 999999
+          },
+          "is_active": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "sort_order": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 9999
+          }
+        },
+        "required": [
+          "price_type",
+          "duration_minutes",
+          "price"
+        ]
+      },
+      "PostEntryexitGuardianVerificationStoreRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "entry_exit_log_id": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "verification_code": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 20
+          }
+        },
+        "required": [
+          "entry_exit_log_id",
+          "mode"
+        ]
+      },
+      "PostEntryexitOvertimeSettlementsRazorpayOrderRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "PostEntryexitOvertimeSettlementsRazorpayVerifyRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "razorpay_order_id": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "razorpay_payment_id": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "razorpay_signature": {
+            "type": "string",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "id",
+          "razorpay_order_id",
+          "razorpay_payment_id",
+          "razorpay_signature"
+        ]
+      },
+      "PostEntryexitOvertimeSettlementsStoreRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "payment_mode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "payment_mode"
+        ]
+      },
+      "PostEntryexitPassesMarkOvertimePaidRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "payment_mode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "payment_mode"
+        ]
+      },
+      "PostEntryexitPassesMarkPaidRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "payment_mode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ids",
+          "payment_mode"
+        ]
+      },
+      "PostEntryexitPassesRazorpayOrderRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "ids"
+        ]
+      },
+      "PostEntryexitPassesRazorpayVerifyRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "razorpay_order_id": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "razorpay_payment_id": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "razorpay_signature": {
+            "type": "string",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "ids",
+          "razorpay_order_id",
+          "razorpay_payment_id",
+          "razorpay_signature"
+        ]
+      },
+      "PostEntryexitPassesRecordPrintRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "ids"
+        ]
+      },
+      "PostEntryexitPassesScanEntryRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "scan_token": {
+            "type": "string",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "scan_token"
+        ]
+      },
+      "PostEntryexitPassesScanExitRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "scan_token": {
+            "type": "string",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "scan_token"
+        ]
+      },
+      "PostEntryexitPassesStoreRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "location_id": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 30
+          },
+          "customer_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "customer_name": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 191
+          },
+          "child_name": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 191
+          },
+          "child_names": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            }
+          },
+          "child_count": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 20
+          },
+          "parent_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "child_ids": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            }
+          },
+          "hours": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 72
+          },
+          "duration_minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4320
+          },
+          "duration_price_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "booking_id": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "location_id"
+        ]
+      },
+      "PostEntryexitPassesVerifyExitOtpRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "scan_token": {
+            "type": "string"
+          },
+          "otp": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "scan_token",
+          "otp"
+        ]
+      },
+      "PostIdentityaccessStoreRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "location_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string"
+          },
+          "joining_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string"
+          },
+          "remember_token": {
+            "type": "string"
+          }
+        }
+      },
+      "PutCoreLocationsUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 191
+          },
+          "address": {
+            "type": "string"
+          },
+          "mall": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 191
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "operating_hours": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "gstin": {
+            "type": "string",
+            "nullable": true
+          },
+          "manager_staff_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "image": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 3072
+          },
+          "remove_image": {
+            "type": "boolean",
+            "nullable": true
+          }
+        },
+        "required": [
+          "name",
+          "address",
+          "capacity",
+          "operating_hours"
+        ]
+      },
+      "PutCustomerParentChildrenUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 191
+          },
+          "dob": {
+            "type": "string",
+            "format": "date"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "photo": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2048
+          },
+          "school": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 191
+          },
+          "medical_notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "dietary_restrictions": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "name",
+          "dob",
+          "gender"
+        ]
+      },
+      "PutCustomerParentProfileUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 191
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 30
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "format": "email",
+            "maxLength": 191
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "emergency_contact_name": {
+            "type": "string",
+            "maxLength": 191
+          },
+          "emergency_contact_phone": {
+            "type": "string",
+            "maxLength": 30
+          }
+        },
+        "required": [
+          "name",
+          "phone",
+          "emergency_contact_name",
+          "emergency_contact_phone"
+        ]
+      },
+      "PutCustomerUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 191
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 30
+          },
+          "whatsapp_number": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 30
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "format": "email",
+            "maxLength": 191
+          }
+        },
+        "required": [
+          "name",
+          "phone"
+        ]
+      },
+      "PutEntryexitDurationPricesExitGraceUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "exit_grace_minutes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1440
+          }
+        },
+        "required": [
+          "exit_grace_minutes"
+        ]
+      },
+      "PutIdentityaccessUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "location_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string"
+          },
+          "joining_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string"
+          },
+          "remember_token": {
+            "type": "string"
+          }
+        }
+      },
+      "RestaurantBill": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "bill_number": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "subtotal": {
+            "type": "number"
+          },
+          "tax_total": {
+            "type": "number"
+          },
+          "discount_total": {
+            "type": "number"
+          },
+          "grand_total": {
+            "type": "number"
+          },
+          "payment_method": {
+            "type": "string",
+            "nullable": true
+          },
+          "location": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "table": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "table_number": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "capacity": {
+                "type": "integer"
+              }
+            }
+          },
+          "customer": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              },
+              "phone": {
+                "type": "string",
+                "nullable": true
+              },
+              "whatsapp_number": {
+                "type": "string",
+                "nullable": true
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "nullable": true
+              }
+            }
+          },
+          "kot_count": {
+            "type": "integer",
+            "nullable": true
+          },
+          "kots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RestaurantOrder"
+            }
+          },
+          "opened_by": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "paid_by": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "opened_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "paid_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "RestaurantLocationDisplayBoardResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              },
+              "summary": {
+                "type": "object",
+                "properties": {
+                  "visible_orders": {
+                    "type": "integer"
+                  },
+                  "new_orders": {
+                    "type": "integer"
+                  },
+                  "preparing_orders": {
+                    "type": "integer"
+                  },
+                  "ready_orders": {
+                    "type": "integer"
+                  },
+                  "served_orders": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "orders": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/RestaurantOrder"
+                }
+              }
+            }
+          }
+        }
+      },
+      "RestaurantLocationMenuResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              },
+              "summary": {
+                "type": "object",
+                "properties": {
+                  "total_items": {
+                    "type": "integer"
+                  },
+                  "available_items": {
+                    "type": "integer"
+                  },
+                  "unavailable_items": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "categories": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "menu_items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/RestaurantMenuItem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "RestaurantLocationOrderingResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              },
+              "filters": {
+                "type": "object",
+                "properties": {
+                  "table_status": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "category": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "menu_search": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                }
+              },
+              "summary": {
+                "type": "object",
+                "properties": {
+                  "available_tables": {
+                    "type": "integer"
+                  },
+                  "occupied_tables": {
+                    "type": "integer"
+                  },
+                  "available_menu_items": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "categories": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "tables": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/RestaurantTable"
+                }
+              },
+              "menu_items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/RestaurantMenuItem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "RestaurantLocationTablesResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "location": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              },
+              "summary": {
+                "type": "object",
+                "properties": {
+                  "total_tables": {
+                    "type": "integer"
+                  },
+                  "available_tables": {
+                    "type": "integer"
+                  },
+                  "occupied_tables": {
+                    "type": "integer"
+                  },
+                  "reserved_tables": {
+                    "type": "integer"
+                  },
+                  "cleaning_tables": {
+                    "type": "integer"
+                  },
+                  "active_orders": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "tables": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/RestaurantTable"
+                }
+              }
+            }
+          }
+        }
+      },
+      "RestaurantMenuItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "price": {
+            "type": "number"
+          },
+          "category": {
+            "type": "string",
+            "nullable": true
+          },
+          "is_available": {
+            "type": "boolean"
+          },
+          "location": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "menu_category": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              },
+              "is_active": {
+                "type": "boolean"
+              }
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "RestaurantOrder": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kot_number": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string"
+          },
+          "payment_status": {
+            "type": "string"
+          },
+          "customer_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "customer_phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "total_amount": {
+            "type": "number"
+          },
+          "location": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "table": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "table_number": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "capacity": {
+                "type": "integer"
+              }
+            }
+          },
+          "ordered_by": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RestaurantOrderItem"
+            }
+          },
+          "item_count": {
+            "type": "integer",
+            "nullable": true
+          },
+          "preparing_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "ready_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "served_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "cancelled_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "RestaurantOrderItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quantity": {
+            "type": "integer"
+          },
+          "returned_quantity": {
+            "type": "integer"
+          },
+          "cancelled_quantity": {
+            "type": "integer"
+          },
+          "active_quantity": {
+            "type": "integer"
+          },
+          "unit_price": {
+            "type": "number"
+          },
+          "subtotal": {
+            "type": "number"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "menu_item": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              },
+              "category": {
+                "type": "string",
+                "nullable": true
+              },
+              "price": {
+                "type": "number"
+              },
+              "is_available": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "RestaurantTable": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "table_number": {
+            "type": "string"
+          },
+          "capacity": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "occupied_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "location": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "active_orders_count": {
+            "type": "integer",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "RestaurantTableStatus": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "table_number": {
+            "type": "string"
+          },
+          "capacity": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "occupied_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "location": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "active_orders_count": {
+            "type": "integer",
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "latest_order": {
+            "nullable": true,
+            "$ref": "#/components/schemas/RestaurantOrder"
+          }
+        }
+      },
+      "ValidationError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "The given data was invalid."
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/user": {
+      "get": {
+        "summary": "Api.user",
+        "tags": [
+          "User"
+        ],
+        "operationId": "user",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "summary": "Api.v1.Auth.login",
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "authLogin",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "device_name": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "summary": "Api.v1.Auth.logout",
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "authLogout",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "summary": "Api.v1.Auth.me",
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "authMe",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/booking-catalog/customization-types": {
+      "get": {
+        "summary": "Api.",
+        "tags": [
+          "Booking Catalog"
+        ],
+        "operationId": "",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/v1/booking-catalog/customization-types/{type}/items": {
+      "get": {
+        "summary": "Get Active Customisation Catalog Items",
+        "tags": [
+          "Booking Catalog"
+        ],
+        "operationId": "",
+        "responses": {
+          "200": {
+            "description": "Catalog items returned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "food",
+                              "cake",
+                              "decor",
+                              "addon",
+                              "other"
+                            ]
+                          },
+                          "name": {
+                            "type": "string",
+                            "example": "Chocolate Truffle Cake"
+                          },
+                          "default_unit_price": {
+                            "type": "number",
+                            "example": 1500
+                          },
+                          "pricing_mode": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "additional"
+                          },
+                          "has_sizes": {
+                            "type": "boolean",
+                            "example": true
+                          },
+                          "description": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "image_path": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "image_url": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "variant_options": {
+                            "type": "array",
+                            "items": {
+                              "type": "object"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "example": {
+                    "data": [
+                      {
+                        "id": "550e8400-e29b-41d4-a716-446655440020",
+                        "type": "cake",
+                        "name": "Chocolate Truffle Cake",
+                        "default_unit_price": 1500,
+                        "pricing_mode": "additional",
+                        "has_sizes": true,
+                        "description": "Chocolate cake with custom size options.",
+                        "image_path": "catalog/cakes/chocolate-truffle-cake.jpg",
+                        "image_url": "http://localhost/api/v1/booking-catalog/images?path=catalog/cakes/chocolate-truffle-cake.jpg",
+                        "variant_options": [
+                          {
+                            "option_type": "size",
+                            "label": "1 Kg",
+                            "price": 1500
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "food",
+                "cake",
+                "decor",
+                "addon",
+                "other"
+              ],
+              "example": "cake"
+            }
+          }
+        ],
+        "description": "Returns active setup catalog items for the selected customisation type. Use this for post-booking food, cake, decor, add-on and other options. Items are returned from the global active setup catalog, not restricted to package-included items."
+      }
+    },
+    "/api/v1/booking-catalog/images": {
+      "get": {
+        "summary": "Api.booking Catalog.image",
+        "tags": [
+          "Booking Catalog"
+        ],
+        "operationId": "bookingCatalogImage",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/v1/booking-catalog/locations": {
+      "get": {
+        "summary": "Api.",
+        "tags": [
+          "Booking Catalog"
+        ],
+        "operationId": "",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        }
+      }
+    },
+    "/api/v1/booking-catalog/locations/{location}/available-slots/{date}": {
+      "get": {
+        "summary": "Check Custom Booking Time Availability",
+        "tags": [
+          "Booking Catalog"
+        ],
+        "operationId": "",
+        "responses": {
+          "200": {
+            "description": "Availability result returned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "location_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "date": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "slot_start": {
+                          "type": "string",
+                          "example": "15:30"
+                        },
+                        "slot_end": {
+                          "type": "string",
+                          "example": "17:00"
+                        },
+                        "operating_hours": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "open": {
+                              "type": "string",
+                              "example": "10:00"
+                            },
+                            "close": {
+                              "type": "string",
+                              "example": "22:00"
+                            }
+                          }
+                        },
+                        "is_available": {
+                          "type": "boolean",
+                          "example": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "Selected time is available."
+                        }
+                      }
+                    }
+                  },
+                  "example": {
+                    "data": {
+                      "location_id": "550e8400-e29b-41d4-a716-446655440001",
+                      "date": "2026-04-30",
+                      "slot_start": "15:30",
+                      "slot_end": "17:00",
+                      "operating_hours": {
+                        "open": "10:00",
+                        "close": "22:00"
+                      },
+                      "is_available": true,
+                      "message": "Selected time is available."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "parameters": [
+          {
+            "name": "location",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "date",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "example": "2026-04-30"
+            }
+          },
+          {
+            "name": "slot_start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{2}:(00|30)$",
+              "example": "15:30"
+            }
+          },
+          {
+            "name": "slot_end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{2}:(00|30)$",
+              "example": "17:00"
+            }
+          }
+        ],
+        "description": "Checks whether a custom start and end time is available for a branch and date. Times must be selected in 30-minute increments and within branch operating hours."
+      }
+    },
+    "/api/v1/booking-catalog/locations/{location}/packages": {
+      "get": {
+        "summary": "Api.",
+        "tags": [
+          "Booking Catalog"
+        ],
+        "operationId": "",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "name": "location",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/booking-catalog/locations/{location}/slots": {
+      "get": {
+        "summary": "Api.",
+        "tags": [
+          "Booking Catalog"
+        ],
+        "operationId": "",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "name": "location",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/booking-catalog/locations/{location}/slots/{dayOfWeek}": {
+      "get": {
+        "summary": "Api.",
+        "tags": [
+          "Booking Catalog"
+        ],
+        "operationId": "",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "name": "location",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dayOfWeek",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/bookings": {
+      "get": {
+        "summary": "Api.booking.index",
+        "tags": [
+          "Bookings"
+        ],
+        "operationId": "bookingIndex",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create a new booking",
+        "tags": [
+          "Bookings"
+        ],
+        "operationId": "bookingStore",
+        "responses": {
+          "201": {
+            "description": "Booking created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Booking created successfully."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "location_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "package_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "event_date": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "slot_start": {
+                          "type": "string",
+                          "example": "15:30:00"
+                        },
+                        "slot_end": {
+                          "type": "string",
+                          "example": "17:00:00"
+                        },
+                        "adult_pax_count": {
+                          "type": "integer",
+                          "example": 5
+                        },
+                        "child_pax_count": {
+                          "type": "integer",
+                          "example": 10
+                        },
+                        "pax_count": {
+                          "type": "integer",
+                          "example": 15
+                        },
+                        "status": {
+                          "type": "string",
+                          "example": "pending"
+                        },
+                        "deposit_status": {
+                          "type": "string",
+                          "example": "unpaid"
+                        },
+                        "total_amount": {
+                          "type": "number",
+                          "example": 82600
+                        },
+                        "balance_due": {
+                          "type": "number",
+                          "example": 82600
+                        }
+                      }
+                    },
+                    "gst_amount": {
+                      "type": "number",
+                      "example": 12600
+                    },
+                    "total_amount": {
+                      "type": "number",
+                      "example": 82600
+                    },
+                    "balance_due": {
+                      "type": "number",
+                      "example": 82600
+                    },
+                    "payment": {
+                      "type": "object",
+                      "properties": {
+                        "required": {
+                          "type": "boolean",
+                          "example": true
+                        },
+                        "provider": {
+                          "type": "string",
+                          "example": "razorpay"
+                        },
+                        "create_order_url": {
+                          "type": "string",
+                          "example": "http://localhost:8000/api/v1/bookings/550e8400-e29b-41d4-a716-446655440010/razorpay-order"
+                        },
+                        "verify_url": {
+                          "type": "string",
+                          "example": "http://localhost:8000/api/v1/bookings/550e8400-e29b-41d4-a716-446655440010/razorpay-verify"
+                        }
+                      }
+                    },
+                    "calculation_breakdown": {
+                      "type": "object",
+                      "properties": {
+                        "adult_pax_count": {
+                          "type": "integer",
+                          "example": 2
+                        },
+                        "child_pax_count": {
+                          "type": "integer",
+                          "example": 3
+                        },
+                        "adult_buffet_unit_price": {
+                          "type": "number",
+                          "example": 700
+                        },
+                        "child_buffet_unit_price": {
+                          "type": "number",
+                          "example": 400
+                        },
+                        "adult_buffet_total": {
+                          "type": "number",
+                          "example": 1400
+                        },
+                        "child_buffet_total": {
+                          "type": "number",
+                          "example": 1200
+                        },
+                        "buffet_subtotal": {
+                          "type": "number",
+                          "example": 2600
+                        },
+                        "base_amount": {
+                          "type": "number",
+                          "example": 2600
+                        },
+                        "customisation_amount": {
+                          "type": "number",
+                          "example": 1500
+                        },
+                        "subtotal": {
+                          "type": "number",
+                          "example": 4100
+                        },
+                        "gst_rate": {
+                          "type": "number",
+                          "example": 0.18
+                        },
+                        "gst_amount": {
+                          "type": "number",
+                          "example": 738
+                        },
+                        "overtime_amount": {
+                          "type": "number",
+                          "example": 0
+                        },
+                        "discount_amount": {
+                          "type": "number",
+                          "example": 0
+                        },
+                        "total_amount": {
+                          "type": "number",
+                          "example": 4838
+                        },
+                        "amount_paid": {
+                          "type": "number",
+                          "example": 0
+                        },
+                        "balance_due": {
+                          "type": "number",
+                          "example": 4838
+                        }
+                      }
+                    }
+                  },
+                  "example": {
+                    "message": "Booking created successfully.",
+                    "data": {
+                      "id": "550e8400-e29b-41d4-a716-446655440010",
+                      "location_id": "550e8400-e29b-41d4-a716-446655440001",
+                      "package_id": "550e8400-e29b-41d4-a716-446655440002",
+                      "event_date": "2026-04-10T00:00:00.000000Z",
+                      "slot_start": "15:30:00",
+                      "slot_end": "17:00:00",
+                      "adult_pax_count": 5,
+                      "child_pax_count": 10,
+                      "pax_count": 15,
+                      "status": "pending",
+                      "deposit_status": "unpaid",
+                      "total_amount": 82600,
+                      "balance_due": 82600
+                    },
+                    "gst_amount": 12600,
+                    "total_amount": 82600,
+                    "balance_due": 82600,
+                    "payment": {
+                      "required": true,
+                      "provider": "razorpay",
+                      "create_order_url": "http://localhost:8000/api/v1/bookings/550e8400-e29b-41d4-a716-446655440010/razorpay-order",
+                      "verify_url": "http://localhost:8000/api/v1/bookings/550e8400-e29b-41d4-a716-446655440010/razorpay-verify"
+                    },
+                    "calculation_breakdown": {
+                      "adult_pax_count": 5,
+                      "child_pax_count": 10,
+                      "adult_buffet_unit_price": 700,
+                      "child_buffet_unit_price": 400,
+                      "adult_buffet_total": 3500,
+                      "child_buffet_total": 4000,
+                      "buffet_subtotal": 7500,
+                      "base_amount": 7500,
+                      "customisation_amount": 31,
+                      "subtotal": 7531,
+                      "gst_rate": 0.18,
+                      "gst_amount": 1355.58,
+                      "overtime_amount": 0,
+                      "discount_amount": 0,
+                      "total_amount": 8886.58,
+                      "amount_paid": 0,
+                      "balance_due": 8886.58
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "parent_id": {
+                    "type": "string",
+                    "nullable": true,
+                    "format": "uuid"
+                  },
+                  "location_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "package_id": {
+                    "type": "string",
+                    "nullable": true,
+                    "format": "uuid"
+                  },
+                  "child_id": {
+                    "type": "string",
+                    "nullable": true,
+                    "format": "uuid"
+                  },
+                  "event_date": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "slot_start": {
+                    "type": "string",
+                    "pattern": "^\\d{2}:(00|30)$",
+                    "example": "15:30"
+                  },
+                  "slot_end": {
+                    "type": "string",
+                    "pattern": "^\\d{2}:(00|30)$",
+                    "example": "17:00"
+                  },
+                  "adult_pax_count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 200,
+                    "example": 5
+                  },
+                  "child_pax_count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 200,
+                    "example": 10
+                  },
+                  "pax_count": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 200
+                  },
+                  "initial_requirements": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "customisations": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "type": "string"
+                        },
+                        "item_name": {
+                          "type": "string",
+                          "maxLength": 191
+                        },
+                        "quantity": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "unit_price": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "duration_minutes": {
+                          "type": "integer",
+                          "nullable": true,
+                          "minimum": 1
+                        },
+                        "notes": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  },
+                  "guests": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "maxLength": 191
+                        },
+                        "phone": {
+                          "type": "string",
+                          "maxLength": 20
+                        },
+                        "adult_count": {
+                          "type": "integer",
+                          "nullable": true,
+                          "minimum": 0,
+                          "maximum": 200
+                        },
+                        "child_count": {
+                          "type": "integer",
+                          "nullable": true,
+                          "minimum": 0,
+                          "maximum": 200
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "location_id",
+                  "event_date",
+                  "slot_start",
+                  "slot_end",
+                  "adult_pax_count",
+                  "child_pax_count",
+                  "pax_count"
+                ],
+                "example": {
+                  "parent_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "location_id": "550e8400-e29b-41d4-a716-446655440001",
+                  "package_id": "550e8400-e29b-41d4-a716-446655440002",
+                  "child_id": "550e8400-e29b-41d4-a716-446655440003",
+                  "event_date": "2026-04-10",
+                  "slot_start": "15:30",
+                  "slot_end": "17:00",
+                  "adult_pax_count": 5,
+                  "child_pax_count": 10,
+                  "pax_count": 15,
+                  "initial_requirements": "Need projector",
+                  "gst_amount": 12600,
+                  "total_amount": 82600,
+                  "balance_due": 82600,
+                  "customisations": [
+                    {
+                      "type": "food",
+                      "item_name": "Cheese Pizza",
+                      "quantity": 2,
+                      "unit_price": 15.5,
+                      "duration_minutes": 30,
+                      "notes": "No onions"
+                    }
+                  ],
+                  "guests": [
+                    {
+                      "name": "Amit Shah",
+                      "phone": "9876543210",
+                      "adult_count": 2,
+                      "child_count": 1
+                    }
+                  ]
+                }
+              },
+              "example": {
+                "parent_id": "550e8400-e29b-41d4-a716-446655440000",
+                "location_id": "550e8400-e29b-41d4-a716-446655440001",
+                "package_id": "550e8400-e29b-41d4-a716-446655440002",
+                "child_id": "550e8400-e29b-41d4-a716-446655440003",
+                "event_date": "2026-04-10",
+                "slot_start": "15:30",
+                "slot_end": "17:00",
+                "adult_pax_count": 5,
+                "child_pax_count": 10,
+                "pax_count": 15,
+                "initial_requirements": "Need projector",
+                "gst_amount": 12600,
+                "total_amount": 82600,
+                "balance_due": 82600,
+                "customisations": [
+                  {
+                    "type": "food",
+                    "item_name": "Cheese Pizza",
+                    "quantity": 2,
+                    "unit_price": 15.5,
+                    "duration_minutes": 30,
+                    "notes": "No onions"
+                  }
+                ],
+                "guests": [
+                  {
+                    "name": "Amit Shah",
+                    "phone": "9876543210",
+                    "adult_count": 2,
+                    "child_count": 1
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "description": "Creates a booking with custom start and end time. slot_start and slot_end must be 30-minute increments, within branch operating hours, and must not overlap another active booking."
+      }
+    },
+    "/api/v1/bookings/guardian-verification-update": {
+      "post": {
+        "summary": "Update child pass guardian verification status",
+        "tags": [
+          "Bookings"
+        ],
+        "operationId": "bookingGuardianVerificationUpdate",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          },
+          "200": {
+            "description": "Guardian verification updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingGuardianVerificationResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Pass not found"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "entry_exit_log_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "mode": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "verification_code": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 20
+                  }
+                },
+                "required": [
+                  "entry_exit_log_id"
+                ],
+                "$ref": "#/components/schemas/BookingGuardianVerificationRequest"
+              },
+              "example": {
+                "entry_exit_log_id": "550e8400-e29b-41d4-a716-446655440041"
+              }
+            }
+          }
+        },
+        "description": "Marks the pass generated for a child as guardian verified."
+      }
+    },
+    "/api/v1/bookings/package-list": {
+      "get": {
+        "summary": "Api.booking.package List",
+        "tags": [
+          "Bookings"
+        ],
+        "operationId": "bookingPackageList",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bookings/{booking}": {
+      "get": {
+        "summary": "Api.booking.show",
+        "tags": [
+          "Bookings"
+        ],
+        "operationId": "bookingShow",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "name": "booking",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "summary": "Update an existing booking",
+        "tags": [
+          "Bookings"
+        ],
+        "operationId": "bookingUpdate",
+        "responses": {
+          "200": {
+            "description": "Booking updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Booking created successfully."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "location_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "package_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "event_date": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "slot_start": {
+                          "type": "string",
+                          "example": "15:30:00"
+                        },
+                        "slot_end": {
+                          "type": "string",
+                          "example": "17:00:00"
+                        },
+                        "adult_pax_count": {
+                          "type": "integer",
+                          "example": 5
+                        },
+                        "child_pax_count": {
+                          "type": "integer",
+                          "example": 10
+                        },
+                        "pax_count": {
+                          "type": "integer",
+                          "example": 15
+                        },
+                        "status": {
+                          "type": "string",
+                          "example": "pending"
+                        },
+                        "deposit_status": {
+                          "type": "string",
+                          "example": "unpaid"
+                        },
+                        "total_amount": {
+                          "type": "number",
+                          "example": 82600
+                        },
+                        "balance_due": {
+                          "type": "number",
+                          "example": 82600
+                        }
+                      }
+                    },
+                    "gst_amount": {
+                      "type": "number",
+                      "example": 12600
+                    },
+                    "total_amount": {
+                      "type": "number",
+                      "example": 82600
+                    },
+                    "balance_due": {
+                      "type": "number",
+                      "example": 82600
+                    },
+                    "payment": {
+                      "type": "object",
+                      "properties": {
+                        "required": {
+                          "type": "boolean",
+                          "example": true
+                        },
+                        "provider": {
+                          "type": "string",
+                          "example": "razorpay"
+                        },
+                        "create_order_url": {
+                          "type": "string",
+                          "example": "http://localhost:8000/api/v1/bookings/550e8400-e29b-41d4-a716-446655440010/razorpay-order"
+                        },
+                        "verify_url": {
+                          "type": "string",
+                          "example": "http://localhost:8000/api/v1/bookings/550e8400-e29b-41d4-a716-446655440010/razorpay-verify"
+                        }
+                      }
+                    },
+                    "calculation_breakdown": {
+                      "type": "object",
+                      "properties": {
+                        "adult_pax_count": {
+                          "type": "integer",
+                          "example": 2
+                        },
+                        "child_pax_count": {
+                          "type": "integer",
+                          "example": 3
+                        },
+                        "adult_buffet_unit_price": {
+                          "type": "number",
+                          "example": 700
+                        },
+                        "child_buffet_unit_price": {
+                          "type": "number",
+                          "example": 400
+                        },
+                        "adult_buffet_total": {
+                          "type": "number",
+                          "example": 1400
+                        },
+                        "child_buffet_total": {
+                          "type": "number",
+                          "example": 1200
+                        },
+                        "buffet_subtotal": {
+                          "type": "number",
+                          "example": 2600
+                        },
+                        "base_amount": {
+                          "type": "number",
+                          "example": 2600
+                        },
+                        "customisation_amount": {
+                          "type": "number",
+                          "example": 1500
+                        },
+                        "subtotal": {
+                          "type": "number",
+                          "example": 4100
+                        },
+                        "gst_rate": {
+                          "type": "number",
+                          "example": 0.18
+                        },
+                        "gst_amount": {
+                          "type": "number",
+                          "example": 738
+                        },
+                        "overtime_amount": {
+                          "type": "number",
+                          "example": 0
+                        },
+                        "discount_amount": {
+                          "type": "number",
+                          "example": 0
+                        },
+                        "total_amount": {
+                          "type": "number",
+                          "example": 4838
+                        },
+                        "amount_paid": {
+                          "type": "number",
+                          "example": 0
+                        },
+                        "balance_due": {
+                          "type": "number",
+                          "example": 4838
+                        }
+                      }
+                    }
+                  },
+                  "example": {
+                    "message": "Booking created successfully.",
+                    "data": {
+                      "id": "550e8400-e29b-41d4-a716-446655440010",
+                      "location_id": "550e8400-e29b-41d4-a716-446655440001",
+                      "package_id": "550e8400-e29b-41d4-a716-446655440002",
+                      "event_date": "2026-04-10T00:00:00.000000Z",
+                      "slot_start": "15:30:00",
+                      "slot_end": "17:00:00",
+                      "adult_pax_count": 5,
+                      "child_pax_count": 10,
+                      "pax_count": 15,
+                      "status": "pending",
+                      "deposit_status": "unpaid",
+                      "total_amount": 82600,
+                      "balance_due": 82600
+                    },
+                    "gst_amount": 12600,
+                    "total_amount": 82600,
+                    "balance_due": 82600,
+                    "payment": {
+                      "required": true,
+                      "provider": "razorpay",
+                      "create_order_url": "http://localhost:8000/api/v1/bookings/550e8400-e29b-41d4-a716-446655440010/razorpay-order",
+                      "verify_url": "http://localhost:8000/api/v1/bookings/550e8400-e29b-41d4-a716-446655440010/razorpay-verify"
+                    },
+                    "calculation_breakdown": {
+                      "adult_pax_count": 5,
+                      "child_pax_count": 10,
+                      "adult_buffet_unit_price": 700,
+                      "child_buffet_unit_price": 400,
+                      "adult_buffet_total": 3500,
+                      "child_buffet_total": 4000,
+                      "buffet_subtotal": 7500,
+                      "base_amount": 7500,
+                      "customisation_amount": 31,
+                      "subtotal": 7531,
+                      "gst_rate": 0.18,
+                      "gst_amount": 1355.58,
+                      "overtime_amount": 0,
+                      "discount_amount": 0,
+                      "total_amount": 8886.58,
+                      "amount_paid": 0,
+                      "balance_due": 8886.58
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "booking",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "parent_id": {
+                    "type": "string",
+                    "nullable": true,
+                    "format": "uuid"
+                  },
+                  "location_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "package_id": {
+                    "type": "string",
+                    "nullable": true,
+                    "format": "uuid"
+                  },
+                  "child_id": {
+                    "type": "string",
+                    "nullable": true,
+                    "format": "uuid"
+                  },
+                  "event_date": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "slot_start": {
+                    "type": "string",
+                    "pattern": "^\\d{2}:(00|30)$",
+                    "example": "15:30"
+                  },
+                  "slot_end": {
+                    "type": "string",
+                    "pattern": "^\\d{2}:(00|30)$",
+                    "example": "17:00"
+                  },
+                  "adult_pax_count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 200,
+                    "example": 6
+                  },
+                  "child_pax_count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 200,
+                    "example": 14
+                  },
+                  "pax_count": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 200
+                  },
+                  "initial_requirements": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "customisations": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "type": "string"
+                        },
+                        "item_name": {
+                          "type": "string",
+                          "maxLength": 191
+                        },
+                        "quantity": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "unit_price": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "duration_minutes": {
+                          "type": "integer",
+                          "nullable": true,
+                          "minimum": 1
+                        },
+                        "notes": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  },
+                  "guests": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "maxLength": 191
+                        },
+                        "phone": {
+                          "type": "string",
+                          "maxLength": 20
+                        },
+                        "adult_count": {
+                          "type": "integer",
+                          "nullable": true,
+                          "minimum": 0,
+                          "maximum": 200
+                        },
+                        "child_count": {
+                          "type": "integer",
+                          "nullable": true,
+                          "minimum": 0,
+                          "maximum": 200
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "location_id",
+                  "event_date",
+                  "slot_start",
+                  "slot_end",
+                  "adult_pax_count",
+                  "child_pax_count",
+                  "pax_count"
+                ],
+                "example": {
+                  "location_id": "550e8400-e29b-41d4-a716-446655440001",
+                  "package_id": "550e8400-e29b-41d4-a716-446655440002",
+                  "event_date": "2026-04-24",
+                  "slot_start": "15:30",
+                  "slot_end": "17:00",
+                  "adult_pax_count": 6,
+                  "child_pax_count": 14,
+                  "pax_count": 20,
+                  "initial_requirements": "Updated requirement",
+                  "gst_amount": 12600,
+                  "total_amount": 82600,
+                  "balance_due": 82600
+                }
+              },
+              "example": {
+                "location_id": "550e8400-e29b-41d4-a716-446655440001",
+                "package_id": "550e8400-e29b-41d4-a716-446655440002",
+                "event_date": "2026-04-24",
+                "slot_start": "15:30",
+                "slot_end": "17:00",
+                "adult_pax_count": 6,
+                "child_pax_count": 14,
+                "pax_count": 20,
+                "initial_requirements": "Updated requirement",
+                "gst_amount": 12600,
+                "total_amount": 82600,
+                "balance_due": 82600
+              }
+            }
+          }
+        },
+        "description": "Updates a booking with custom start and end time. slot_start and slot_end must be 30-minute increments, within branch operating hours, and must not overlap another active booking."
+      },
+      "delete": {
+        "summary": "Api.booking.destroy",
+        "tags": [
+          "Bookings"
+        ],
+        "operationId": "bookingDestroy",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "name": "booking",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bookings/{booking}/confirm": {
+      "post": {
+        "summary": "Api.booking.confirm",
+        "tags": [
+          "Bookings"
+        ],
+        "operationId": "bookingConfirm",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "name": "booking",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "location_id": {
+                    "type": "string"
+                  },
+                  "parent_id": {
+                    "type": "string"
+                  },
+                  "event_date": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "slot_start": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "slot_end": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "pax_count": {
+                    "type": "integer"
+                  },
+                  "adult_pax_count": {
+                    "type": "integer"
+                  },
+                  "child_pax_count": {
+                    "type": "integer"
+                  },
+                  "base_amount": {
+                    "type": "number"
+                  },
+                  "package_id": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "deposit_status": {
+                    "type": "string"
+                  },
+                  "overtime_amount": {
+                    "type": "number"
+                  },
+                  "discount_amount": {
+                    "type": "number"
+                  },
+                  "gst_amount": {
+                    "type": "number"
+                  },
+                  "total_amount": {
+                    "type": "number"
+                  },
+                  "amount_paid": {
+                    "type": "number"
+                  },
+                  "balance_due": {
+                    "type": "number"
+                  },
+                  "estimate_pdf_url": {
+                    "type": "string"
+                  },
+                  "estimate_status": {
+                    "type": "string"
+                  },
+                  "initial_requirements": {
+                    "type": "string"
+                  },
+                  "cancellation_reason": {
+                    "type": "string"
+                  },
+                  "cancelled_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "refund_amount": {
+                    "type": "number"
+                  },
+                  "quote_terms": {
+                    "type": "string"
+                  },
+                  "quote_sent_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "created_by_staff_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/bookings/{booking}/customisations": {
+      "post": {
+        "summary": "Add Booking Customisation",
+        "tags": [
+          "Bookings"
+        ],
+        "operationId": "bookingCustomisationsStore",
+        "responses": {
+          "201": {
+            "description": "Booking customisation added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Booking customisation added successfully."
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "booking": {
+                      "type": "object"
+                    },
+                    "calculation_breakdown": {
+                      "type": "object",
+                      "properties": {
+                        "adult_pax_count": {
+                          "type": "integer",
+                          "example": 2
+                        },
+                        "child_pax_count": {
+                          "type": "integer",
+                          "example": 3
+                        },
+                        "adult_buffet_unit_price": {
+                          "type": "number",
+                          "example": 700
+                        },
+                        "child_buffet_unit_price": {
+                          "type": "number",
+                          "example": 400
+                        },
+                        "adult_buffet_total": {
+                          "type": "number",
+                          "example": 1400
+                        },
+                        "child_buffet_total": {
+                          "type": "number",
+                          "example": 1200
+                        },
+                        "buffet_subtotal": {
+                          "type": "number",
+                          "example": 2600
+                        },
+                        "base_amount": {
+                          "type": "number",
+                          "example": 2600
+                        },
+                        "customisation_amount": {
+                          "type": "number",
+                          "example": 1500
+                        },
+                        "subtotal": {
+                          "type": "number",
+                          "example": 4100
+                        },
+                        "gst_rate": {
+                          "type": "number",
+                          "example": 0.18
+                        },
+                        "gst_amount": {
+                          "type": "number",
+                          "example": 738
+                        },
+                        "overtime_amount": {
+                          "type": "number",
+                          "example": 0
+                        },
+                        "discount_amount": {
+                          "type": "number",
+                          "example": 0
+                        },
+                        "total_amount": {
+                          "type": "number",
+                          "example": 4838
+                        },
+                        "amount_paid": {
+                          "type": "number",
+                          "example": 0
+                        },
+                        "balance_due": {
+                          "type": "number",
+                          "example": 4838
+                        }
+                      }
+                    }
+                  },
+                  "example": {
+                    "message": "Booking customisation added successfully.",
+                    "data": {
+                      "id": "550e8400-e29b-41d4-a716-446655440030",
+                      "booking_id": "550e8400-e29b-41d4-a716-446655440010",
+                      "type": "cake",
+                      "item_name": "Chocolate Truffle Cake",
+                      "quantity": 1,
+                      "unit_price": "1500.00",
+                      "total_price": "1500.00"
+                    },
+                    "booking": {
+                      "id": "550e8400-e29b-41d4-a716-446655440010",
+                      "total_amount": "4838.00",
+                      "balance_due": "4838.00"
+                    },
+                    "calculation_breakdown": {
+                      "adult_pax_count": 2,
+                      "child_pax_count": 3,
+                      "adult_buffet_unit_price": 700,
+                      "child_buffet_unit_price": 400,
+                      "adult_buffet_total": 1400,
+                      "child_buffet_total": 1200,
+                      "buffet_subtotal": 2600,
+                      "base_amount": 2600,
+                      "customisation_amount": 1500,
+                      "subtotal": 4100,
+                      "gst_rate": 0.18,
+                      "gst_amount": 738,
+                      "overtime_amount": 0,
+                      "discount_amount": 0,
+                      "total_amount": 4838,
+                      "amount_paid": 0,
+                      "balance_due": 4838
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "booking",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "food",
+                      "cake",
+                      "decor",
+                      "addon"
+                    ],
+                    "example": "cake"
+                  },
+                  "item_name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "Chocolate Truffle Cake"
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 200,
+                    "example": 1
+                  },
+                  "unit_price": {
+                    "type": "number",
+                    "minimum": 0,
+                    "example": 1500
+                  },
+                  "addons_total": {
+                    "type": "number",
+                    "nullable": true,
+                    "minimum": 0,
+                    "example": 0
+                  },
+                  "food_total": {
+                    "type": "number",
+                    "nullable": true,
+                    "minimum": 0,
+                    "example": 0
+                  },
+                  "cake_total": {
+                    "type": "number",
+                    "nullable": true,
+                    "minimum": 0,
+                    "example": 1500
+                  },
+                  "duration_minutes": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 0,
+                    "maximum": 600
+                  },
+                  "notes": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "Eggless"
+                  },
+                  "photo_url": {
+                    "type": "string",
+                    "nullable": true,
+                    "format": "uri",
+                    "maxLength": 1024
+                  }
+                },
+                "required": [
+                  "type",
+                  "item_name",
+                  "quantity",
+                  "unit_price"
+                ]
+              },
+              "example": {
+                "type": "cake",
+                "item_name": "Chocolate Truffle Cake",
+                "quantity": 1,
+                "unit_price": 1500,
+                "addons_total": 0,
+                "food_total": 0,
+                "cake_total": 1500,
+                "duration_minutes": null,
+                "notes": "Eggless",
+                "photo_url": null
+              }
+            }
+          }
+        },
+        "description": "Adds a post-booking food, cake, decor or add-on item and returns the recalculated booking breakdown."
+      }
+    },
+    "/api/v1/bookings/{booking}/customisations/{customisation}": {
+      "patch": {
+        "summary": "Update Booking Customisation",
+        "tags": [
+          "Bookings"
+        ],
+        "operationId": "bookingCustomisationsUpdate",
+        "responses": {
+          "200": {
+            "description": "Booking customisation updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Booking customisation added successfully."
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "booking": {
+                      "type": "object"
+                    },
+                    "calculation_breakdown": {
+                      "type": "object",
+                      "properties": {
+                        "adult_pax_count": {
+                          "type": "integer",
+                          "example": 2
+                        },
+                        "child_pax_count": {
+                          "type": "integer",
+                          "example": 3
+                        },
+                        "adult_buffet_unit_price": {
+                          "type": "number",
+                          "example": 700
+                        },
+                        "child_buffet_unit_price": {
+                          "type": "number",
+                          "example": 400
+                        },
+                        "adult_buffet_total": {
+                          "type": "number",
+                          "example": 1400
+                        },
+                        "child_buffet_total": {
+                          "type": "number",
+                          "example": 1200
+                        },
+                        "buffet_subtotal": {
+                          "type": "number",
+                          "example": 2600
+                        },
+                        "base_amount": {
+                          "type": "number",
+                          "example": 2600
+                        },
+                        "customisation_amount": {
+                          "type": "number",
+                          "example": 1500
+                        },
+                        "subtotal": {
+                          "type": "number",
+                          "example": 4100
+                        },
+                        "gst_rate": {
+                          "type": "number",
+                          "example": 0.18
+                        },
+                        "gst_amount": {
+                          "type": "number",
+                          "example": 738
+                        },
+                        "overtime_amount": {
+                          "type": "number",
+                          "example": 0
+                        },
+                        "discount_amount": {
+                          "type": "number",
+                          "example": 0
+                        },
+                        "total_amount": {
+                          "type": "number",
+                          "example": 4838
+                        },
+                        "amount_paid": {
+                          "type": "number",
+                          "example": 0
+                        },
+                        "balance_due": {
+                          "type": "number",
+                          "example": 4838
+                        }
+                      }
+                    }
+                  },
+                  "example": {
+                    "message": "Booking customisation added successfully.",
+                    "data": {
+                      "id": "550e8400-e29b-41d4-a716-446655440030",
+                      "booking_id": "550e8400-e29b-41d4-a716-446655440010",
+                      "type": "cake",
+                      "item_name": "Chocolate Truffle Cake",
+                      "quantity": 1,
+                      "unit_price": "1500.00",
+                      "total_price": "1500.00"
+                    },
+                    "booking": {
+                      "id": "550e8400-e29b-41d4-a716-446655440010",
+                      "total_amount": "4838.00",
+                      "balance_due": "4838.00"
+                    },
+                    "calculation_breakdown": {
+                      "adult_pax_count": 2,
+                      "child_pax_count": 3,
+                      "adult_buffet_unit_price": 700,
+                      "child_buffet_unit_price": 400,
+                      "adult_buffet_total": 1400,
+                      "child_buffet_total": 1200,
+                      "buffet_subtotal": 2600,
+                      "base_amount": 2600,
+                      "customisation_amount": 1500,
+                      "subtotal": 4100,
+                      "gst_rate": 0.18,
+                      "gst_amount": 738,
+                      "overtime_amount": 0,
+                      "discount_amount": 0,
+                      "total_amount": 4838,
+                      "amount_paid": 0,
+                      "balance_due": 4838
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "booking",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "customisation",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "food",
+                      "cake",
+                      "decor",
+                      "addon"
+                    ],
+                    "example": "decor"
+                  },
+                  "item_name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "Space Adventure Decor"
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 200,
+                    "example": 1
+                  },
+                  "unit_price": {
+                    "type": "number",
+                    "minimum": 0,
+                    "example": 2500
+                  },
+                  "addons_total": {
+                    "type": "number",
+                    "nullable": true,
+                    "minimum": 0,
+                    "example": 2500
+                  },
+                  "food_total": {
+                    "type": "number",
+                    "nullable": true,
+                    "minimum": 0,
+                    "example": 0
+                  },
+                  "cake_total": {
+                    "type": "number",
+                    "nullable": true,
+                    "minimum": 0,
+                    "example": 0
+                  },
+                  "duration_minutes": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 0,
+                    "maximum": 600
+                  },
+                  "notes": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "Eggless"
+                  },
+                  "photo_url": {
+                    "type": "string",
+                    "nullable": true,
+                    "format": "uri",
+                    "maxLength": 1024
+                  }
+                },
+                "required": [
+                  "type",
+                  "item_name",
+                  "quantity",
+                  "unit_price"
+                ]
+              },
+              "example": {
+                "type": "decor",
+                "item_name": "Space Adventure Decor",
+                "quantity": 1,
+                "unit_price": 2500,
+                "addons_total": 2500,
+                "food_total": 0,
+                "cake_total": 0,
+                "duration_minutes": null,
+                "notes": "Blue theme",
+                "photo_url": null
+              }
+            }
+          }
+        },
+        "description": "Updates a post-booking customisation item and returns the recalculated booking breakdown."
+      },
+      "delete": {
+        "summary": "Delete Booking Customisation",
+        "tags": [
+          "Bookings"
+        ],
+        "operationId": "bookingCustomisationsDestroy",
+        "responses": {
+          "200": {
+            "description": "Booking customisation deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Booking customisation deleted successfully."
+                    },
+                    "booking": {
+                      "type": "object"
+                    },
+                    "calculation_breakdown": {
+                      "type": "object",
+                      "properties": {
+                        "adult_pax_count": {
+                          "type": "integer",
+                          "example": 2
+                        },
+                        "child_pax_count": {
+                          "type": "integer",
+                          "example": 3
+                        },
+                        "adult_buffet_unit_price": {
+                          "type": "number",
+                          "example": 700
+                        },
+                        "child_buffet_unit_price": {
+                          "type": "number",
+                          "example": 400
+                        },
+                        "adult_buffet_total": {
+                          "type": "number",
+                          "example": 1400
+                        },
+                        "child_buffet_total": {
+                          "type": "number",
+                          "example": 1200
+                        },
+                        "buffet_subtotal": {
+                          "type": "number",
+                          "example": 2600
+                        },
+                        "base_amount": {
+                          "type": "number",
+                          "example": 2600
+                        },
+                        "customisation_amount": {
+                          "type": "number",
+                          "example": 1500
+                        },
+                        "subtotal": {
+                          "type": "number",
+                          "example": 4100
+                        },
+                        "gst_rate": {
+                          "type": "number",
+                          "example": 0.18
+                        },
+                        "gst_amount": {
+                          "type": "number",
+                          "example": 738
+                        },
+                        "overtime_amount": {
+                          "type": "number",
+                          "example": 0
+                        },
+                        "discount_amount": {
+                          "type": "number",
+                          "example": 0
+                        },
+                        "total_amount": {
+                          "type": "number",
+                          "example": 4838
+                        },
+                        "amount_paid": {
+                          "type": "number",
+                          "example": 0
+                        },
+                        "balance_due": {
+                          "type": "number",
+                          "example": 4838
+                        }
+                      }
+                    }
+                  },
+                  "example": {
+                    "message": "Booking customisation deleted successfully.",
+                    "booking": {
+                      "id": "550e8400-e29b-41d4-a716-446655440010",
+                      "total_amount": "3068.00",
+                      "balance_due": "3068.00"
+                    },
+                    "calculation_breakdown": {
+                      "buffet_subtotal": 2600,
+                      "customisation_amount": 0,
+                      "subtotal": 2600,
+                      "gst_amount": 468,
+                      "total_amount": 3068,
+                      "balance_due": 3068
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "booking",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "customisation",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "Removes a manually added post-booking customisation and returns the recalculated booking breakdown. Package-included customisations cannot be removed."
+      }
+    },
+    "/api/v1/bookings/{booking}/guests": {
+      "post": {
+        "summary": "Add Booking Guest",
+        "tags": [
+          "Bookings"
+        ],
+        "operationId": "bookingGuestsStore",
+        "responses": {
+          "201": {
+            "description": "Booking guest added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Booking guest added successfully."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "booking_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "name": {
+                          "type": "string",
+                          "example": "Guest One"
+                        },
+                        "phone": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "9876543210"
+                        },
+                        "adult_count": {
+                          "type": "integer",
+                          "example": 2
+                        },
+                        "child_count": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "rsvp_status": {
+                          "type": "string",
+                          "example": "pending"
+                        },
+                        "qr_code": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      }
+                    },
+                    "booking": {
+                      "type": "object"
+                    }
+                  },
+                  "example": {
+                    "message": "Booking guest added successfully.",
+                    "data": {
+                      "id": "550e8400-e29b-41d4-a716-446655440040",
+                      "booking_id": "550e8400-e29b-41d4-a716-446655440010",
+                      "name": "Guest One",
+                      "phone": "9876543210",
+                      "adult_count": 2,
+                      "child_count": 1,
+                      "rsvp_status": "pending",
+                      "qr_code": "550e8400-e29b-41d4-a716-446655440041"
+                    },
+                    "booking": {
+                      "id": "550e8400-e29b-41d4-a716-446655440010"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "booking",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "Guest One"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 20,
+                    "example": "9876543210"
+                  },
+                  "adult_count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 200,
+                    "example": 2
+                  },
+                  "child_count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 200,
+                    "example": 1
+                  }
+                },
+                "required": [
+                  "name",
+                  "adult_count",
+                  "child_count"
+                ]
+              },
+              "example": {
+                "name": "Guest One",
+                "phone": "9876543210",
+                "adult_count": 2,
+                "child_count": 1
+              }
+            }
+          }
+        },
+        "description": "Adds a guest contact for a booking. Each guest can carry adult and child counts for that specific person/family entry."
+      }
+    },
+    "/api/v1/bookings/{booking}/guests/{guest}": {
+      "patch": {
+        "summary": "Update Booking Guest",
+        "tags": [
+          "Bookings"
+        ],
+        "operationId": "bookingGuestsUpdate",
+        "responses": {
+          "200": {
+            "description": "Booking guest updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Booking guest added successfully."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "booking_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "name": {
+                          "type": "string",
+                          "example": "Guest One"
+                        },
+                        "phone": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "9876543210"
+                        },
+                        "adult_count": {
+                          "type": "integer",
+                          "example": 2
+                        },
+                        "child_count": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "rsvp_status": {
+                          "type": "string",
+                          "example": "pending"
+                        },
+                        "qr_code": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      }
+                    },
+                    "booking": {
+                      "type": "object"
+                    }
+                  },
+                  "example": {
+                    "message": "Booking guest added successfully.",
+                    "data": {
+                      "id": "550e8400-e29b-41d4-a716-446655440040",
+                      "booking_id": "550e8400-e29b-41d4-a716-446655440010",
+                      "name": "Guest One",
+                      "phone": "9876543210",
+                      "adult_count": 2,
+                      "child_count": 1,
+                      "rsvp_status": "pending",
+                      "qr_code": "550e8400-e29b-41d4-a716-446655440041"
+                    },
+                    "booking": {
+                      "id": "550e8400-e29b-41d4-a716-446655440010"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "booking",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "guest",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "Guest One"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 20,
+                    "example": "9876543210"
+                  },
+                  "adult_count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 200,
+                    "example": 2
+                  },
+                  "child_count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 200,
+                    "example": 1
+                  }
+                },
+                "required": [
+                  "name",
+                  "adult_count",
+                  "child_count"
+                ]
+              },
+              "example": {
+                "name": "Guest One Updated",
+                "phone": "9876543211",
+                "adult_count": 1,
+                "child_count": 2
+              }
+            }
+          }
+        },
+        "description": "Updates a guest contact and the adult/child counts for that guest entry."
+      },
+      "delete": {
+        "summary": "Api.booking.guests.destroy",
+        "tags": [
+          "Bookings"
+        ],
+        "operationId": "bookingGuestsDestroy",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "name": "booking",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "guest",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/bookings/{booking}/guests/{guest}/rsvp": {
+      "patch": {
+        "summary": "Api.booking.guests.rsvp",
+        "tags": [
+          "Bookings"
+        ],
+        "operationId": "bookingGuestsRsvp",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "name": "booking",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "guest",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "rsvp_status": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "rsvp_status"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/bookings/{booking}/razorpay-order": {
+      "post": {
+        "summary": "Create Razorpay order for booking payment",
+        "tags": [
+          "Bookings"
+        ],
+        "operationId": "bookingRazorpayOrder",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          },
+          "200": {
+            "description": "Razorpay order created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingRazorpayOrderResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "booking",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": []
+              }
+            }
+          }
+        },
+        "description": "Creates or reuses a pending Razorpay order for the booking balance due. Android should use the returned checkout payload to open Razorpay Checkout."
+      }
+    },
+    "/api/v1/bookings/{booking}/razorpay-verify": {
+      "post": {
+        "summary": "Verify Razorpay payment and confirm booking",
+        "tags": [
+          "Bookings"
+        ],
+        "operationId": "bookingRazorpayVerify",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          },
+          "200": {
+            "description": "Booking payment verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingRazorpayVerifyResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "booking",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "razorpay_order_id": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "razorpay_payment_id": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "razorpay_signature": {
+                    "type": "string",
+                    "maxLength": 255
+                  }
+                },
+                "required": [
+                  "razorpay_order_id",
+                  "razorpay_payment_id",
+                  "razorpay_signature"
+                ],
+                "$ref": "#/components/schemas/BookingRazorpayVerifyRequest"
+              },
+              "example": {
+                "razorpay_order_id": "order_NX1234567890AB",
+                "razorpay_payment_id": "pay_NX1234567890AB",
+                "razorpay_signature": "9ef4dffbfd84f1318f6739a3ce19f9d85851857ae648f114332d8401e0949a3d"
+              }
+            }
+          }
+        },
+        "description": "Verifies the Razorpay signature returned by Android Checkout. On success, records payment, marks the booking confirmed, updates amount_paid, and clears balance_due for a full payment."
+      }
+    },
+    "/api/v1/core/locations": {
+      "get": {
+        "summary": "Api.api.core.locations.index",
+        "tags": [
+          "Core"
+        ],
+        "operationId": "coreLocationsIndex",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Api.api.core.locations.store",
+        "tags": [
+          "Core"
+        ],
+        "operationId": "coreLocationsStore",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 191
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "mall": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 191
+                  },
+                  "capacity": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "operating_hours": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "gstin": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "manager_staff_id": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "image": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 3072
+                  }
+                },
+                "required": [
+                  "name",
+                  "address",
+                  "capacity",
+                  "operating_hours"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/core/locations/{location}": {
+      "get": {
+        "summary": "Api.api.core.locations.show",
+        "tags": [
+          "Core"
+        ],
+        "operationId": "coreLocationsShow",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "name": "location",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "Api.api.core.locations.update",
+        "tags": [
+          "Core"
+        ],
+        "operationId": "coreLocationsUpdate",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "name": "location",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 191
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "mall": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 191
+                  },
+                  "capacity": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "operating_hours": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "gstin": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "manager_staff_id": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "image": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 3072
+                  },
+                  "remove_image": {
+                    "type": "boolean",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "name",
+                  "address",
+                  "capacity",
+                  "operating_hours"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customers": {
+      "get": {
+        "summary": "Api.customer.index",
+        "tags": [
+          "Customers"
+        ],
+        "operationId": "customerIndex",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/customers/login": {
+      "post": {
+        "summary": "Api.customer.login.api.store",
+        "tags": [
+          "Customers"
+        ],
+        "operationId": "customerLoginStore",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "maxLength": 30
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "device_name": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100
+                  }
+                },
+                "required": [
+                  "phone",
+                  "password"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customers/login/request-otp": {
+      "post": {
+        "summary": "Request Customer Login OTP",
+        "tags": [
+          "Customer Auth"
+        ],
+        "operationId": "customerLoginRequestOtp",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          },
+          "200": {
+            "description": "OTP prepared successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "OTP sent successfully."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "customer_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "phone": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email",
+                          "nullable": true
+                        },
+                        "address": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "emergency_contact_name": {
+                          "type": "string"
+                        },
+                        "emergency_contact_phone": {
+                          "type": "string"
+                        },
+                        "customer": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "name": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "phone": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "whatsapp_number": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "email": {
+                              "type": "string",
+                              "format": "email",
+                              "nullable": true
+                            }
+                          }
+                        },
+                        "children": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "parent_id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "dob": {
+                                "type": "string",
+                                "format": "date",
+                                "nullable": true
+                              },
+                              "age": {
+                                "type": "integer"
+                              },
+                              "gender": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "photo": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "school": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "medical_notes": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "dietary_restrictions": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "updated_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "rewards_profile": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "waiver_signed": {
+                              "type": "boolean"
+                            },
+                            "waiver_signed_at": {
+                              "type": "string",
+                              "format": "date-time",
+                              "nullable": true
+                            },
+                            "loyalty_points": {
+                              "type": "integer"
+                            },
+                            "loyalty_tier": {
+                              "type": "string",
+                              "nullable": true
+                            }
+                          }
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "updated_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Customer not found"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "maxLength": 30
+                  }
+                },
+                "required": [
+                  "phone"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customers/login/verify-otp": {
+      "post": {
+        "summary": "Verify Customer Login OTP",
+        "tags": [
+          "Customer Auth"
+        ],
+        "operationId": "customerLoginVerifyOtp",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          },
+          "200": {
+            "description": "OTP verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "OTP verified successfully."
+                    },
+                    "token_type": {
+                      "type": "string",
+                      "example": "Bearer"
+                    },
+                    "access_token": {
+                      "type": "string",
+                      "example": "1|exampletokenvalue"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "customer_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "phone": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email",
+                          "nullable": true
+                        },
+                        "address": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "emergency_contact_name": {
+                          "type": "string"
+                        },
+                        "emergency_contact_phone": {
+                          "type": "string"
+                        },
+                        "customer": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "name": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "phone": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "whatsapp_number": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "email": {
+                              "type": "string",
+                              "format": "email",
+                              "nullable": true
+                            }
+                          }
+                        },
+                        "children": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "parent_id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "dob": {
+                                "type": "string",
+                                "format": "date",
+                                "nullable": true
+                              },
+                              "age": {
+                                "type": "integer"
+                              },
+                              "gender": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "photo": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "school": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "medical_notes": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "dietary_restrictions": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "updated_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "rewards_profile": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "waiver_signed": {
+                              "type": "boolean"
+                            },
+                            "waiver_signed_at": {
+                              "type": "string",
+                              "format": "date-time",
+                              "nullable": true
+                            },
+                            "loyalty_points": {
+                              "type": "integer"
+                            },
+                            "loyalty_tier": {
+                              "type": "string",
+                              "nullable": true
+                            }
+                          }
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "updated_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed or OTP invalid"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "maxLength": 30
+                  },
+                  "otp": {
+                    "type": "string"
+                  },
+                  "device_name": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 100
+                  }
+                },
+                "required": [
+                  "phone",
+                  "otp"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customers/signup": {
+      "post": {
+        "summary": "Customer Signup",
+        "tags": [
+          "Customer Auth"
+        ],
+        "operationId": "customerSignupStore",
+        "responses": {
+          "201": {
+            "description": "Customer signup completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Customer signup completed successfully."
+                    },
+                    "token_type": {
+                      "type": "string",
+                      "example": "Bearer"
+                    },
+                    "access_token": {
+                      "type": "string",
+                      "example": "1|exampletokenvalue"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "customer_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "phone": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email",
+                          "nullable": true
+                        },
+                        "address": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "emergency_contact_name": {
+                          "type": "string"
+                        },
+                        "emergency_contact_phone": {
+                          "type": "string"
+                        },
+                        "customer": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "name": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "phone": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "whatsapp_number": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "email": {
+                              "type": "string",
+                              "format": "email",
+                              "nullable": true
+                            }
+                          }
+                        },
+                        "children": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "parent_id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "dob": {
+                                "type": "string",
+                                "format": "date",
+                                "nullable": true
+                              },
+                              "age": {
+                                "type": "integer"
+                              },
+                              "gender": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "photo": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "school": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "medical_notes": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "dietary_restrictions": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "updated_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "rewards_profile": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "waiver_signed": {
+                              "type": "boolean"
+                            },
+                            "waiver_signed_at": {
+                              "type": "string",
+                              "format": "date-time",
+                              "nullable": true
+                            },
+                            "loyalty_points": {
+                              "type": "integer"
+                            },
+                            "loyalty_tier": {
+                              "type": "string",
+                              "nullable": true
+                            }
+                          }
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "updated_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed or OTP invalid"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 191
+                  },
+                  "phone": {
+                    "type": "string",
+                    "maxLength": 30
+                  },
+                  "email": {
+                    "type": "string",
+                    "nullable": true,
+                    "format": "email",
+                    "maxLength": 191
+                  },
+                  "emergency_contact_name": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 191
+                  },
+                  "emergency_contact_phone": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 30
+                  },
+                  "address": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "otp": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string",
+                    "nullable": true,
+                    "minLength": 8
+                  }
+                },
+                "required": [
+                  "phone",
+                  "otp"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customers/signup/request-otp": {
+      "post": {
+        "summary": "Request Customer Signup OTP",
+        "tags": [
+          "Customer Auth"
+        ],
+        "operationId": "customerSignupRequestOtp",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          },
+          "200": {
+            "description": "OTP sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "OTP sent successfully."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "500": {
+            "description": "OTP delivery failed"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 191
+                  },
+                  "phone": {
+                    "type": "string",
+                    "maxLength": 30
+                  }
+                },
+                "required": [
+                  "phone"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/customers/{customer}": {
+      "get": {
+        "summary": "Api.customer.show",
+        "tags": [
+          "Customers"
+        ],
+        "operationId": "customerShow",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "name": "customer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "Api.customer.update",
+        "tags": [
+          "Customers"
+        ],
+        "operationId": "customerUpdate",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "name": "customer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 191
+                  },
+                  "phone": {
+                    "type": "string",
+                    "maxLength": 30
+                  },
+                  "whatsapp_number": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 30
+                  },
+                  "email": {
+                    "type": "string",
+                    "nullable": true,
+                    "format": "email",
+                    "maxLength": 191
+                  }
+                },
+                "required": [
+                  "name",
+                  "phone"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Api.customer.update",
+        "tags": [
+          "Customers"
+        ],
+        "operationId": "customerUpdate",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "name": "customer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 191
+                  },
+                  "phone": {
+                    "type": "string",
+                    "maxLength": 30
+                  },
+                  "whatsapp_number": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 30
+                  },
+                  "email": {
+                    "type": "string",
+                    "nullable": true,
+                    "format": "email",
+                    "maxLength": 191
+                  }
+                },
+                "required": [
+                  "name",
+                  "phone"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Api.customer.destroy",
+        "tags": [
+          "Customers"
+        ],
+        "operationId": "customerDestroy",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "name": "customer",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/email/config": {
+      "get": {
+        "summary": "Api.email.config.show",
+        "tags": [
+          "Email"
+        ],
+        "operationId": "emailConfigShow",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Api.email.config.store",
+        "tags": [
+          "Email"
+        ],
+        "operationId": "emailConfigStore",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "provider": {
+                    "type": "string"
+                  },
+                  "host": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 255
+                  },
+                  "port": {
+                    "type": "integer",
+                    "nullable": true
+                  },
+                  "encryption": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "username": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "password": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "from_address": {
+                    "type": "string",
+                    "format": "email",
+                    "maxLength": 255
+                  },
+                  "from_name": {
+                    "type": "string",
+                    "maxLength": 255
+                  }
+                },
+                "required": [
+                  "provider",
+                  "username",
+                  "password",
+                  "from_address",
+                  "from_name"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entry-exit/bill-dashboard": {
+      "get": {
+        "summary": "Entry Exit Bill Dashboard",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitBillDashboardIndex",
+        "responses": {
+          "200": {
+            "description": "Bill dashboard summary and paginated bills loaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "summary": {
+                          "type": "object",
+                          "properties": {
+                            "pending": {
+                              "type": "integer"
+                            },
+                            "generated_today": {
+                              "type": "integer"
+                            },
+                            "all_time": {
+                              "type": "integer"
+                            },
+                            "amount_today": {
+                              "type": "number"
+                            },
+                            "amount_today_count": {
+                              "type": "integer"
+                            },
+                            "amount_month": {
+                              "type": "number"
+                            },
+                            "amount_month_count": {
+                              "type": "integer"
+                            }
+                          }
+                        },
+                        "filtered_total": {
+                          "type": "number"
+                        },
+                        "filters": {
+                          "type": "object"
+                        },
+                        "bills": {
+                          "type": "object",
+                          "properties": {
+                            "data": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "location_id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "location_name": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "customer_id": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "customer_name": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "parent_id": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "parent_name": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "child_id": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "child_name": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "booking_id": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "entry_type": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "pass_lifecycle_status": {
+                                    "type": "string",
+                                    "enum": [
+                                      "payment_pending",
+                                      "issued_not_scanned",
+                                      "claimed_inside",
+                                      "used_checked_out",
+                                      "expired"
+                                    ],
+                                    "example": "issued_not_scanned"
+                                  },
+                                  "pass_lifecycle_label": {
+                                    "type": "string",
+                                    "example": "Issued / Not scanned"
+                                  },
+                                  "entry_time": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "nullable": true
+                                  },
+                                  "booked_exit_time": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "nullable": true
+                                  },
+                                  "actual_exit_time": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "nullable": true
+                                  },
+                                  "guardian_verification_mode": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "guardian_verified_by": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "expected_duration_minutes": {
+                                    "type": "integer",
+                                    "nullable": true
+                                  },
+                                  "pass_price": {
+                                    "type": "number"
+                                  },
+                                  "bill_base_amount": {
+                                    "type": "number"
+                                  },
+                                  "bill_overtime_amount": {
+                                    "type": "number"
+                                  },
+                                  "bill_total_amount": {
+                                    "type": "number"
+                                  },
+                                  "payment_status": {
+                                    "type": "string",
+                                    "enum": [
+                                      "pending",
+                                      "paid"
+                                    ]
+                                  },
+                                  "payment_mode": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "razorpay_order_id": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "order_NX1234567890AB"
+                                  },
+                                  "razorpay_payment_id": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "pay_NX1234567890AB"
+                                  },
+                                  "razorpay_signature": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "paid_at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "nullable": true
+                                  },
+                                  "issued_at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "nullable": true
+                                  },
+                                  "print_count": {
+                                    "type": "integer"
+                                  },
+                                  "overtime_minutes": {
+                                    "type": "number"
+                                  },
+                                  "overtime_charge": {
+                                    "type": "number"
+                                  },
+                                  "overtime_paid": {
+                                    "type": "boolean"
+                                  },
+                                  "overtime_payment_mode": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "overtime_razorpay_order_id": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "order_OT1234567890AB"
+                                  },
+                                  "overtime_razorpay_payment_id": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "pay_OT1234567890AB"
+                                  },
+                                  "overtime_razorpay_signature": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "overtime_paid_at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "nullable": true
+                                  },
+                                  "overtime_amount_paid": {
+                                    "type": "number"
+                                  },
+                                  "pass_expires_at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "nullable": true
+                                  },
+                                  "created_at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "nullable": true
+                                  },
+                                  "updated_at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "nullable": true
+                                  }
+                                }
+                              }
+                            },
+                            "meta": {
+                              "type": "object",
+                              "properties": {
+                                "current_page": {
+                                  "type": "integer"
+                                },
+                                "from": {
+                                  "type": "integer",
+                                  "nullable": true
+                                },
+                                "last_page": {
+                                  "type": "integer"
+                                },
+                                "per_page": {
+                                  "type": "integer"
+                                },
+                                "to": {
+                                  "type": "integer",
+                                  "nullable": true
+                                },
+                                "total": {
+                                  "type": "integer"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all_time",
+                "pending",
+                "generated_today",
+                "amount_today",
+                "amount_month"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "pending",
+                "completed",
+                "active",
+                "expired"
+              ]
+            }
+          },
+          {
+            "name": "location_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "amount_min",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "amount_max",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "bill",
+                "amount",
+                "created_at",
+                "duration",
+                "status",
+                "entry_time",
+                "exit_time"
+              ]
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 50
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/entry-exit/duration-prices": {
+      "get": {
+        "summary": "List Entry And Overtime Duration Prices",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitDurationPricesIndex",
+        "responses": {
+          "200": {
+            "description": "Duration prices and exit grace setting loaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "settings": {
+                      "type": "object",
+                      "properties": {
+                        "exit_grace_minutes": {
+                          "type": "integer",
+                          "example": 10
+                        }
+                      }
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "price_type": {
+                            "type": "string",
+                            "enum": [
+                              "standard",
+                              "overtime"
+                            ]
+                          },
+                          "duration_minutes": {
+                            "type": "integer",
+                            "example": 30
+                          },
+                          "duration_label": {
+                            "type": "string",
+                            "example": "30 mins (0.5 hr)"
+                          },
+                          "price": {
+                            "type": "number",
+                            "example": 250
+                          },
+                          "is_active": {
+                            "type": "boolean"
+                          },
+                          "sort_order": {
+                            "type": "integer"
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "updated_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "price_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "standard",
+                "overtime"
+              ]
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create Duration Price",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitDurationPricesStore",
+        "responses": {
+          "201": {
+            "description": "Duration price created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Duration price created successfully."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "price_type": {
+                          "type": "string",
+                          "enum": [
+                            "standard",
+                            "overtime"
+                          ]
+                        },
+                        "duration_minutes": {
+                          "type": "integer",
+                          "example": 30
+                        },
+                        "duration_label": {
+                          "type": "string",
+                          "example": "30 mins (0.5 hr)"
+                        },
+                        "price": {
+                          "type": "number",
+                          "example": 250
+                        },
+                        "is_active": {
+                          "type": "boolean"
+                        },
+                        "sort_order": {
+                          "type": "integer"
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "updated_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "price_type": {
+                    "type": "string"
+                  },
+                  "duration_minutes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 4320
+                  },
+                  "price": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 999999
+                  },
+                  "is_active": {
+                    "type": "boolean",
+                    "nullable": true
+                  },
+                  "sort_order": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 0,
+                    "maximum": 9999
+                  }
+                },
+                "required": [
+                  "price_type",
+                  "duration_minutes",
+                  "price"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entry-exit/duration-prices/exit-grace": {
+      "put": {
+        "summary": "Update Exit Grace Buffer",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitDurationPricesExitGraceUpdate",
+        "responses": {
+          "200": {
+            "description": "Exit grace buffer updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Exit grace buffer updated successfully."
+                    },
+                    "settings": {
+                      "type": "object",
+                      "properties": {
+                        "exit_grace_minutes": {
+                          "type": "integer",
+                          "example": 10
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "exit_grace_minutes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1440
+                  }
+                },
+                "required": [
+                  "exit_grace_minutes"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entry-exit/duration-prices/{durationPrice}": {
+      "delete": {
+        "summary": "Delete Duration Price",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitDurationPricesDestroy",
+        "responses": {
+          "200": {
+            "description": "Duration price removed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Duration price removed successfully."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Duration price not found"
+          }
+        },
+        "parameters": [
+          {
+            "name": "durationPrice",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/entry-exit/guardian-verification": {
+      "post": {
+        "summary": "Verify Guardian",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitGuardianVerificationStore",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          },
+          "200": {
+            "description": "Guardian verification completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Guardian verification completed successfully."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "location_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "location_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "customer_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "customer_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "parent_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "parent_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "child_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "child_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "booking_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "entry_type": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "pass_lifecycle_status": {
+                          "type": "string",
+                          "enum": [
+                            "payment_pending",
+                            "issued_not_scanned",
+                            "claimed_inside",
+                            "used_checked_out",
+                            "expired"
+                          ],
+                          "example": "issued_not_scanned"
+                        },
+                        "pass_lifecycle_label": {
+                          "type": "string",
+                          "example": "Issued / Not scanned"
+                        },
+                        "entry_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "booked_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "actual_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "guardian_verification_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "guardian_verified_by": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "expected_duration_minutes": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "pass_price": {
+                          "type": "number"
+                        },
+                        "bill_base_amount": {
+                          "type": "number"
+                        },
+                        "bill_overtime_amount": {
+                          "type": "number"
+                        },
+                        "bill_total_amount": {
+                          "type": "number"
+                        },
+                        "payment_status": {
+                          "type": "string",
+                          "enum": [
+                            "pending",
+                            "paid"
+                          ]
+                        },
+                        "payment_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "razorpay_order_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "order_NX1234567890AB"
+                        },
+                        "razorpay_payment_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "pay_NX1234567890AB"
+                        },
+                        "razorpay_signature": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "paid_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "issued_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "print_count": {
+                          "type": "integer"
+                        },
+                        "overtime_minutes": {
+                          "type": "number"
+                        },
+                        "overtime_charge": {
+                          "type": "number"
+                        },
+                        "overtime_paid": {
+                          "type": "boolean"
+                        },
+                        "overtime_payment_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "overtime_razorpay_order_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "order_OT1234567890AB"
+                        },
+                        "overtime_razorpay_payment_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "pay_OT1234567890AB"
+                        },
+                        "overtime_razorpay_signature": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "overtime_paid_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "overtime_amount_paid": {
+                          "type": "number"
+                        },
+                        "pass_expires_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "updated_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "entry_exit_log_id": {
+                    "type": "string"
+                  },
+                  "mode": {
+                    "type": "string"
+                  },
+                  "verification_code": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 20
+                  }
+                },
+                "required": [
+                  "entry_exit_log_id",
+                  "mode"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entry-exit/kids-status": {
+      "get": {
+        "summary": "Get Kids Status",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitKidsStatusIndex",
+        "responses": {
+          "200": {
+            "description": "Kids status loaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "entry_exit_log_id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "child_id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "child_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "status": {
+                            "type": "string",
+                            "example": "checked-in"
+                          },
+                          "entry_time": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "exit_time": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/entry-exit/live-occupancy": {
+      "get": {
+        "summary": "Get Live Occupancy",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitLiveOccupancyIndex",
+        "responses": {
+          "200": {
+            "description": "Live occupancy loaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "occupancy_count": {
+                          "type": "integer"
+                        },
+                        "active_sessions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "location_id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "location_name": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "customer_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "customer_name": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "parent_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "parent_name": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "child_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "child_name": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "booking_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "entry_type": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "pass_lifecycle_status": {
+                                "type": "string",
+                                "enum": [
+                                  "payment_pending",
+                                  "issued_not_scanned",
+                                  "claimed_inside",
+                                  "used_checked_out",
+                                  "expired"
+                                ],
+                                "example": "issued_not_scanned"
+                              },
+                              "pass_lifecycle_label": {
+                                "type": "string",
+                                "example": "Issued / Not scanned"
+                              },
+                              "entry_time": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "booked_exit_time": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "actual_exit_time": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "guardian_verification_mode": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "guardian_verified_by": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "expected_duration_minutes": {
+                                "type": "integer",
+                                "nullable": true
+                              },
+                              "pass_price": {
+                                "type": "number"
+                              },
+                              "bill_base_amount": {
+                                "type": "number"
+                              },
+                              "bill_overtime_amount": {
+                                "type": "number"
+                              },
+                              "bill_total_amount": {
+                                "type": "number"
+                              },
+                              "payment_status": {
+                                "type": "string",
+                                "enum": [
+                                  "pending",
+                                  "paid"
+                                ]
+                              },
+                              "payment_mode": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "razorpay_order_id": {
+                                "type": "string",
+                                "nullable": true,
+                                "example": "order_NX1234567890AB"
+                              },
+                              "razorpay_payment_id": {
+                                "type": "string",
+                                "nullable": true,
+                                "example": "pay_NX1234567890AB"
+                              },
+                              "razorpay_signature": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "paid_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "issued_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "print_count": {
+                                "type": "integer"
+                              },
+                              "overtime_minutes": {
+                                "type": "number"
+                              },
+                              "overtime_charge": {
+                                "type": "number"
+                              },
+                              "overtime_paid": {
+                                "type": "boolean"
+                              },
+                              "overtime_payment_mode": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "overtime_razorpay_order_id": {
+                                "type": "string",
+                                "nullable": true,
+                                "example": "order_OT1234567890AB"
+                              },
+                              "overtime_razorpay_payment_id": {
+                                "type": "string",
+                                "nullable": true,
+                                "example": "pay_OT1234567890AB"
+                              },
+                              "overtime_razorpay_signature": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "overtime_paid_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "overtime_amount_paid": {
+                                "type": "number"
+                              },
+                              "pass_expires_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "updated_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/entry-exit/logs": {
+      "get": {
+        "summary": "List Entry Exit Logs",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitLogsIndex",
+        "responses": {
+          "200": {
+            "description": "Entry exit logs loaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "location_id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "location_name": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "customer_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "customer_name": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "parent_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "parent_name": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "child_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "child_name": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "booking_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "entry_type": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "pass_lifecycle_status": {
+                                "type": "string",
+                                "enum": [
+                                  "payment_pending",
+                                  "issued_not_scanned",
+                                  "claimed_inside",
+                                  "used_checked_out",
+                                  "expired"
+                                ],
+                                "example": "issued_not_scanned"
+                              },
+                              "pass_lifecycle_label": {
+                                "type": "string",
+                                "example": "Issued / Not scanned"
+                              },
+                              "entry_time": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "booked_exit_time": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "actual_exit_time": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "guardian_verification_mode": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "guardian_verified_by": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "expected_duration_minutes": {
+                                "type": "integer",
+                                "nullable": true
+                              },
+                              "pass_price": {
+                                "type": "number"
+                              },
+                              "bill_base_amount": {
+                                "type": "number"
+                              },
+                              "bill_overtime_amount": {
+                                "type": "number"
+                              },
+                              "bill_total_amount": {
+                                "type": "number"
+                              },
+                              "payment_status": {
+                                "type": "string",
+                                "enum": [
+                                  "pending",
+                                  "paid"
+                                ]
+                              },
+                              "payment_mode": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "razorpay_order_id": {
+                                "type": "string",
+                                "nullable": true,
+                                "example": "order_NX1234567890AB"
+                              },
+                              "razorpay_payment_id": {
+                                "type": "string",
+                                "nullable": true,
+                                "example": "pay_NX1234567890AB"
+                              },
+                              "razorpay_signature": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "paid_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "issued_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "print_count": {
+                                "type": "integer"
+                              },
+                              "overtime_minutes": {
+                                "type": "number"
+                              },
+                              "overtime_charge": {
+                                "type": "number"
+                              },
+                              "overtime_paid": {
+                                "type": "boolean"
+                              },
+                              "overtime_payment_mode": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "overtime_razorpay_order_id": {
+                                "type": "string",
+                                "nullable": true,
+                                "example": "order_OT1234567890AB"
+                              },
+                              "overtime_razorpay_payment_id": {
+                                "type": "string",
+                                "nullable": true,
+                                "example": "pay_OT1234567890AB"
+                              },
+                              "overtime_razorpay_signature": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "overtime_paid_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "overtime_amount_paid": {
+                                "type": "number"
+                              },
+                              "pass_expires_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "updated_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/entry-exit/overtime-settlements": {
+      "get": {
+        "summary": "Lookup Overtime Settlements By Phone",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitOvertimeSettlementsIndex",
+        "responses": {
+          "200": {
+            "description": "Open tickets and overtime settlement status loaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "phone": {
+                          "type": "string",
+                          "example": "9001112222"
+                        },
+                        "settlements": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "location_id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "location_name": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "customer_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "customer_name": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "parent_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "parent_name": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "child_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "child_name": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "booking_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "entry_type": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "pass_lifecycle_status": {
+                                "type": "string",
+                                "enum": [
+                                  "payment_pending",
+                                  "issued_not_scanned",
+                                  "claimed_inside",
+                                  "used_checked_out",
+                                  "expired"
+                                ],
+                                "example": "issued_not_scanned"
+                              },
+                              "pass_lifecycle_label": {
+                                "type": "string",
+                                "example": "Issued / Not scanned"
+                              },
+                              "entry_time": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "booked_exit_time": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "actual_exit_time": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "guardian_verification_mode": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "guardian_verified_by": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "expected_duration_minutes": {
+                                "type": "integer",
+                                "nullable": true
+                              },
+                              "pass_price": {
+                                "type": "number"
+                              },
+                              "bill_base_amount": {
+                                "type": "number"
+                              },
+                              "bill_overtime_amount": {
+                                "type": "number"
+                              },
+                              "bill_total_amount": {
+                                "type": "number"
+                              },
+                              "payment_status": {
+                                "type": "string",
+                                "enum": [
+                                  "pending",
+                                  "paid"
+                                ]
+                              },
+                              "payment_mode": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "razorpay_order_id": {
+                                "type": "string",
+                                "nullable": true,
+                                "example": "order_NX1234567890AB"
+                              },
+                              "razorpay_payment_id": {
+                                "type": "string",
+                                "nullable": true,
+                                "example": "pay_NX1234567890AB"
+                              },
+                              "razorpay_signature": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "paid_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "issued_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "print_count": {
+                                "type": "integer"
+                              },
+                              "overtime_minutes": {
+                                "type": "number"
+                              },
+                              "overtime_charge": {
+                                "type": "number"
+                              },
+                              "overtime_paid": {
+                                "type": "boolean"
+                              },
+                              "overtime_payment_mode": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "overtime_razorpay_order_id": {
+                                "type": "string",
+                                "nullable": true,
+                                "example": "order_OT1234567890AB"
+                              },
+                              "overtime_razorpay_payment_id": {
+                                "type": "string",
+                                "nullable": true,
+                                "example": "pay_OT1234567890AB"
+                              },
+                              "overtime_razorpay_signature": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "overtime_paid_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "overtime_amount_paid": {
+                                "type": "number"
+                              },
+                              "pass_expires_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "updated_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "settlement_status": {
+                                "type": "string",
+                                "enum": [
+                                  "not_due",
+                                  "due",
+                                  "settled"
+                                ]
+                              },
+                              "chargeable_minutes": {
+                                "type": "number"
+                              },
+                              "grace_minutes": {
+                                "type": "integer"
+                              },
+                              "can_settle": {
+                                "type": "boolean"
+                              },
+                              "can_scan_exit": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "phone",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 30
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Settle Overtime Bill Without Closing Ticket",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitOvertimeSettlementsStore",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          },
+          "200": {
+            "description": "Overtime bill settled and QR can be scanned at the gate",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Overtime bill settled. QR can now be scanned at the gate to complete checkout."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "location_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "location_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "customer_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "customer_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "parent_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "parent_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "child_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "child_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "booking_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "entry_type": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "pass_lifecycle_status": {
+                          "type": "string",
+                          "enum": [
+                            "payment_pending",
+                            "issued_not_scanned",
+                            "claimed_inside",
+                            "used_checked_out",
+                            "expired"
+                          ],
+                          "example": "issued_not_scanned"
+                        },
+                        "pass_lifecycle_label": {
+                          "type": "string",
+                          "example": "Issued / Not scanned"
+                        },
+                        "entry_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "booked_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "actual_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "guardian_verification_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "guardian_verified_by": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "expected_duration_minutes": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "pass_price": {
+                          "type": "number"
+                        },
+                        "bill_base_amount": {
+                          "type": "number"
+                        },
+                        "bill_overtime_amount": {
+                          "type": "number"
+                        },
+                        "bill_total_amount": {
+                          "type": "number"
+                        },
+                        "payment_status": {
+                          "type": "string",
+                          "enum": [
+                            "pending",
+                            "paid"
+                          ]
+                        },
+                        "payment_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "razorpay_order_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "order_NX1234567890AB"
+                        },
+                        "razorpay_payment_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "pay_NX1234567890AB"
+                        },
+                        "razorpay_signature": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "paid_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "issued_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "print_count": {
+                          "type": "integer"
+                        },
+                        "overtime_minutes": {
+                          "type": "number"
+                        },
+                        "overtime_charge": {
+                          "type": "number"
+                        },
+                        "overtime_paid": {
+                          "type": "boolean"
+                        },
+                        "overtime_payment_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "overtime_razorpay_order_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "order_OT1234567890AB"
+                        },
+                        "overtime_razorpay_payment_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "pay_OT1234567890AB"
+                        },
+                        "overtime_razorpay_signature": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "overtime_paid_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "overtime_amount_paid": {
+                          "type": "number"
+                        },
+                        "pass_expires_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "updated_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "chargeable_minutes": {
+                          "type": "number",
+                          "example": 30
+                        },
+                        "grace_minutes": {
+                          "type": "integer",
+                          "example": 10
+                        },
+                        "can_retry_exit": {
+                          "type": "boolean",
+                          "example": true
+                        },
+                        "can_scan_exit": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No overtime due or pass already checked out"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "payment_mode": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "payment_mode"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entry-exit/overtime-settlements/razorpay-order": {
+      "post": {
+        "summary": "Create Razorpay Order For Overtime",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitOvertimeSettlementsRazorpayOrder",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          },
+          "200": {
+            "description": "Razorpay order created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryExitRazorpayOrderResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Pass already checked out"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation failed or no overtime due"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id"
+                ]
+              }
+            }
+          }
+        },
+        "description": "Creates or reuses a pending Razorpay order for a due overtime settlement."
+      }
+    },
+    "/api/v1/entry-exit/overtime-settlements/razorpay-verify": {
+      "post": {
+        "summary": "Verify Razorpay Overtime Payment",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitOvertimeSettlementsRazorpayVerify",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          },
+          "200": {
+            "description": "Razorpay overtime payment verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryExitOvertimeRazorpayVerifyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No overtime due or pass already checked out"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation failed or invalid signature"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "razorpay_order_id": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "razorpay_payment_id": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "razorpay_signature": {
+                    "type": "string",
+                    "maxLength": 255
+                  }
+                },
+                "required": [
+                  "id",
+                  "razorpay_order_id",
+                  "razorpay_payment_id",
+                  "razorpay_signature"
+                ]
+              }
+            }
+          }
+        },
+        "description": "Verifies Razorpay signature returned by Android Checkout, marks overtime paid, and stores Razorpay overtime payment details."
+      }
+    },
+    "/api/v1/entry-exit/parents/lookup": {
+      "get": {
+        "summary": "Lookup Parent By Phone",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitParentsLookup",
+        "responses": {
+          "200": {
+            "description": "Parent loaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "record_type": {
+                          "type": "string",
+                          "example": "parent"
+                        },
+                        "customer": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "phone": {
+                              "type": "string",
+                              "nullable": true
+                            }
+                          }
+                        },
+                        "parent": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "phone": {
+                              "type": "string",
+                              "nullable": true
+                            }
+                          }
+                        },
+                        "children": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "age": {
+                                "type": "integer"
+                              }
+                            }
+                          }
+                        },
+                        "active_sessions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "child_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "child_name": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "entry_time": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "booked_exit_time": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Parent not found"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "phone",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/entry-exit/parents/search": {
+      "get": {
+        "summary": "Search Parents",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitParentsSearch",
+        "responses": {
+          "200": {
+            "description": "Matching parents loaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "record_type": {
+                            "type": "string",
+                            "example": "parent"
+                          },
+                          "customer": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "phone": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            }
+                          },
+                          "parent": {
+                            "type": "object",
+                            "nullable": true,
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "phone": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            }
+                          },
+                          "children": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "age": {
+                                  "type": "integer"
+                                }
+                              }
+                            }
+                          },
+                          "active_sessions": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "child_id": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "child_name": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "entry_time": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "nullable": true
+                                },
+                                "booked_exit_time": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "nullable": true
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 2
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/entry-exit/passes": {
+      "get": {
+        "summary": "List Generated Entry Passes",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitPassesIndex",
+        "responses": {
+          "200": {
+            "description": "Generated passes loaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "location_id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "location_name": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "customer_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "customer_name": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "parent_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "parent_name": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "child_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "child_name": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "booking_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "entry_type": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "pass_lifecycle_status": {
+                                "type": "string",
+                                "enum": [
+                                  "payment_pending",
+                                  "issued_not_scanned",
+                                  "claimed_inside",
+                                  "used_checked_out",
+                                  "expired"
+                                ],
+                                "example": "issued_not_scanned"
+                              },
+                              "pass_lifecycle_label": {
+                                "type": "string",
+                                "example": "Issued / Not scanned"
+                              },
+                              "entry_time": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "booked_exit_time": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "actual_exit_time": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "guardian_verification_mode": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "guardian_verified_by": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "expected_duration_minutes": {
+                                "type": "integer",
+                                "nullable": true
+                              },
+                              "pass_price": {
+                                "type": "number"
+                              },
+                              "bill_base_amount": {
+                                "type": "number"
+                              },
+                              "bill_overtime_amount": {
+                                "type": "number"
+                              },
+                              "bill_total_amount": {
+                                "type": "number"
+                              },
+                              "payment_status": {
+                                "type": "string",
+                                "enum": [
+                                  "pending",
+                                  "paid"
+                                ]
+                              },
+                              "payment_mode": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "razorpay_order_id": {
+                                "type": "string",
+                                "nullable": true,
+                                "example": "order_NX1234567890AB"
+                              },
+                              "razorpay_payment_id": {
+                                "type": "string",
+                                "nullable": true,
+                                "example": "pay_NX1234567890AB"
+                              },
+                              "razorpay_signature": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "paid_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "issued_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "print_count": {
+                                "type": "integer"
+                              },
+                              "overtime_minutes": {
+                                "type": "number"
+                              },
+                              "overtime_charge": {
+                                "type": "number"
+                              },
+                              "overtime_paid": {
+                                "type": "boolean"
+                              },
+                              "overtime_payment_mode": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "overtime_razorpay_order_id": {
+                                "type": "string",
+                                "nullable": true,
+                                "example": "order_OT1234567890AB"
+                              },
+                              "overtime_razorpay_payment_id": {
+                                "type": "string",
+                                "nullable": true,
+                                "example": "pay_OT1234567890AB"
+                              },
+                              "overtime_razorpay_signature": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "overtime_paid_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "overtime_amount_paid": {
+                                "type": "number"
+                              },
+                              "pass_expires_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "updated_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "meta": {
+                          "type": "object",
+                          "properties": {
+                            "current_page": {
+                              "type": "integer"
+                            },
+                            "from": {
+                              "type": "integer",
+                              "nullable": true
+                            },
+                            "last_page": {
+                              "type": "integer"
+                            },
+                            "per_page": {
+                              "type": "integer"
+                            },
+                            "to": {
+                              "type": "integer",
+                              "nullable": true
+                            },
+                            "total": {
+                              "type": "integer"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "paid"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 50
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Issue Entry Passes",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitPassesStore",
+        "responses": {
+          "201": {
+            "description": "Entry passes generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Entry passes generated successfully."
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "location_id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "location_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "customer_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "customer_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "parent_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "parent_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "child_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "child_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "booking_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "entry_type": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "pass_lifecycle_status": {
+                            "type": "string",
+                            "enum": [
+                              "payment_pending",
+                              "issued_not_scanned",
+                              "claimed_inside",
+                              "used_checked_out",
+                              "expired"
+                            ],
+                            "example": "issued_not_scanned"
+                          },
+                          "pass_lifecycle_label": {
+                            "type": "string",
+                            "example": "Issued / Not scanned"
+                          },
+                          "entry_time": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "booked_exit_time": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "actual_exit_time": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "guardian_verification_mode": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "guardian_verified_by": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "expected_duration_minutes": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "pass_price": {
+                            "type": "number"
+                          },
+                          "bill_base_amount": {
+                            "type": "number"
+                          },
+                          "bill_overtime_amount": {
+                            "type": "number"
+                          },
+                          "bill_total_amount": {
+                            "type": "number"
+                          },
+                          "payment_status": {
+                            "type": "string",
+                            "enum": [
+                              "pending",
+                              "paid"
+                            ]
+                          },
+                          "payment_mode": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "razorpay_order_id": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "order_NX1234567890AB"
+                          },
+                          "razorpay_payment_id": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "pay_NX1234567890AB"
+                          },
+                          "razorpay_signature": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "paid_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "issued_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "print_count": {
+                            "type": "integer"
+                          },
+                          "overtime_minutes": {
+                            "type": "number"
+                          },
+                          "overtime_charge": {
+                            "type": "number"
+                          },
+                          "overtime_paid": {
+                            "type": "boolean"
+                          },
+                          "overtime_payment_mode": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "overtime_razorpay_order_id": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "order_OT1234567890AB"
+                          },
+                          "overtime_razorpay_payment_id": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "pay_OT1234567890AB"
+                          },
+                          "overtime_razorpay_signature": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "overtime_paid_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "overtime_amount_paid": {
+                            "type": "number"
+                          },
+                          "pass_expires_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "updated_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    },
+                    "payment": {
+                      "type": "object",
+                      "properties": {
+                        "required": {
+                          "type": "boolean",
+                          "example": true
+                        },
+                        "provider": {
+                          "type": "string",
+                          "example": "razorpay"
+                        },
+                        "create_order_url": {
+                          "type": "string",
+                          "example": "http://localhost:8000/api/v1/entry-exit/passes/razorpay-order"
+                        },
+                        "verify_url": {
+                          "type": "string",
+                          "example": "http://localhost:8000/api/v1/entry-exit/passes/razorpay-verify"
+                        },
+                        "ids": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "format": "uuid"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "409": {
+            "description": "Requested child or customer already has an active inside session"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "location_id": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 30
+                  },
+                  "customer_id": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "customer_name": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 191
+                  },
+                  "child_name": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 191
+                  },
+                  "child_names": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "child_count": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 0,
+                    "maximum": 20
+                  },
+                  "parent_id": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "child_ids": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "hours": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 72
+                  },
+                  "duration_minutes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 4320
+                  },
+                  "duration_price_id": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "booking_id": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "location_id"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entry-exit/passes/lookup": {
+      "get": {
+        "summary": "Lookup Entry Passes",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitPassesLookup",
+        "responses": {
+          "200": {
+            "description": "Customer entry passes loaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "location_id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "location_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "customer_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "customer_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "parent_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "parent_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "child_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "child_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "booking_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "entry_type": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "pass_lifecycle_status": {
+                            "type": "string",
+                            "enum": [
+                              "payment_pending",
+                              "issued_not_scanned",
+                              "claimed_inside",
+                              "used_checked_out",
+                              "expired"
+                            ],
+                            "example": "issued_not_scanned"
+                          },
+                          "pass_lifecycle_label": {
+                            "type": "string",
+                            "example": "Issued / Not scanned"
+                          },
+                          "entry_time": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "booked_exit_time": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "actual_exit_time": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "guardian_verification_mode": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "guardian_verified_by": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "expected_duration_minutes": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "pass_price": {
+                            "type": "number"
+                          },
+                          "bill_base_amount": {
+                            "type": "number"
+                          },
+                          "bill_overtime_amount": {
+                            "type": "number"
+                          },
+                          "bill_total_amount": {
+                            "type": "number"
+                          },
+                          "payment_status": {
+                            "type": "string",
+                            "enum": [
+                              "pending",
+                              "paid"
+                            ]
+                          },
+                          "payment_mode": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "razorpay_order_id": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "order_NX1234567890AB"
+                          },
+                          "razorpay_payment_id": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "pay_NX1234567890AB"
+                          },
+                          "razorpay_signature": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "paid_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "issued_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "print_count": {
+                            "type": "integer"
+                          },
+                          "overtime_minutes": {
+                            "type": "number"
+                          },
+                          "overtime_charge": {
+                            "type": "number"
+                          },
+                          "overtime_paid": {
+                            "type": "boolean"
+                          },
+                          "overtime_payment_mode": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "overtime_razorpay_order_id": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "order_OT1234567890AB"
+                          },
+                          "overtime_razorpay_payment_id": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "pay_OT1234567890AB"
+                          },
+                          "overtime_razorpay_signature": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "overtime_paid_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "overtime_amount_paid": {
+                            "type": "number"
+                          },
+                          "pass_expires_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "updated_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "customer": {
+                            "type": "object",
+                            "nullable": true,
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "phone": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "whatsapp_number": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "email": {
+                                "type": "string",
+                                "format": "email",
+                                "nullable": true
+                              }
+                            }
+                          },
+                          "parent_guardian": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "customer_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "phone": {
+                                "type": "string"
+                              },
+                              "email": {
+                                "type": "string",
+                                "format": "email",
+                                "nullable": true
+                              },
+                              "address": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "emergency_contact_name": {
+                                "type": "string"
+                              },
+                              "emergency_contact_phone": {
+                                "type": "string"
+                              },
+                              "customer": {
+                                "type": "object",
+                                "nullable": true,
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "name": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "phone": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "whatsapp_number": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "email": {
+                                    "type": "string",
+                                    "format": "email",
+                                    "nullable": true
+                                  }
+                                }
+                              },
+                              "children": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "format": "uuid"
+                                    },
+                                    "parent_id": {
+                                      "type": "string",
+                                      "format": "uuid"
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "dob": {
+                                      "type": "string",
+                                      "format": "date",
+                                      "nullable": true
+                                    },
+                                    "age": {
+                                      "type": "integer"
+                                    },
+                                    "gender": {
+                                      "type": "string",
+                                      "nullable": true
+                                    },
+                                    "photo": {
+                                      "type": "string",
+                                      "nullable": true
+                                    },
+                                    "school": {
+                                      "type": "string",
+                                      "nullable": true
+                                    },
+                                    "medical_notes": {
+                                      "type": "string",
+                                      "nullable": true
+                                    },
+                                    "dietary_restrictions": {
+                                      "type": "string",
+                                      "nullable": true
+                                    },
+                                    "created_at": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "nullable": true
+                                    },
+                                    "updated_at": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "nullable": true
+                                    }
+                                  }
+                                }
+                              },
+                              "rewards_profile": {
+                                "type": "object",
+                                "nullable": true,
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "waiver_signed": {
+                                    "type": "boolean"
+                                  },
+                                  "waiver_signed_at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "nullable": true
+                                  },
+                                  "loyalty_points": {
+                                    "type": "integer"
+                                  },
+                                  "loyalty_tier": {
+                                    "type": "string",
+                                    "nullable": true
+                                  }
+                                }
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "updated_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              }
+                            }
+                          },
+                          "issued_for_child": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "parent_id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "dob": {
+                                "type": "string",
+                                "format": "date",
+                                "nullable": true
+                              },
+                              "age": {
+                                "type": "integer"
+                              },
+                              "gender": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "photo": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "school": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "medical_notes": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "dietary_restrictions": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "updated_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              }
+                            }
+                          },
+                          "location": {
+                            "type": "object",
+                            "nullable": true
+                          },
+                          "booking": {
+                            "type": "object",
+                            "nullable": true
+                          },
+                          "staff": {
+                            "type": "object",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Customer not found"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "customer_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "phone",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/entry-exit/passes/mark-overtime-paid": {
+      "post": {
+        "summary": "Mark Overtime Paid",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitPassesMarkOvertimePaid",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          },
+          "200": {
+            "description": "Overtime payment collected successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Overtime bill settled. QR can now be scanned at the gate to complete checkout."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "location_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "location_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "customer_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "customer_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "parent_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "parent_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "child_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "child_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "booking_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "entry_type": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "pass_lifecycle_status": {
+                          "type": "string",
+                          "enum": [
+                            "payment_pending",
+                            "issued_not_scanned",
+                            "claimed_inside",
+                            "used_checked_out",
+                            "expired"
+                          ],
+                          "example": "issued_not_scanned"
+                        },
+                        "pass_lifecycle_label": {
+                          "type": "string",
+                          "example": "Issued / Not scanned"
+                        },
+                        "entry_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "booked_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "actual_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "guardian_verification_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "guardian_verified_by": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "expected_duration_minutes": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "pass_price": {
+                          "type": "number"
+                        },
+                        "bill_base_amount": {
+                          "type": "number"
+                        },
+                        "bill_overtime_amount": {
+                          "type": "number"
+                        },
+                        "bill_total_amount": {
+                          "type": "number"
+                        },
+                        "payment_status": {
+                          "type": "string",
+                          "enum": [
+                            "pending",
+                            "paid"
+                          ]
+                        },
+                        "payment_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "razorpay_order_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "order_NX1234567890AB"
+                        },
+                        "razorpay_payment_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "pay_NX1234567890AB"
+                        },
+                        "razorpay_signature": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "paid_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "issued_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "print_count": {
+                          "type": "integer"
+                        },
+                        "overtime_minutes": {
+                          "type": "number"
+                        },
+                        "overtime_charge": {
+                          "type": "number"
+                        },
+                        "overtime_paid": {
+                          "type": "boolean"
+                        },
+                        "overtime_payment_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "overtime_razorpay_order_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "order_OT1234567890AB"
+                        },
+                        "overtime_razorpay_payment_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "pay_OT1234567890AB"
+                        },
+                        "overtime_razorpay_signature": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "overtime_paid_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "overtime_amount_paid": {
+                          "type": "number"
+                        },
+                        "pass_expires_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "updated_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "chargeable_minutes": {
+                          "type": "number",
+                          "example": 30
+                        },
+                        "grace_minutes": {
+                          "type": "integer",
+                          "example": 10
+                        },
+                        "can_retry_exit": {
+                          "type": "boolean",
+                          "example": true
+                        },
+                        "can_scan_exit": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No overtime due or pass already checked out"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "payment_mode": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "payment_mode"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entry-exit/passes/mark-paid": {
+      "post": {
+        "summary": "Mark Entry Passes Paid",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitPassesMarkPaid",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          },
+          "200": {
+            "description": "Payment received and passes issued successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Payment received. Passes issued and ready to print."
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "location_id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "location_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "customer_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "customer_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "parent_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "parent_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "child_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "child_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "booking_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "entry_type": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "pass_lifecycle_status": {
+                            "type": "string",
+                            "enum": [
+                              "payment_pending",
+                              "issued_not_scanned",
+                              "claimed_inside",
+                              "used_checked_out",
+                              "expired"
+                            ],
+                            "example": "issued_not_scanned"
+                          },
+                          "pass_lifecycle_label": {
+                            "type": "string",
+                            "example": "Issued / Not scanned"
+                          },
+                          "entry_time": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "booked_exit_time": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "actual_exit_time": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "guardian_verification_mode": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "guardian_verified_by": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "expected_duration_minutes": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "pass_price": {
+                            "type": "number"
+                          },
+                          "bill_base_amount": {
+                            "type": "number"
+                          },
+                          "bill_overtime_amount": {
+                            "type": "number"
+                          },
+                          "bill_total_amount": {
+                            "type": "number"
+                          },
+                          "payment_status": {
+                            "type": "string",
+                            "enum": [
+                              "pending",
+                              "paid"
+                            ]
+                          },
+                          "payment_mode": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "razorpay_order_id": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "order_NX1234567890AB"
+                          },
+                          "razorpay_payment_id": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "pay_NX1234567890AB"
+                          },
+                          "razorpay_signature": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "paid_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "issued_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "print_count": {
+                            "type": "integer"
+                          },
+                          "overtime_minutes": {
+                            "type": "number"
+                          },
+                          "overtime_charge": {
+                            "type": "number"
+                          },
+                          "overtime_paid": {
+                            "type": "boolean"
+                          },
+                          "overtime_payment_mode": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "overtime_razorpay_order_id": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "order_OT1234567890AB"
+                          },
+                          "overtime_razorpay_payment_id": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "pay_OT1234567890AB"
+                          },
+                          "overtime_razorpay_signature": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "overtime_paid_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "overtime_amount_paid": {
+                            "type": "number"
+                          },
+                          "pass_expires_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "updated_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "payment_mode": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "ids",
+                  "payment_mode"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entry-exit/passes/razorpay-order": {
+      "post": {
+        "summary": "Create Razorpay Order For Entry Passes",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitPassesRazorpayOrder",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          },
+          "200": {
+            "description": "Razorpay order created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryExitRazorpayOrderResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation failed or no payment due"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "ids"
+                ]
+              }
+            }
+          }
+        },
+        "description": "Creates or reuses a pending Razorpay order for unpaid entry pass IDs. Android should use the returned checkout payload to open Razorpay Checkout."
+      }
+    },
+    "/api/v1/entry-exit/passes/razorpay-verify": {
+      "post": {
+        "summary": "Verify Razorpay Entry Pass Payment",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitPassesRazorpayVerify",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          },
+          "200": {
+            "description": "Razorpay payment verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryExitPassRazorpayVerifyResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "422": {
+            "description": "Validation failed or invalid signature"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "razorpay_order_id": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "razorpay_payment_id": {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  "razorpay_signature": {
+                    "type": "string",
+                    "maxLength": 255
+                  }
+                },
+                "required": [
+                  "ids",
+                  "razorpay_order_id",
+                  "razorpay_payment_id",
+                  "razorpay_signature"
+                ]
+              }
+            }
+          }
+        },
+        "description": "Verifies Razorpay signature returned by Android Checkout, marks the selected passes paid, and stores Razorpay payment details."
+      }
+    },
+    "/api/v1/entry-exit/passes/record-print": {
+      "post": {
+        "summary": "Record Pass Print Count",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitPassesRecordPrint",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          },
+          "200": {
+            "description": "Print counts updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "print_counts": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "integer"
+                      },
+                      "example": {
+                        "9c8f0e7a-0000-4000-9000-000000000001": 2
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Payment must be completed before recording pass prints or forbidden"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "ids"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entry-exit/passes/scan-entry": {
+      "post": {
+        "summary": "Scan Entry Pass",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitPassesScanEntry",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          },
+          "200": {
+            "description": "Entry committed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Entry successfully committed."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "location_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "location_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "customer_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "customer_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "parent_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "parent_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "child_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "child_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "booking_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "entry_type": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "pass_lifecycle_status": {
+                          "type": "string",
+                          "enum": [
+                            "payment_pending",
+                            "issued_not_scanned",
+                            "claimed_inside",
+                            "used_checked_out",
+                            "expired"
+                          ],
+                          "example": "issued_not_scanned"
+                        },
+                        "pass_lifecycle_label": {
+                          "type": "string",
+                          "example": "Issued / Not scanned"
+                        },
+                        "entry_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "booked_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "actual_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "guardian_verification_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "guardian_verified_by": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "expected_duration_minutes": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "pass_price": {
+                          "type": "number"
+                        },
+                        "bill_base_amount": {
+                          "type": "number"
+                        },
+                        "bill_overtime_amount": {
+                          "type": "number"
+                        },
+                        "bill_total_amount": {
+                          "type": "number"
+                        },
+                        "payment_status": {
+                          "type": "string",
+                          "enum": [
+                            "pending",
+                            "paid"
+                          ]
+                        },
+                        "payment_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "razorpay_order_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "order_NX1234567890AB"
+                        },
+                        "razorpay_payment_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "pay_NX1234567890AB"
+                        },
+                        "razorpay_signature": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "paid_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "issued_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "print_count": {
+                          "type": "integer"
+                        },
+                        "overtime_minutes": {
+                          "type": "number"
+                        },
+                        "overtime_charge": {
+                          "type": "number"
+                        },
+                        "overtime_paid": {
+                          "type": "boolean"
+                        },
+                        "overtime_payment_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "overtime_razorpay_order_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "order_OT1234567890AB"
+                        },
+                        "overtime_razorpay_payment_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "pay_OT1234567890AB"
+                        },
+                        "overtime_razorpay_signature": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "overtime_paid_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "overtime_amount_paid": {
+                          "type": "number"
+                        },
+                        "pass_expires_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "updated_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Pass already used, expired, or cannot be claimed"
+          },
+          "404": {
+            "description": "Invalid entry pass QR"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "scan_token": {
+                    "type": "string",
+                    "maxLength": 255
+                  }
+                },
+                "required": [
+                  "scan_token"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entry-exit/passes/scan-exit": {
+      "post": {
+        "summary": "Scan Exit Pass",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitPassesScanExit",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          },
+          "200": {
+            "description": "Exit OTP sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "exit_otp_required"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Exit OTP sent to registered guardian phone number."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "location_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "location_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "customer_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "customer_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "parent_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "parent_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "child_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "child_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "booking_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "entry_type": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "pass_lifecycle_status": {
+                          "type": "string",
+                          "enum": [
+                            "payment_pending",
+                            "issued_not_scanned",
+                            "claimed_inside",
+                            "used_checked_out",
+                            "expired"
+                          ],
+                          "example": "issued_not_scanned"
+                        },
+                        "pass_lifecycle_label": {
+                          "type": "string",
+                          "example": "Issued / Not scanned"
+                        },
+                        "entry_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "booked_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "actual_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "guardian_verification_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "guardian_verified_by": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "expected_duration_minutes": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "pass_price": {
+                          "type": "number"
+                        },
+                        "bill_base_amount": {
+                          "type": "number"
+                        },
+                        "bill_overtime_amount": {
+                          "type": "number"
+                        },
+                        "bill_total_amount": {
+                          "type": "number"
+                        },
+                        "payment_status": {
+                          "type": "string",
+                          "enum": [
+                            "pending",
+                            "paid"
+                          ]
+                        },
+                        "payment_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "razorpay_order_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "order_NX1234567890AB"
+                        },
+                        "razorpay_payment_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "pay_NX1234567890AB"
+                        },
+                        "razorpay_signature": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "paid_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "issued_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "print_count": {
+                          "type": "integer"
+                        },
+                        "overtime_minutes": {
+                          "type": "number"
+                        },
+                        "overtime_charge": {
+                          "type": "number"
+                        },
+                        "overtime_paid": {
+                          "type": "boolean"
+                        },
+                        "overtime_payment_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "overtime_razorpay_order_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "order_OT1234567890AB"
+                        },
+                        "overtime_razorpay_payment_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "pay_OT1234567890AB"
+                        },
+                        "overtime_razorpay_signature": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "overtime_paid_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "overtime_amount_paid": {
+                          "type": "number"
+                        },
+                        "pass_expires_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "updated_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "otp_expires_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "otp_phone": {
+                          "type": "string",
+                          "example": "******2222"
+                        },
+                        "can_verify_exit": {
+                          "type": "boolean",
+                          "example": true
+                        },
+                        "verify_url": {
+                          "type": "string",
+                          "example": "http://localhost:8000/api/v1/entry-exit/passes/verify-exit-otp"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Pass already checked out or invalid request"
+          },
+          "409": {
+            "description": "Overtime payment is due before exit can be recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "overtime_due"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Overtime payment is due before exit can be recorded."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "location_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "location_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "customer_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "customer_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "parent_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "parent_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "child_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "child_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "booking_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "entry_type": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "pass_lifecycle_status": {
+                          "type": "string",
+                          "enum": [
+                            "payment_pending",
+                            "issued_not_scanned",
+                            "claimed_inside",
+                            "used_checked_out",
+                            "expired"
+                          ],
+                          "example": "issued_not_scanned"
+                        },
+                        "pass_lifecycle_label": {
+                          "type": "string",
+                          "example": "Issued / Not scanned"
+                        },
+                        "entry_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "booked_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "actual_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "guardian_verification_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "guardian_verified_by": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "expected_duration_minutes": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "pass_price": {
+                          "type": "number"
+                        },
+                        "bill_base_amount": {
+                          "type": "number"
+                        },
+                        "bill_overtime_amount": {
+                          "type": "number"
+                        },
+                        "bill_total_amount": {
+                          "type": "number"
+                        },
+                        "payment_status": {
+                          "type": "string",
+                          "enum": [
+                            "pending",
+                            "paid"
+                          ]
+                        },
+                        "payment_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "razorpay_order_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "order_NX1234567890AB"
+                        },
+                        "razorpay_payment_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "pay_NX1234567890AB"
+                        },
+                        "razorpay_signature": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "paid_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "issued_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "print_count": {
+                          "type": "integer"
+                        },
+                        "overtime_minutes": {
+                          "type": "number",
+                          "example": 16
+                        },
+                        "overtime_charge": {
+                          "type": "number",
+                          "example": 250
+                        },
+                        "overtime_paid": {
+                          "type": "boolean"
+                        },
+                        "overtime_payment_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "overtime_razorpay_order_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "order_OT1234567890AB"
+                        },
+                        "overtime_razorpay_payment_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "pay_OT1234567890AB"
+                        },
+                        "overtime_razorpay_signature": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "overtime_paid_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "overtime_amount_paid": {
+                          "type": "number"
+                        },
+                        "pass_expires_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "updated_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "chargeable_minutes": {
+                          "type": "number",
+                          "example": 30
+                        },
+                        "grace_minutes": {
+                          "type": "integer",
+                          "example": 10
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "scan_token": {
+                    "type": "string",
+                    "maxLength": 255
+                  }
+                },
+                "required": [
+                  "scan_token"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entry-exit/passes/verify-exit-otp": {
+      "post": {
+        "summary": "Verify Exit OTP",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitPassesVerifyExitOtp",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          },
+          "200": {
+            "description": "Exit recorded successfully after OTP verification",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Exit successfully recorded."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "location_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "location_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "customer_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "customer_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "parent_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "parent_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "child_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "child_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "booking_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "entry_type": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "pass_lifecycle_status": {
+                          "type": "string",
+                          "enum": [
+                            "payment_pending",
+                            "issued_not_scanned",
+                            "claimed_inside",
+                            "used_checked_out",
+                            "expired"
+                          ],
+                          "example": "issued_not_scanned"
+                        },
+                        "pass_lifecycle_label": {
+                          "type": "string",
+                          "example": "Issued / Not scanned"
+                        },
+                        "entry_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "booked_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "actual_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "guardian_verification_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "guardian_verified_by": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "expected_duration_minutes": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "pass_price": {
+                          "type": "number"
+                        },
+                        "bill_base_amount": {
+                          "type": "number"
+                        },
+                        "bill_overtime_amount": {
+                          "type": "number"
+                        },
+                        "bill_total_amount": {
+                          "type": "number"
+                        },
+                        "payment_status": {
+                          "type": "string",
+                          "enum": [
+                            "pending",
+                            "paid"
+                          ]
+                        },
+                        "payment_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "razorpay_order_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "order_NX1234567890AB"
+                        },
+                        "razorpay_payment_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "pay_NX1234567890AB"
+                        },
+                        "razorpay_signature": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "paid_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "issued_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "print_count": {
+                          "type": "integer"
+                        },
+                        "overtime_minutes": {
+                          "type": "number"
+                        },
+                        "overtime_charge": {
+                          "type": "number"
+                        },
+                        "overtime_paid": {
+                          "type": "boolean"
+                        },
+                        "overtime_payment_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "overtime_razorpay_order_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "order_OT1234567890AB"
+                        },
+                        "overtime_razorpay_payment_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "pay_OT1234567890AB"
+                        },
+                        "overtime_razorpay_signature": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "overtime_paid_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "overtime_amount_paid": {
+                          "type": "number"
+                        },
+                        "pass_expires_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "updated_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Pass already checked out or invalid request"
+          },
+          "409": {
+            "description": "Overtime payment is due before exit can be recorded"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "scan_token": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440041"
+                  },
+                  "otp": {
+                    "type": "string",
+                    "minLength": 6,
+                    "maxLength": 6,
+                    "example": "123456"
+                  }
+                },
+                "required": [
+                  "scan_token",
+                  "otp"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/entry-exit/sessions/lookup": {
+      "get": {
+        "summary": "Lookup Open Sessions",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitSessionsLookup",
+        "responses": {
+          "200": {
+            "description": "Open sessions loaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "location_id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "location_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "customer_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "customer_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "parent_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "parent_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "child_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "child_name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "booking_id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "entry_type": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "pass_lifecycle_status": {
+                            "type": "string",
+                            "enum": [
+                              "payment_pending",
+                              "issued_not_scanned",
+                              "claimed_inside",
+                              "used_checked_out",
+                              "expired"
+                            ],
+                            "example": "issued_not_scanned"
+                          },
+                          "pass_lifecycle_label": {
+                            "type": "string",
+                            "example": "Issued / Not scanned"
+                          },
+                          "entry_time": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "booked_exit_time": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "actual_exit_time": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "guardian_verification_mode": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "guardian_verified_by": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "expected_duration_minutes": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "pass_price": {
+                            "type": "number"
+                          },
+                          "bill_base_amount": {
+                            "type": "number"
+                          },
+                          "bill_overtime_amount": {
+                            "type": "number"
+                          },
+                          "bill_total_amount": {
+                            "type": "number"
+                          },
+                          "payment_status": {
+                            "type": "string",
+                            "enum": [
+                              "pending",
+                              "paid"
+                            ]
+                          },
+                          "payment_mode": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "razorpay_order_id": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "order_NX1234567890AB"
+                          },
+                          "razorpay_payment_id": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "pay_NX1234567890AB"
+                          },
+                          "razorpay_signature": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "paid_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "issued_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "print_count": {
+                            "type": "integer"
+                          },
+                          "overtime_minutes": {
+                            "type": "number"
+                          },
+                          "overtime_charge": {
+                            "type": "number"
+                          },
+                          "overtime_paid": {
+                            "type": "boolean"
+                          },
+                          "overtime_payment_mode": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "overtime_razorpay_order_id": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "order_OT1234567890AB"
+                          },
+                          "overtime_razorpay_payment_id": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "pay_OT1234567890AB"
+                          },
+                          "overtime_razorpay_signature": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "overtime_paid_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "overtime_amount_paid": {
+                            "type": "number"
+                          },
+                          "pass_expires_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "updated_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "phone",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/identityaccesses": {
+      "get": {
+        "summary": "Api.identityaccess.index",
+        "tags": [
+          "Identityaccesses"
+        ],
+        "operationId": "identityaccessIndex",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Api.identityaccess.store",
+        "tags": [
+          "Identityaccesses"
+        ],
+        "operationId": "identityaccessStore",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "location_id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "role": {
+                    "type": "string"
+                  },
+                  "joining_date": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "remember_token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/identityaccesses/{identityaccess}": {
+      "get": {
+        "summary": "Api.identityaccess.show",
+        "tags": [
+          "Identityaccesses"
+        ],
+        "operationId": "identityaccessShow",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "name": "identityaccess",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "Api.identityaccess.update",
+        "tags": [
+          "Identityaccesses"
+        ],
+        "operationId": "identityaccessUpdate",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "name": "identityaccess",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "location_id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "role": {
+                    "type": "string"
+                  },
+                  "joining_date": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "remember_token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Api.identityaccess.update",
+        "tags": [
+          "Identityaccesses"
+        ],
+        "operationId": "identityaccessUpdate",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "name": "identityaccess",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "location_id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "role": {
+                    "type": "string"
+                  },
+                  "joining_date": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "remember_token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Api.identityaccess.destroy",
+        "tags": [
+          "Identityaccesses"
+        ],
+        "operationId": "identityaccessDestroy",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "name": "identityaccess",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/parent/children": {
+      "get": {
+        "summary": "List Child Profiles",
+        "tags": [
+          "Children"
+        ],
+        "operationId": "customerParentChildrenIndex",
+        "responses": {
+          "200": {
+            "description": "Child profiles retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "parent_id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "dob": {
+                            "type": "string",
+                            "format": "date",
+                            "nullable": true
+                          },
+                          "age": {
+                            "type": "integer"
+                          },
+                          "gender": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "photo": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "school": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "medical_notes": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "dietary_restrictions": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "updated_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Only authenticated parents can access this endpoint."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create Child Profile",
+        "tags": [
+          "Children"
+        ],
+        "operationId": "customerParentChildrenStore",
+        "responses": {
+          "201": {
+            "description": "Child profile created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Child profile created successfully."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "parent_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "dob": {
+                          "type": "string",
+                          "format": "date",
+                          "nullable": true
+                        },
+                        "age": {
+                          "type": "integer"
+                        },
+                        "gender": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "photo": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "school": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "medical_notes": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "dietary_restrictions": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "updated_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Only authenticated parents can access this endpoint."
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 191
+                  },
+                  "dob": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "gender": {
+                    "type": "string"
+                  },
+                  "photo": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 2048
+                  },
+                  "school": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 191
+                  },
+                  "medical_notes": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "dietary_restrictions": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "name",
+                  "dob",
+                  "gender"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/parent/children/{child}": {
+      "get": {
+        "summary": "Get Child Profile",
+        "tags": [
+          "Children"
+        ],
+        "operationId": "customerParentChildrenShow",
+        "responses": {
+          "200": {
+            "description": "Child profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "parent_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "dob": {
+                          "type": "string",
+                          "format": "date",
+                          "nullable": true
+                        },
+                        "age": {
+                          "type": "integer"
+                        },
+                        "gender": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "photo": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "school": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "medical_notes": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "dietary_restrictions": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "updated_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "You may only access your own child profiles."
+          }
+        },
+        "parameters": [
+          {
+            "name": "child",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "Update Child Profile",
+        "tags": [
+          "Children"
+        ],
+        "operationId": "customerParentChildrenUpdate",
+        "responses": {
+          "200": {
+            "description": "Child profile updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Child profile updated successfully."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "parent_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "dob": {
+                          "type": "string",
+                          "format": "date",
+                          "nullable": true
+                        },
+                        "age": {
+                          "type": "integer"
+                        },
+                        "gender": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "photo": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "school": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "medical_notes": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "dietary_restrictions": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "updated_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "You may only access your own child profiles."
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "parameters": [
+          {
+            "name": "child",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 191
+                  },
+                  "dob": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "gender": {
+                    "type": "string"
+                  },
+                  "photo": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 2048
+                  },
+                  "school": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 191
+                  },
+                  "medical_notes": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "dietary_restrictions": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "name",
+                  "dob",
+                  "gender"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Api.customer.parent.children.update",
+        "tags": [
+          "Parent"
+        ],
+        "operationId": "customerParentChildrenUpdate",
+        "responses": {
+          "200": {
+            "description": "Successful response"
+          }
+        },
+        "parameters": [
+          {
+            "name": "child",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 191
+                  },
+                  "dob": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "gender": {
+                    "type": "string"
+                  },
+                  "photo": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 2048
+                  },
+                  "school": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 191
+                  },
+                  "medical_notes": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "dietary_restrictions": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "name",
+                  "dob",
+                  "gender"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Child Profile",
+        "tags": [
+          "Children"
+        ],
+        "operationId": "customerParentChildrenDestroy",
+        "responses": {
+          "200": {
+            "description": "Child profile deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Child profile deleted successfully."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "You may only access your own child profiles."
+          }
+        },
+        "parameters": [
+          {
+            "name": "child",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/parent/profile": {
+      "get": {
+        "summary": "Get Parent Profile",
+        "tags": [
+          "Parent"
+        ],
+        "operationId": "customerParentProfileShow",
+        "responses": {
+          "200": {
+            "description": "Parent profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "customer_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "phone": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email",
+                          "nullable": true
+                        },
+                        "address": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "emergency_contact_name": {
+                          "type": "string"
+                        },
+                        "emergency_contact_phone": {
+                          "type": "string"
+                        },
+                        "customer": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "name": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "phone": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "whatsapp_number": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "email": {
+                              "type": "string",
+                              "format": "email",
+                              "nullable": true
+                            }
+                          }
+                        },
+                        "children": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "parent_id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "dob": {
+                                "type": "string",
+                                "format": "date",
+                                "nullable": true
+                              },
+                              "age": {
+                                "type": "integer"
+                              },
+                              "gender": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "photo": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "school": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "medical_notes": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "dietary_restrictions": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "updated_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "rewards_profile": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "waiver_signed": {
+                              "type": "boolean"
+                            },
+                            "waiver_signed_at": {
+                              "type": "string",
+                              "format": "date-time",
+                              "nullable": true
+                            },
+                            "loyalty_points": {
+                              "type": "integer"
+                            },
+                            "loyalty_tier": {
+                              "type": "string",
+                              "nullable": true
+                            }
+                          }
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "updated_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Only authenticated parents can access this endpoint."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "Update Parent Profile",
+        "tags": [
+          "Parent"
+        ],
+        "operationId": "customerParentProfileUpdate",
+        "responses": {
+          "200": {
+            "description": "Parent profile updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Parent profile updated successfully."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "customer_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "phone": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email",
+                          "nullable": true
+                        },
+                        "address": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "emergency_contact_name": {
+                          "type": "string"
+                        },
+                        "emergency_contact_phone": {
+                          "type": "string"
+                        },
+                        "customer": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "name": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "phone": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "whatsapp_number": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "email": {
+                              "type": "string",
+                              "format": "email",
+                              "nullable": true
+                            }
+                          }
+                        },
+                        "children": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "parent_id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "dob": {
+                                "type": "string",
+                                "format": "date",
+                                "nullable": true
+                              },
+                              "age": {
+                                "type": "integer"
+                              },
+                              "gender": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "photo": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "school": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "medical_notes": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "dietary_restrictions": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "updated_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "rewards_profile": {
+                          "type": "object",
+                          "nullable": true,
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "waiver_signed": {
+                              "type": "boolean"
+                            },
+                            "waiver_signed_at": {
+                              "type": "string",
+                              "format": "date-time",
+                              "nullable": true
+                            },
+                            "loyalty_points": {
+                              "type": "integer"
+                            },
+                            "loyalty_tier": {
+                              "type": "string",
+                              "nullable": true
+                            }
+                          }
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "updated_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Only authenticated parents can access this endpoint."
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 191
+                  },
+                  "phone": {
+                    "type": "string",
+                    "maxLength": 30
+                  },
+                  "email": {
+                    "type": "string",
+                    "nullable": true,
+                    "format": "email",
+                    "maxLength": 191
+                  },
+                  "address": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "emergency_contact_name": {
+                    "type": "string",
+                    "maxLength": 191
+                  },
+                  "emergency_contact_phone": {
+                    "type": "string",
+                    "maxLength": 30
+                  }
+                },
+                "required": [
+                  "name",
+                  "phone",
+                  "emergency_contact_name",
+                  "emergency_contact_phone"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

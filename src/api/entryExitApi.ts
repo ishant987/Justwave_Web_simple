@@ -1,0 +1,106 @@
+import { request } from './http';
+import type {
+  BillDashboardResponse,
+  DurationPrice,
+  EntryExitLog,
+  OvertimeSettlementItem,
+  PaginatedApiResponse,
+  ParentLookupResponse,
+  PassCreatePayload,
+  PassCreateResponse,
+  PaymentMode,
+  ScanExitResponse,
+} from '../types/entryExit';
+
+export function lookupParentByPhone(token: string, phone: string) {
+  return request<ParentLookupResponse>(`/entry-exit/parents/lookup?phone=${encodeURIComponent(phone)}`, { token });
+}
+
+export function getCustomer(token: string, customerId: string) {
+  return request<{ data?: { id?: string; name?: string; phone?: string } } | { id?: string; name?: string; phone?: string }>(
+    `/customers/${customerId}`,
+    { token },
+  );
+}
+
+export function getDurationPrices(token: string) {
+  return request<{ data?: DurationPrice[] } | DurationPrice[]>(`/entry-exit/duration-prices?price_type=standard`, { token });
+}
+
+export function createPass(token: string, payload: PassCreatePayload) {
+  return request<PassCreateResponse>('/entry-exit/passes', { method: 'POST', body: payload, token });
+}
+
+export function listPasses(token: string, query: string) {
+  return request<PaginatedApiResponse<EntryExitLog> | EntryExitLog[]>(`/entry-exit/passes${query ? `?${query}` : ''}`, { token });
+}
+
+export function markPassPaid(token: string, ids: string[], payment_mode: PaymentMode) {
+  return request<{ message?: string }>('/entry-exit/passes/mark-paid', {
+    method: 'POST',
+    body: { ids, payment_mode },
+    token,
+  });
+}
+
+export function recordPrint(token: string, ids: string[]) {
+  return request<{ message?: string }>('/entry-exit/passes/record-print', {
+    method: 'POST',
+    body: { ids },
+    token,
+  });
+}
+
+export function scanEntry(token: string, scan_token: string) {
+  return request<{ message?: string; data?: EntryExitLog }>('/entry-exit/passes/scan-entry', {
+    method: 'POST',
+    body: { scan_token },
+    token,
+  });
+}
+
+export function getOvertimeSettlements(token: string, phone: string) {
+  return request<{ data?: OvertimeSettlementItem[] } | OvertimeSettlementItem[]>(
+    `/entry-exit/overtime-settlements?phone=${encodeURIComponent(phone)}`,
+    { token },
+  );
+}
+
+export function settleOvertime(token: string, id: string, payment_mode: PaymentMode) {
+  return request<{ message?: string }>('/entry-exit/overtime-settlements', {
+    method: 'POST',
+    body: { id, payment_mode },
+    token,
+  });
+}
+
+export function scanExit(token: string, scan_token: string) {
+  return request<ScanExitResponse>('/entry-exit/passes/scan-exit', {
+    method: 'POST',
+    body: { scan_token },
+    token,
+  });
+}
+
+export function verifyExitOtp(token: string, scan_token: string, otp: string) {
+  return request<{ message?: string; data?: EntryExitLog }>('/entry-exit/passes/verify-exit-otp', {
+    method: 'POST',
+    body: { scan_token, otp },
+    token,
+  });
+}
+
+export function getLiveOccupancy(token: string) {
+  return request<{ occupancy_count?: number; active_sessions?: EntryExitLog[]; data?: { occupancy_count?: number; active_sessions?: EntryExitLog[] } }>(
+    '/entry-exit/live-occupancy',
+    { token },
+  );
+}
+
+export function getBillDashboard(token: string, query: string) {
+  return request<BillDashboardResponse>(`/entry-exit/bill-dashboard${query ? `?${query}` : ''}`, { token });
+}
+
+export function getVisitHistory(token: string, query: string) {
+  return request<PaginatedApiResponse<EntryExitLog> | EntryExitLog[]>(`/entry-exit/logs${query ? `?${query}` : ''}`, { token });
+}
