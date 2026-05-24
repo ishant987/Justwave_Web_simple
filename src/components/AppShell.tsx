@@ -5,9 +5,10 @@ import { useAuth } from '../hooks/useAuth';
 
 const links = [
   { to: '/walkin/new', label: 'New Walk-In' },
+   { to: '/walkin/history', label: 'Visit History' },
   { to: '/walkin/occupancy', label: 'Live Occupancy' },
   { to: '/walkin/bills', label: 'Bill Dashboard' },
-  { to: '/walkin/history', label: 'Visit History' },
+ 
 ];
 
 function normalizeLocations(payload: { data?: { id: string; name: string }[] } | { id: string; name: string }[] | undefined) {
@@ -28,7 +29,6 @@ export function AppShell() {
   return (
     <div className="app-shell">
       <header className="top-app-bar full-width">
-        <div className="top-app-brand">JUSTWAVE</div>
         <nav className="top-app-nav">
           <span className="top-app-link active">Walk-In</span>
           <span className="top-app-link">Bookings</span>
@@ -40,8 +40,9 @@ export function AppShell() {
 
       <aside className="sidebar">
         <div className="sidebar-top">
-          <div className="sidebar-brand">JUSTWAVE</div>
-         
+          <div className="sidebar-brand-lockup">
+            <img className="sidebar-brand-logo" src="/logo2.svg" alt="JustWave" />
+          </div>
         </div>
         <nav className="nav-list">
           {links.map((link) => (

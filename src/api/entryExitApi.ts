@@ -23,6 +23,17 @@ export function getCustomer(token: string, customerId: string) {
   );
 }
 
+export function updateCustomer(token: string, customerId: string, payload: { name: string; phone: string }) {
+  return request<{ data?: { id?: string; name?: string; phone?: string }; message?: string }>(
+    `/customers/${customerId}`,
+    {
+      method: 'PUT',
+      body: payload,
+      token,
+    },
+  );
+}
+
 export function getDurationPrices(token: string) {
   return request<{ data?: DurationPrice[] } | DurationPrice[]>(`/entry-exit/duration-prices?price_type=standard`, { token });
 }

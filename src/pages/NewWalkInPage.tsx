@@ -138,6 +138,8 @@ export function NewWalkInPage() {
   const [paymentPlan, setPaymentPlan] = useState<'once' | 'parts'>('once');
   const [toastMessage, setToastMessage] = useState('');
   const [qrByPassId, setQrByPassId] = useState<Record<string, string>>({});
+  const [isEditingCustomerName, setIsEditingCustomerName] = useState(false);
+  const [editableCustomerName, setEditableCustomerName] = useState('');
   const lastLookupPhoneRef = useRef('');
 
   const locationsQuery = useQuery({
@@ -154,6 +156,20 @@ export function NewWalkInPage() {
 
   const lookupMutation = useMutation({
     mutationFn: (phone: string) => entryExitApi.lookupParentByPhone(token!, phone),
+  });
+
+  const updateCustomerMutation = useMutation({
+    mutationFn: ({ customerId, name, phone }: { customerId: string; name: string; phone: string }) =>
+      entryExitApi.updateCustomer(token!, customerId, { name, phone }),
+    onSuccess: () => {
+      setToastMessage('Customer name updated successfully.');
+      window.setTimeout(() => setToastMessage(''), 2600);
+      setIsEditingCustomerName(false);
+      const normalizedPhone = lookupPhone.replace(/\D/g, '').trim();
+      if (normalizedPhone.length === 10) {
+        lookupMutation.mutate(normalizedPhone);
+      }
+    },
   });
 
   const printMutation = useMutation({
@@ -561,6 +577,11 @@ export function NewWalkInPage() {
     setSelectedChildIds((current) => current.filter((id) => !insideChildIds.has(id)));
   }, [insideChildIds]);
 
+  useEffect(() => {
+    setEditableCustomerName(lookupData?.customer?.name || lookupData?.parent?.name || '');
+    setIsEditingCustomerName(false);
+  }, [lookupData?.customer?.id, lookupData?.customer?.name, lookupData?.parent?.id, lookupData?.parent?.name]);
+
   function toggleChild(child: ChildRecord) {
     if (insideChildIds.has(child.id)) {
       return;
@@ -595,6 +616,32 @@ export function NewWalkInPage() {
     setResultMessage('');
     lastLookupPhoneRef.current = normalizedPhone;
     lookupMutation.mutate(normalizedPhone);
+  }
+
+  function startEditingCustomerName() {
+    setEditableCustomerName(customerNameValue);
+    setIsEditingCustomerName(true);
+  }
+
+  function cancelEditingCustomerName() {
+    setEditableCustomerName(customerNameValue);
+    setIsEditingCustomerName(false);
+  }
+
+  function saveCustomerName() {
+    const customerId = lookupData?.customer?.id;
+    const nextName = editableCustomerName.trim();
+    const phone = (lookupData?.customer?.phone || lookupData?.parent?.phone || lookupPhone).replace(/\D/g, '').trim();
+
+    if (!customerId || !nextName || !phone) {
+      return;
+    }
+
+    updateCustomerMutation.mutate({
+      customerId,
+      name: nextName,
+      phone,
+    });
   }
 
   function openAddChildModal() {
@@ -667,7 +714,14 @@ export function NewWalkInPage() {
     setIsPaymentOpen(true);
   }
 
-  const customerNameValue = lookupData?.parent?.name || lookupData?.customer?.name || manualCustomerName;
+  const existingCustomerId = lookupData?.customer?.id;
+  const customerNameValue = lookupData?.customer?.name || lookupData?.parent?.name || manualCustomerName;
+  const customerNameInputValue = isEditingCustomerName ? editableCustomerName : customerNameValue;
+  const canSaveCustomerName =
+    Boolean(existingCustomerId) &&
+    editableCustomerName.trim().length > 0 &&
+    editableCustomerName.trim() !== customerNameValue.trim() &&
+    !updateCustomerMutation.isPending;
 
   return (
     <div className="simple-page">
@@ -710,16 +764,45 @@ export function NewWalkInPage() {
 
             <label className="simple-field">
               <span className="simple-field-label">Customer Name</span>
-              <div className="input-shell input-shell-static">
+              <div className="input-shell input-shell-static customer-name-shell">
                 <span className="input-leading-icon">
                   <UiIcon type="user" />
                 </span>
                 <input
-                  value={customerNameValue}
-                  onChange={(event) => setManualCustomerName(event.target.value)}
+                  value={customerNameInputValue}
+                  onChange={(event) => {
+                    if (isEditingCustomerName) {
+                      setEditableCustomerName(event.target.value);
+                      return;
+                    }
+                    setManualCustomerName(event.target.value);
+                  }}
                   placeholder="Required if this phone is new"
-                  disabled={!hasLookupPhone || Boolean(lookupData?.parent?.id || lookupData?.customer?.id)}
+                  disabled={!hasLookupPhone || (Boolean(existingCustomerId) && !isEditingCustomerName)}
                 />
+                {existingCustomerId ? (
+                  <div className="customer-name-actions">
+                    {isEditingCustomerName ? (
+                      <>
+                        <button type="button" className="inline-action-button compact" onClick={saveCustomerName} disabled={!canSaveCustomerName}>
+                          {updateCustomerMutation.isPending ? 'Saving...' : 'Save'}
+                        </button>
+                        <button
+                          type="button"
+                          className="inline-action-button compact muted-action"
+                          onClick={cancelEditingCustomerName}
+                          disabled={updateCustomerMutation.isPending}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <button type="button" className="inline-action-button compact" onClick={startEditingCustomerName}>
+                        Edit
+                      </button>
+                    )}
+                  </div>
+                ) : null}
               </div>
             </label>
           </div>
@@ -728,6 +811,13 @@ export function NewWalkInPage() {
             !isNewCustomerFlowActive ? (
               <StatusBanner tone="danger" message={lookupMutation.error instanceof Error ? lookupMutation.error.message : 'Lookup failed.'} />
             ) : null
+          ) : null}
+
+          {updateCustomerMutation.isError ? (
+            <StatusBanner
+              tone="danger"
+              message={updateCustomerMutation.error instanceof Error ? updateCustomerMutation.error.message : 'Customer name update failed.'}
+            />
           ) : null}
 
           {lookupData?.parent ? (
