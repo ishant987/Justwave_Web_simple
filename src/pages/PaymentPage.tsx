@@ -4,7 +4,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import * as entryExitApi from '../api/entryExitApi';
 import { useAuth } from '../hooks/useAuth';
 import { StatusBanner } from '../components/StatusBanner';
-import type { EntryExitLog, PaginatedApiResponse, PaymentMode } from '../types/entryExit';
+import type { EntryExitLog, PaginatedApiResponse, PassPaymentMode } from '../types/entryExit';
 
 function normalizePasses(payload: PaginatedApiResponse<EntryExitLog> | EntryExitLog[] | undefined) {
   if (!payload) return [];
@@ -33,7 +33,7 @@ export function PaymentPage() {
   const seededPhone = routeState.phone;
   const [search, setSearch] = useState(seededPhone);
   const [selectedIds, setSelectedIds] = useState<string[]>(routeState.ids);
-  const [paymentMode, setPaymentMode] = useState<PaymentMode>('upi');
+  const [paymentMode, setPaymentMode] = useState<PassPaymentMode>('upi');
   const [message, setMessage] = useState('');
   const [searchTouched, setSearchTouched] = useState(Boolean(routeState.phone));
 
@@ -44,7 +44,7 @@ export function PaymentPage() {
   });
 
   const markPaidMutation = useMutation({
-    mutationFn: () => entryExitApi.markPassPaid(token!, selectedIds, paymentMode),
+    mutationFn: () => entryExitApi.markPassPaid(token!, { ids: selectedIds, payment_mode: paymentMode }),
     onSuccess: async (response) => {
       setMessage(response.message || 'Payment recorded.');
       if (selectedIds.length) {
@@ -124,7 +124,7 @@ export function PaymentPage() {
           <h3>Take Payment</h3>
           <label>
             Payment Mode
-            <select value={paymentMode} onChange={(event) => setPaymentMode(event.target.value as PaymentMode)}>
+            <select value={paymentMode} onChange={(event) => setPaymentMode(event.target.value as PassPaymentMode)}>
               <option value="cash">Cash</option>
               <option value="upi">UPI</option>
               <option value="card">Card</option>

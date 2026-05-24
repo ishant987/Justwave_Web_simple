@@ -1,4 +1,16 @@
 export type PaymentMode = 'cash' | 'upi' | 'card' | 'bank_transfer' | 'other' | 'razorpay';
+export type PassPaymentMode = Exclude<PaymentMode, 'razorpay'>;
+
+export interface PaymentSplit {
+  mode: PassPaymentMode;
+  amount: number;
+}
+
+export interface MarkPassPaidPayload {
+  ids: string[];
+  payment_mode: PassPaymentMode | 'split';
+  payment_splits?: PaymentSplit[];
+}
 
 export interface User {
   id: string;
@@ -70,6 +82,7 @@ export interface EntryExitLog {
   bill_total_amount?: number | null;
   payment_status?: string;
   payment_mode?: string | null;
+  payment_splits?: PaymentSplit[] | null;
   paid_at?: string | null;
   issued_at?: string | null;
   print_count?: number;
@@ -104,17 +117,27 @@ export interface PaginatedApiResponse<T> {
 
 export interface BillDashboardSummary {
   pending?: number;
-  pending_count?: number;
   generated_today?: number;
-  generated_today_count?: number;
   all_time?: number;
-  all_time_count?: number;
   amount_today?: number;
-  total_amount_today?: number;
   amount_today_count?: number;
   amount_month?: number;
-  total_amount_month?: number;
   amount_month_count?: number;
+}
+
+export interface BillDashboardQueryParams {
+  category?: 'all_time' | 'pending' | 'generated_today' | 'amount_today' | 'amount_month';
+  status?: 'all' | 'pending' | 'completed' | 'active' | 'expired';
+  location_id?: string;
+  date_from?: string;
+  date_to?: string;
+  amount_min?: string;
+  amount_max?: string;
+  search?: string;
+  sort?: 'bill' | 'amount' | 'created_at' | 'duration' | 'status' | 'entry_time' | 'exit_time';
+  direction?: 'asc' | 'desc';
+  per_page?: number;
+  page?: number;
 }
 
 export interface BillDashboardResponse {

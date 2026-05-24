@@ -5,6 +5,7 @@ import * as entryExitApi from '../api/entryExitApi';
 import { useAuth } from '../hooks/useAuth';
 import { StatusBanner } from '../components/StatusBanner';
 import type { EntryExitLog, OvertimeSettlementItem, PaginatedApiResponse, PaymentMode } from '../types/entryExit';
+import { buildPassPrintDocument } from '../utils/passPrint';
 
 function normalizeLogs(payload: PaginatedApiResponse<EntryExitLog> | EntryExitLog[] | undefined) {
   if (!payload) return [];
@@ -36,12 +37,79 @@ function normalizeSettlements(
   return [];
 }
 
+function buildPassSearchValue(row: EntryExitLog | null) {
+  if (!row) return '';
+  return row.booking_id || row.child_id || row.child_name || row.parent_name || row.customer_name || row.id || '';
+}
+
 function formatAmount(value?: number | null) {
   return `Rs.${Number(value ?? 0).toFixed(2)}`;
 }
 
+function formatAmountCompact(value?: number | null) {
+  const amount = Number(value ?? 0);
+  return Number.isInteger(amount) ? `Rs.${amount}` : `Rs.${amount.toFixed(2)}`;
+}
+
 function readNumber(value: unknown) {
   return typeof value === 'number' ? value : Number(value ?? 0) || 0;
+}
+
+function isPaymentCompleted(row?: EntryExitLog | null) {
+  if (!row) return false;
+  return row.payment_status?.toLowerCase() === 'paid' || Boolean(row.paid_at);
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function printHtmlDocument(html: string) {
+  return new Promise<void>((resolve, reject) => {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    iframe.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc || !iframe.contentWindow) {
+      iframe.remove();
+      reject(new Error('Could not prepare print view. Please try again.'));
+      return;
+    }
+
+    doc.open();
+    doc.write(html);
+    doc.close();
+
+    const cleanup = () => {
+      window.setTimeout(() => iframe.remove(), 400);
+    };
+
+    const triggerPrint = () => {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      cleanup();
+      resolve();
+    };
+
+    if (doc.readyState === 'complete') {
+      window.setTimeout(triggerPrint, 150);
+      return;
+    }
+
+    iframe.onload = () => window.setTimeout(triggerPrint, 150);
+  });
 }
 
 function formatDateTime(value?: string | null) {
@@ -80,6 +148,21 @@ function formatDate(value?: string | null) {
   }).format(date);
 }
 
+function formatDurationLabel(minutes?: number | null) {
+  const totalMinutes = readNumber(minutes);
+  if (!totalMinutes) return '40m';
+  if (totalMinutes % 60 === 0) {
+    const hours = totalMinutes / 60;
+    return `${hours}h`;
+  }
+  if (totalMinutes > 60) {
+    const hours = Math.floor(totalMinutes / 60);
+    const remainingMinutes = totalMinutes % 60;
+    return remainingMinutes ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+  }
+  return `${totalMinutes}m`;
+}
+
 function getPassTimingRange(row: EntryExitLog) {
   const from = row.issued_at || row.created_at;
   const to = row.pass_expires_at || row.booked_exit_time;
@@ -96,6 +179,21 @@ function formatTimingRange(from?: string | null, to?: string | null) {
 
 function formatTimingDate(from?: string | null, to?: string | null) {
   return formatDate(from || to);
+}
+
+function findMatchingPassDetails(candidates: EntryExitLog[], row: EntryExitLog | null) {
+  if (!row) return null;
+
+  return (
+    candidates.find((item) => item.id === row.id) ||
+    candidates.find((item) => item.booking_id && row.booking_id && item.booking_id === row.booking_id) ||
+    candidates.find((item) => item.child_id && row.child_id && item.child_id === row.child_id) ||
+    candidates.find((item) => item.child_name && row.child_name && item.child_name === row.child_name) ||
+    candidates.find((item) => item.parent_name && row.parent_name && item.parent_name === row.parent_name) ||
+    candidates.find((item) => item.customer_name && row.customer_name && item.customer_name === row.customer_name) ||
+    candidates[0] ||
+    null
+  );
 }
 
 function hasGraceExpired(row: EntryExitLog) {
@@ -155,6 +253,8 @@ export function VisitHistoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPass, setSelectedPass] = useState<EntryExitLog | null>(null);
   const [selectedPassQr, setSelectedPassQr] = useState('');
+  const [printMessage, setPrintMessage] = useState('');
+  const [printMessageTone, setPrintMessageTone] = useState<'success' | 'warning'>('success');
   const [settlementRow, setSettlementRow] = useState<EntryExitLog | null>(null);
   const [settlementMessage, setSettlementMessage] = useState('');
   const [settlementLookupPhone, setSettlementLookupPhone] = useState('');
@@ -167,18 +267,20 @@ export function VisitHistoryPage() {
     enabled: !!token,
   });
 
-  const settlementPassSearch = useMemo(() => {
-    if (!settlementRow) return '';
-    return (
-      settlementRow.booking_id ||
-      settlementRow.child_id ||
-      settlementRow.child_name ||
-      settlementRow.parent_name ||
-      settlementRow.customer_name ||
-      settlementRow.id ||
-      ''
-    );
-  }, [settlementRow]);
+  const selectedPassSearch = useMemo(() => buildPassSearchValue(selectedPass), [selectedPass]);
+  const settlementPassSearch = useMemo(() => buildPassSearchValue(settlementRow), [settlementRow]);
+
+  const selectedPassCustomerQuery = useQuery({
+    queryKey: ['visit-history-selected-pass-customer', selectedPass?.customer_id],
+    queryFn: () => entryExitApi.getCustomer(token!, selectedPass?.customer_id || ''),
+    enabled: !!token && !!selectedPass?.customer_id,
+  });
+
+  const selectedPassQuery = useQuery({
+    queryKey: ['visit-history-selected-pass-details', selectedPassSearch],
+    queryFn: () => entryExitApi.listPasses(token!, `search=${encodeURIComponent(selectedPassSearch)}&per_page=10`),
+    enabled: !!token && !!selectedPassSearch,
+  });
 
   const settlementCustomerQuery = useQuery({
     queryKey: ['visit-history-customer', settlementRow?.customer_id],
@@ -192,21 +294,15 @@ export function VisitHistoryPage() {
     enabled: !!token && !!settlementPassSearch,
   });
 
-  const settlementPassDetails = useMemo(() => {
-    const candidates = normalizeLogs(settlementPassQuery.data);
-    if (!settlementRow) return null;
-
-    return (
-      candidates.find((item) => item.id === settlementRow.id) ||
-      candidates.find((item) => item.booking_id && settlementRow.booking_id && item.booking_id === settlementRow.booking_id) ||
-      candidates.find((item) => item.child_id && settlementRow.child_id && item.child_id === settlementRow.child_id) ||
-      candidates.find((item) => item.child_name && settlementRow.child_name && item.child_name === settlementRow.child_name) ||
-      candidates.find((item) => item.parent_name && settlementRow.parent_name && item.parent_name === settlementRow.parent_name) ||
-      candidates.find((item) => item.customer_name && settlementRow.customer_name && item.customer_name === settlementRow.customer_name) ||
-      candidates[0] ||
-      null
-    );
-  }, [settlementPassQuery.data, settlementRow]);
+  const selectedPassDetails = useMemo(
+    () => findMatchingPassDetails(normalizeLogs(selectedPassQuery.data), selectedPass),
+    [selectedPassQuery.data, selectedPass],
+  );
+  const settlementPassDetails = useMemo(
+    () => findMatchingPassDetails(normalizeLogs(settlementPassQuery.data), settlementRow),
+    [settlementPassQuery.data, settlementRow],
+  );
+  const selectedPassCustomerPhone = useMemo(() => extractCustomerPhone(selectedPassCustomerQuery.data), [selectedPassCustomerQuery.data]);
   const settlementCustomerPhone = useMemo(() => extractCustomerPhone(settlementCustomerQuery.data), [settlementCustomerQuery.data]);
 
   const rows = useMemo(() => normalizeLogs(query.data), [query.data]);
@@ -280,6 +376,22 @@ export function VisitHistoryPage() {
     onSuccess: async (response) => {
       setSettlementMessage(response.message || 'Overtime settled.');
       await settlementTicketsQuery.refetch();
+      await query.refetch();
+    },
+  });
+
+  const printPassMutation = useMutation({
+    mutationFn: (pass: EntryExitLog) => entryExitApi.recordPrint(token!, [pass.id]),
+    onSuccess: async (response) => {
+      if (selectedPass) {
+        const nextPrintCount = response.print_counts?.[selectedPass.id] ?? readNumber(selectedPass.print_count) + 1;
+        setSelectedPass({
+          ...selectedPass,
+          print_count: nextPrintCount,
+        });
+        setPrintMessageTone('success');
+        setPrintMessage(`Printed ${nextPrintCount}x.`);
+      }
       await query.refetch();
     },
   });
@@ -376,6 +488,61 @@ export function VisitHistoryPage() {
       setShowAllSettlementKids(false);
     }
   }, [settlementRow]);
+
+  useEffect(() => {
+    setPrintMessage('');
+    setPrintMessageTone('success');
+    printPassMutation.reset();
+  }, [selectedPass?.id]);
+
+  async function printSelectedPass(pass: EntryExitLog) {
+    const qrSrc =
+      selectedPassQr ||
+      (await QRCode.toDataURL(pass.id, {
+        margin: 1,
+        width: 220,
+        color: {
+          dark: '#000000',
+          light: '#ffffff',
+        },
+      }));
+    const nextPrintCount = readNumber(pass.print_count) + 1;
+    const resolvedPass = selectedPassDetails || pass;
+    const amount = formatAmountCompact(resolvedPass.bill_total_amount ?? resolvedPass.pass_price ?? 0);
+    const durationLabel = formatDurationLabel(resolvedPass.expected_duration_minutes);
+    const guardianName = resolvedPass.parent_name || resolvedPass.customer_name || '-';
+    const phone = selectedPassCustomerPhone || resolvedPass.phone || pass.phone || '-';
+
+    await printHtmlDocument(
+      buildPassPrintDocument(
+        [
+          {
+            amount,
+            childName: pass.child_name || 'Walk-In Child',
+            code: pass.id.slice(0, 8).toUpperCase(),
+            durationLabel,
+            guardianName,
+            phone,
+            printCountLabel: `Printed ${nextPrintCount}x`,
+            qrSrc,
+          },
+        ],
+        'Child Pass',
+      ),
+    );
+
+    if (!isPaymentCompleted(resolvedPass)) {
+      setPrintMessageTone('warning');
+      setPrintMessage('Pass printed. Complete payment before recording print count.');
+      return;
+    }
+
+    try {
+      await printPassMutation.mutateAsync(pass);
+    } catch {
+      // React Query stores the error for the banner below; avoid an unhandled promise from the click handler.
+    }
+  }
 
   function openVisitDatePicker() {
     const input = visitDateInputRef.current;
@@ -589,37 +756,50 @@ export function VisitHistoryPage() {
                 <h3>Child Pass</h3>
                 <p className="muted">Preview the selected child pass.</p>
               </div>
-              <button type="button" className="secondary-button" onClick={() => setSelectedPass(null)}>
-                Close
-              </button>
+              <div className="history-pass-header-actions">
+                <button
+                  type="button"
+                  className="primary-button"
+                  disabled={printPassMutation.isPending}
+                  onClick={() => {
+                    void printSelectedPass(selectedPass);
+                  }}
+                >
+                  {printPassMutation.isPending ? 'Recording...' : 'Print Pass'}
+                </button>
+                <button type="button" className="secondary-button" onClick={() => setSelectedPass(null)}>
+                  Close
+                </button>
+              </div>
             </div>
 
             <div className="history-single-pass-shell">
               <div className="ticket-card">
-                <div className="ticket-left">
-                  <div className="ticket-brand">JUSTWAVE</div>
-                  <div className="ticket-badge">CHILD PASS</div>
-                  <div className="ticket-admit">ADMIT ONE</div>
-                  <div className="ticket-child-name">{selectedPass.child_name || 'Walk-In Child'}</div>
-                  <div className="ticket-meta-grid">
-                    <div>
-                      <span>AMOUNT</span>
-                      <strong>{formatAmount(selectedPass.bill_total_amount ?? selectedPass.pass_price ?? 0)}</strong>
-                    </div>
-                    <div>
-                      <span>PAYMENT</span>
-                      <strong>{selectedPass.payment_mode || 'Cash'}</strong>
-                    </div>
-                    <div>
-                      <span>PARENT</span>
-                      <strong>{selectedPass.parent_name || selectedPass.customer_name || '-'}</strong>
-                    </div>
-                    <div>
-                      <span>ISSUED</span>
-                      <strong>{formatDateTime(selectedPass.issued_at || selectedPass.created_at)}</strong>
-                    </div>
+                <div className="ticket-print-count">Printed {readNumber(selectedPass.print_count)}x</div>
+              <div className="ticket-left">
+                <div className="ticket-brand">JUSTWAVE</div>
+                <div className="ticket-badge">CHILD PASS</div>
+                <div className="ticket-admit">ADMIT ONE</div>
+                <div className="ticket-child-name">{selectedPass.child_name || 'Walk-In Child'}</div>
+                <div className="ticket-meta-grid">
+                  <div>
+                    <span>TIME / DURATION</span>
+                    <strong>{formatDurationLabel(selectedPassDetails?.expected_duration_minutes ?? selectedPass.expected_duration_minutes)}</strong>
+                  </div>
+                  <div>
+                    <span>AMOUNT</span>
+                    <strong>{formatAmountCompact(selectedPassDetails?.bill_total_amount ?? selectedPassDetails?.pass_price ?? selectedPass.bill_total_amount ?? selectedPass.pass_price ?? 0)}</strong>
+                  </div>
+                  <div>
+                    <span>GUARDIAN</span>
+                    <strong>{selectedPassDetails?.parent_name || selectedPassDetails?.customer_name || selectedPass.parent_name || selectedPass.customer_name || '-'}</strong>
+                  </div>
+                  <div>
+                    <span>PHONE</span>
+                    <strong>{selectedPassCustomerPhone || selectedPassDetails?.phone || selectedPass.phone || '-'}</strong>
                   </div>
                 </div>
+              </div>
 
                 <div className="ticket-right">
                   <div className="ticket-qr-frame">
@@ -631,6 +811,14 @@ export function VisitHistoryPage() {
                 </div>
               </div>
             </div>
+
+            {printMessage ? <StatusBanner tone={printMessageTone} message={printMessage} /> : null}
+            {printPassMutation.isError ? (
+              <StatusBanner
+                tone="danger"
+                message={printPassMutation.error instanceof Error ? printPassMutation.error.message : 'Could not record print count.'}
+              />
+            ) : null}
           </div>
         </div>
       ) : null}

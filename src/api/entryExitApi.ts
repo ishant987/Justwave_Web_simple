@@ -1,11 +1,13 @@
 import { request } from './http';
 import type {
   BillDashboardResponse,
+  BillDashboardQueryParams,
   DurationPrice,
   EntryExitLog,
   OvertimeSettlementItem,
   PaginatedApiResponse,
   ParentLookupResponse,
+  MarkPassPaidPayload,
   PassCreatePayload,
   PassCreateResponse,
   PaymentMode,
@@ -46,16 +48,16 @@ export function listPasses(token: string, query: string) {
   return request<PaginatedApiResponse<EntryExitLog> | EntryExitLog[]>(`/entry-exit/passes${query ? `?${query}` : ''}`, { token });
 }
 
-export function markPassPaid(token: string, ids: string[], payment_mode: PaymentMode) {
+export function markPassPaid(token: string, payload: MarkPassPaidPayload) {
   return request<{ message?: string }>('/entry-exit/passes/mark-paid', {
     method: 'POST',
-    body: { ids, payment_mode },
+    body: payload,
     token,
   });
 }
 
 export function recordPrint(token: string, ids: string[]) {
-  return request<{ message?: string }>('/entry-exit/passes/record-print', {
+  return request<{ message?: string; print_counts?: Record<string, number> }>('/entry-exit/passes/record-print', {
     method: 'POST',
     body: { ids },
     token,
@@ -108,8 +110,15 @@ export function getLiveOccupancy(token: string) {
   );
 }
 
-export function getBillDashboard(token: string, query: string) {
-  return request<BillDashboardResponse>(`/entry-exit/bill-dashboard${query ? `?${query}` : ''}`, { token });
+export function getBillDashboard(token: string, params: BillDashboardQueryParams) {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return;
+    query.set(key, String(value));
+  });
+
+  const queryString = query.toString();
+  return request<BillDashboardResponse>(`/entry-exit/bill-dashboard${queryString ? `?${queryString}` : ''}`, { token });
 }
 
 export function getVisitHistory(token: string, query: string) {

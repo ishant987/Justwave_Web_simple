@@ -805,10 +805,89 @@
             "format": "date-time",
             "nullable": true
           },
+          "effective_booked_exit_time": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "actual_exit_time": {
             "type": "string",
             "format": "date-time",
             "nullable": true
+          },
+          "is_timer_paused": {
+            "type": "boolean"
+          },
+          "pause_started_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "paused_minutes_total": {
+            "type": "integer"
+          },
+          "extension_minutes_total": {
+            "type": "integer"
+          },
+          "break_reason_required_after_minutes": {
+            "type": "integer",
+            "example": 10
+          },
+          "time_adjustments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "pause_started",
+                    "pause_completed",
+                    "extension"
+                  ]
+                },
+                "started_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                },
+                "ended_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                },
+                "minutes": {
+                  "type": "integer"
+                },
+                "reason": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "notes": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "created_by": {
+                  "type": "string",
+                  "format": "uuid",
+                  "nullable": true
+                },
+                "created_by_staff_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "nullable": true
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                }
+              }
+            }
           },
           "guardian_verification_mode": {
             "type": "string",
@@ -844,6 +923,23 @@
           "payment_mode": {
             "type": "string",
             "nullable": true
+          },
+          "payment_splits": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "example": "cash"
+                },
+                "amount": {
+                  "type": "number",
+                  "example": 200
+                }
+              }
+            }
           },
           "razorpay_order_id": {
             "type": "string",
@@ -1007,10 +1103,89 @@
                 "format": "date-time",
                 "nullable": true
               },
+              "effective_booked_exit_time": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              },
               "actual_exit_time": {
                 "type": "string",
                 "format": "date-time",
                 "nullable": true
+              },
+              "is_timer_paused": {
+                "type": "boolean"
+              },
+              "pause_started_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true
+              },
+              "paused_minutes_total": {
+                "type": "integer"
+              },
+              "extension_minutes_total": {
+                "type": "integer"
+              },
+              "break_reason_required_after_minutes": {
+                "type": "integer",
+                "example": 10
+              },
+              "time_adjustments": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "pause_started",
+                        "pause_completed",
+                        "extension"
+                      ]
+                    },
+                    "started_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    },
+                    "ended_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    },
+                    "minutes": {
+                      "type": "integer"
+                    },
+                    "reason": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "notes": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "created_by": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "created_by_staff_id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    }
+                  }
+                }
               },
               "guardian_verification_mode": {
                 "type": "string",
@@ -1046,6 +1221,23 @@
               "payment_mode": {
                 "type": "string",
                 "nullable": true
+              },
+              "payment_splits": {
+                "type": "array",
+                "nullable": true,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "example": "cash"
+                    },
+                    "amount": {
+                      "type": "number",
+                      "example": 200
+                    }
+                  }
+                }
               },
               "razorpay_order_id": {
                 "type": "string",
@@ -1290,10 +1482,89 @@
                   "format": "date-time",
                   "nullable": true
                 },
+                "effective_booked_exit_time": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                },
                 "actual_exit_time": {
                   "type": "string",
                   "format": "date-time",
                   "nullable": true
+                },
+                "is_timer_paused": {
+                  "type": "boolean"
+                },
+                "pause_started_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true
+                },
+                "paused_minutes_total": {
+                  "type": "integer"
+                },
+                "extension_minutes_total": {
+                  "type": "integer"
+                },
+                "break_reason_required_after_minutes": {
+                  "type": "integer",
+                  "example": 10
+                },
+                "time_adjustments": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "pause_started",
+                          "pause_completed",
+                          "extension"
+                        ]
+                      },
+                      "started_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                      },
+                      "ended_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                      },
+                      "minutes": {
+                        "type": "integer"
+                      },
+                      "reason": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "notes": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "created_by": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                      },
+                      "created_by_staff_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                      },
+                      "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                      }
+                    }
+                  }
                 },
                 "guardian_verification_mode": {
                   "type": "string",
@@ -1329,6 +1600,23 @@
                 "payment_mode": {
                   "type": "string",
                   "nullable": true
+                },
+                "payment_splits": {
+                  "type": "array",
+                  "nullable": true,
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "mode": {
+                        "type": "string",
+                        "example": "cash"
+                      },
+                      "amount": {
+                        "type": "number",
+                        "example": 200
+                      }
+                    }
+                  }
                 },
                 "razorpay_order_id": {
                   "type": "string",
@@ -2961,6 +3249,30 @@
           "payment_mode"
         ]
       },
+      "PostEntryexitPassesExtendTimerRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 240
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "minutes",
+          "reason"
+        ]
+      },
       "PostEntryexitPassesMarkOvertimePaidRequest": {
         "type": "object",
         "additionalProperties": false,
@@ -2989,6 +3301,23 @@
           },
           "payment_mode": {
             "type": "string"
+          },
+          "payment_splits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "mode": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 9999999
+                }
+              }
+            }
           }
         },
         "required": [
@@ -3056,6 +3385,22 @@
           "ids"
         ]
       },
+      "PostEntryexitPassesResumeTimerRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 120
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 1000
+          }
+        }
+      },
       "PostEntryexitPassesScanEntryRequest": {
         "type": "object",
         "additionalProperties": false,
@@ -3112,7 +3457,18 @@
             "type": "array",
             "nullable": true,
             "items": {
-              "type": "string"
+              "type": "string",
+              "nullable": true,
+              "maxLength": 191
+            }
+          },
+          "child_dobs": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true,
+              "pattern": "^\\d{2}/\\d{2}/\\d{4}$"
             }
           },
           "child_count": {
@@ -8478,10 +8834,89 @@
                                     "format": "date-time",
                                     "nullable": true
                                   },
+                                  "effective_booked_exit_time": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "nullable": true
+                                  },
                                   "actual_exit_time": {
                                     "type": "string",
                                     "format": "date-time",
                                     "nullable": true
+                                  },
+                                  "is_timer_paused": {
+                                    "type": "boolean"
+                                  },
+                                  "pause_started_at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "nullable": true
+                                  },
+                                  "paused_minutes_total": {
+                                    "type": "integer"
+                                  },
+                                  "extension_minutes_total": {
+                                    "type": "integer"
+                                  },
+                                  "break_reason_required_after_minutes": {
+                                    "type": "integer",
+                                    "example": 10
+                                  },
+                                  "time_adjustments": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "format": "uuid"
+                                        },
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "pause_started",
+                                            "pause_completed",
+                                            "extension"
+                                          ]
+                                        },
+                                        "started_at": {
+                                          "type": "string",
+                                          "format": "date-time",
+                                          "nullable": true
+                                        },
+                                        "ended_at": {
+                                          "type": "string",
+                                          "format": "date-time",
+                                          "nullable": true
+                                        },
+                                        "minutes": {
+                                          "type": "integer"
+                                        },
+                                        "reason": {
+                                          "type": "string",
+                                          "nullable": true
+                                        },
+                                        "notes": {
+                                          "type": "string",
+                                          "nullable": true
+                                        },
+                                        "created_by": {
+                                          "type": "string",
+                                          "format": "uuid",
+                                          "nullable": true
+                                        },
+                                        "created_by_staff_id": {
+                                          "type": "string",
+                                          "format": "uuid",
+                                          "nullable": true
+                                        },
+                                        "created_at": {
+                                          "type": "string",
+                                          "format": "date-time",
+                                          "nullable": true
+                                        }
+                                      }
+                                    }
                                   },
                                   "guardian_verification_mode": {
                                     "type": "string",
@@ -8517,6 +8952,23 @@
                                   "payment_mode": {
                                     "type": "string",
                                     "nullable": true
+                                  },
+                                  "payment_splits": {
+                                    "type": "array",
+                                    "nullable": true,
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "mode": {
+                                          "type": "string",
+                                          "example": "cash"
+                                        },
+                                        "amount": {
+                                          "type": "number",
+                                          "example": 200
+                                        }
+                                      }
+                                    }
                                   },
                                   "razorpay_order_id": {
                                     "type": "string",
@@ -9226,10 +9678,89 @@
                           "format": "date-time",
                           "nullable": true
                         },
+                        "effective_booked_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
                         "actual_exit_time": {
                           "type": "string",
                           "format": "date-time",
                           "nullable": true
+                        },
+                        "is_timer_paused": {
+                          "type": "boolean"
+                        },
+                        "pause_started_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "paused_minutes_total": {
+                          "type": "integer"
+                        },
+                        "extension_minutes_total": {
+                          "type": "integer"
+                        },
+                        "break_reason_required_after_minutes": {
+                          "type": "integer",
+                          "example": 10
+                        },
+                        "time_adjustments": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "pause_started",
+                                  "pause_completed",
+                                  "extension"
+                                ]
+                              },
+                              "started_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "ended_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "minutes": {
+                                "type": "integer"
+                              },
+                              "reason": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "notes": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "created_by": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "created_by_staff_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              }
+                            }
+                          }
                         },
                         "guardian_verification_mode": {
                           "type": "string",
@@ -9265,6 +9796,23 @@
                         "payment_mode": {
                           "type": "string",
                           "nullable": true
+                        },
+                        "payment_splits": {
+                          "type": "array",
+                          "nullable": true,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "mode": {
+                                "type": "string",
+                                "example": "cash"
+                              },
+                              "amount": {
+                                "type": "number",
+                                "example": 200
+                              }
+                            }
+                          }
                         },
                         "razorpay_order_id": {
                           "type": "string",
@@ -9550,10 +10098,89 @@
                                 "format": "date-time",
                                 "nullable": true
                               },
+                              "effective_booked_exit_time": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
                               "actual_exit_time": {
                                 "type": "string",
                                 "format": "date-time",
                                 "nullable": true
+                              },
+                              "is_timer_paused": {
+                                "type": "boolean"
+                              },
+                              "pause_started_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "paused_minutes_total": {
+                                "type": "integer"
+                              },
+                              "extension_minutes_total": {
+                                "type": "integer"
+                              },
+                              "break_reason_required_after_minutes": {
+                                "type": "integer",
+                                "example": 10
+                              },
+                              "time_adjustments": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "format": "uuid"
+                                    },
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "pause_started",
+                                        "pause_completed",
+                                        "extension"
+                                      ]
+                                    },
+                                    "started_at": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "nullable": true
+                                    },
+                                    "ended_at": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "nullable": true
+                                    },
+                                    "minutes": {
+                                      "type": "integer"
+                                    },
+                                    "reason": {
+                                      "type": "string",
+                                      "nullable": true
+                                    },
+                                    "notes": {
+                                      "type": "string",
+                                      "nullable": true
+                                    },
+                                    "created_by": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "nullable": true
+                                    },
+                                    "created_by_staff_id": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "nullable": true
+                                    },
+                                    "created_at": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "nullable": true
+                                    }
+                                  }
+                                }
                               },
                               "guardian_verification_mode": {
                                 "type": "string",
@@ -9589,6 +10216,23 @@
                               "payment_mode": {
                                 "type": "string",
                                 "nullable": true
+                              },
+                              "payment_splits": {
+                                "type": "array",
+                                "nullable": true,
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "mode": {
+                                      "type": "string",
+                                      "example": "cash"
+                                    },
+                                    "amount": {
+                                      "type": "number",
+                                      "example": 200
+                                    }
+                                  }
+                                }
                               },
                               "razorpay_order_id": {
                                 "type": "string",
@@ -9781,10 +10425,89 @@
                                 "format": "date-time",
                                 "nullable": true
                               },
+                              "effective_booked_exit_time": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
                               "actual_exit_time": {
                                 "type": "string",
                                 "format": "date-time",
                                 "nullable": true
+                              },
+                              "is_timer_paused": {
+                                "type": "boolean"
+                              },
+                              "pause_started_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "paused_minutes_total": {
+                                "type": "integer"
+                              },
+                              "extension_minutes_total": {
+                                "type": "integer"
+                              },
+                              "break_reason_required_after_minutes": {
+                                "type": "integer",
+                                "example": 10
+                              },
+                              "time_adjustments": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "format": "uuid"
+                                    },
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "pause_started",
+                                        "pause_completed",
+                                        "extension"
+                                      ]
+                                    },
+                                    "started_at": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "nullable": true
+                                    },
+                                    "ended_at": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "nullable": true
+                                    },
+                                    "minutes": {
+                                      "type": "integer"
+                                    },
+                                    "reason": {
+                                      "type": "string",
+                                      "nullable": true
+                                    },
+                                    "notes": {
+                                      "type": "string",
+                                      "nullable": true
+                                    },
+                                    "created_by": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "nullable": true
+                                    },
+                                    "created_by_staff_id": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "nullable": true
+                                    },
+                                    "created_at": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "nullable": true
+                                    }
+                                  }
+                                }
                               },
                               "guardian_verification_mode": {
                                 "type": "string",
@@ -9820,6 +10543,23 @@
                               "payment_mode": {
                                 "type": "string",
                                 "nullable": true
+                              },
+                              "payment_splits": {
+                                "type": "array",
+                                "nullable": true,
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "mode": {
+                                      "type": "string",
+                                      "example": "cash"
+                                    },
+                                    "amount": {
+                                      "type": "number",
+                                      "example": 200
+                                    }
+                                  }
+                                }
                               },
                               "razorpay_order_id": {
                                 "type": "string",
@@ -10029,10 +10769,89 @@
                                 "format": "date-time",
                                 "nullable": true
                               },
+                              "effective_booked_exit_time": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
                               "actual_exit_time": {
                                 "type": "string",
                                 "format": "date-time",
                                 "nullable": true
+                              },
+                              "is_timer_paused": {
+                                "type": "boolean"
+                              },
+                              "pause_started_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "paused_minutes_total": {
+                                "type": "integer"
+                              },
+                              "extension_minutes_total": {
+                                "type": "integer"
+                              },
+                              "break_reason_required_after_minutes": {
+                                "type": "integer",
+                                "example": 10
+                              },
+                              "time_adjustments": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "format": "uuid"
+                                    },
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "pause_started",
+                                        "pause_completed",
+                                        "extension"
+                                      ]
+                                    },
+                                    "started_at": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "nullable": true
+                                    },
+                                    "ended_at": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "nullable": true
+                                    },
+                                    "minutes": {
+                                      "type": "integer"
+                                    },
+                                    "reason": {
+                                      "type": "string",
+                                      "nullable": true
+                                    },
+                                    "notes": {
+                                      "type": "string",
+                                      "nullable": true
+                                    },
+                                    "created_by": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "nullable": true
+                                    },
+                                    "created_by_staff_id": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "nullable": true
+                                    },
+                                    "created_at": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "nullable": true
+                                    }
+                                  }
+                                }
                               },
                               "guardian_verification_mode": {
                                 "type": "string",
@@ -10068,6 +10887,23 @@
                               "payment_mode": {
                                 "type": "string",
                                 "nullable": true
+                              },
+                              "payment_splits": {
+                                "type": "array",
+                                "nullable": true,
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "mode": {
+                                      "type": "string",
+                                      "example": "cash"
+                                    },
+                                    "amount": {
+                                      "type": "number",
+                                      "example": 200
+                                    }
+                                  }
+                                }
                               },
                               "razorpay_order_id": {
                                 "type": "string",
@@ -10300,10 +11136,89 @@
                           "format": "date-time",
                           "nullable": true
                         },
+                        "effective_booked_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
                         "actual_exit_time": {
                           "type": "string",
                           "format": "date-time",
                           "nullable": true
+                        },
+                        "is_timer_paused": {
+                          "type": "boolean"
+                        },
+                        "pause_started_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "paused_minutes_total": {
+                          "type": "integer"
+                        },
+                        "extension_minutes_total": {
+                          "type": "integer"
+                        },
+                        "break_reason_required_after_minutes": {
+                          "type": "integer",
+                          "example": 10
+                        },
+                        "time_adjustments": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "pause_started",
+                                  "pause_completed",
+                                  "extension"
+                                ]
+                              },
+                              "started_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "ended_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "minutes": {
+                                "type": "integer"
+                              },
+                              "reason": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "notes": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "created_by": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "created_by_staff_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              }
+                            }
+                          }
                         },
                         "guardian_verification_mode": {
                           "type": "string",
@@ -10339,6 +11254,23 @@
                         "payment_mode": {
                           "type": "string",
                           "nullable": true
+                        },
+                        "payment_splits": {
+                          "type": "array",
+                          "nullable": true,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "mode": {
+                                "type": "string",
+                                "example": "cash"
+                              },
+                              "amount": {
+                                "type": "number",
+                                "example": 200
+                              }
+                            }
+                          }
                         },
                         "razorpay_order_id": {
                           "type": "string",
@@ -10998,10 +11930,89 @@
                                 "format": "date-time",
                                 "nullable": true
                               },
+                              "effective_booked_exit_time": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
                               "actual_exit_time": {
                                 "type": "string",
                                 "format": "date-time",
                                 "nullable": true
+                              },
+                              "is_timer_paused": {
+                                "type": "boolean"
+                              },
+                              "pause_started_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "paused_minutes_total": {
+                                "type": "integer"
+                              },
+                              "extension_minutes_total": {
+                                "type": "integer"
+                              },
+                              "break_reason_required_after_minutes": {
+                                "type": "integer",
+                                "example": 10
+                              },
+                              "time_adjustments": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "format": "uuid"
+                                    },
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "pause_started",
+                                        "pause_completed",
+                                        "extension"
+                                      ]
+                                    },
+                                    "started_at": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "nullable": true
+                                    },
+                                    "ended_at": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "nullable": true
+                                    },
+                                    "minutes": {
+                                      "type": "integer"
+                                    },
+                                    "reason": {
+                                      "type": "string",
+                                      "nullable": true
+                                    },
+                                    "notes": {
+                                      "type": "string",
+                                      "nullable": true
+                                    },
+                                    "created_by": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "nullable": true
+                                    },
+                                    "created_by_staff_id": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "nullable": true
+                                    },
+                                    "created_at": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "nullable": true
+                                    }
+                                  }
+                                }
                               },
                               "guardian_verification_mode": {
                                 "type": "string",
@@ -11037,6 +12048,23 @@
                               "payment_mode": {
                                 "type": "string",
                                 "nullable": true
+                              },
+                              "payment_splits": {
+                                "type": "array",
+                                "nullable": true,
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "mode": {
+                                      "type": "string",
+                                      "example": "cash"
+                                    },
+                                    "amount": {
+                                      "type": "number",
+                                      "example": 200
+                                    }
+                                  }
+                                }
                               },
                               "razorpay_order_id": {
                                 "type": "string",
@@ -11295,10 +12323,89 @@
                             "format": "date-time",
                             "nullable": true
                           },
+                          "effective_booked_exit_time": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
                           "actual_exit_time": {
                             "type": "string",
                             "format": "date-time",
                             "nullable": true
+                          },
+                          "is_timer_paused": {
+                            "type": "boolean"
+                          },
+                          "pause_started_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "paused_minutes_total": {
+                            "type": "integer"
+                          },
+                          "extension_minutes_total": {
+                            "type": "integer"
+                          },
+                          "break_reason_required_after_minutes": {
+                            "type": "integer",
+                            "example": 10
+                          },
+                          "time_adjustments": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "pause_started",
+                                    "pause_completed",
+                                    "extension"
+                                  ]
+                                },
+                                "started_at": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "nullable": true
+                                },
+                                "ended_at": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "nullable": true
+                                },
+                                "minutes": {
+                                  "type": "integer"
+                                },
+                                "reason": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "notes": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "created_by": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "created_by_staff_id": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "created_at": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "nullable": true
+                                }
+                              }
+                            }
                           },
                           "guardian_verification_mode": {
                             "type": "string",
@@ -11334,6 +12441,23 @@
                           "payment_mode": {
                             "type": "string",
                             "nullable": true
+                          },
+                          "payment_splits": {
+                            "type": "array",
+                            "nullable": true,
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "mode": {
+                                  "type": "string",
+                                  "example": "cash"
+                                },
+                                "amount": {
+                                  "type": "number",
+                                  "example": 200
+                                }
+                              }
+                            }
                           },
                           "razorpay_order_id": {
                             "type": "string",
@@ -11494,7 +12618,18 @@
                     "type": "array",
                     "nullable": true,
                     "items": {
-                      "type": "string"
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 191
+                    }
+                  },
+                  "child_dobs": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "string",
+                      "nullable": true,
+                      "pattern": "^\\d{2}/\\d{2}/\\d{4}$"
                     }
                   },
                   "child_count": {
@@ -11536,6 +12671,19 @@
                 "required": [
                   "location_id"
                 ]
+              },
+              "example": {
+                "location_id": "550e8400-e29b-41d4-a716-446655440010",
+                "phone": "9001112222",
+                "customer_name": "Aarav Sharma",
+                "child_count": 1,
+                "child_names": [
+                  "Aanya Sharma"
+                ],
+                "child_dobs": [
+                  "10/05/2019"
+                ],
+                "hours": 2
               }
             }
           }
@@ -11635,10 +12783,89 @@
                             "format": "date-time",
                             "nullable": true
                           },
+                          "effective_booked_exit_time": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
                           "actual_exit_time": {
                             "type": "string",
                             "format": "date-time",
                             "nullable": true
+                          },
+                          "is_timer_paused": {
+                            "type": "boolean"
+                          },
+                          "pause_started_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "paused_minutes_total": {
+                            "type": "integer"
+                          },
+                          "extension_minutes_total": {
+                            "type": "integer"
+                          },
+                          "break_reason_required_after_minutes": {
+                            "type": "integer",
+                            "example": 10
+                          },
+                          "time_adjustments": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "pause_started",
+                                    "pause_completed",
+                                    "extension"
+                                  ]
+                                },
+                                "started_at": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "nullable": true
+                                },
+                                "ended_at": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "nullable": true
+                                },
+                                "minutes": {
+                                  "type": "integer"
+                                },
+                                "reason": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "notes": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "created_by": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "created_by_staff_id": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "created_at": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "nullable": true
+                                }
+                              }
+                            }
                           },
                           "guardian_verification_mode": {
                             "type": "string",
@@ -11674,6 +12901,23 @@
                           "payment_mode": {
                             "type": "string",
                             "nullable": true
+                          },
+                          "payment_splits": {
+                            "type": "array",
+                            "nullable": true,
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "mode": {
+                                  "type": "string",
+                                  "example": "cash"
+                                },
+                                "amount": {
+                                  "type": "number",
+                                  "example": 200
+                                }
+                              }
+                            }
                           },
                           "razorpay_order_id": {
                             "type": "string",
@@ -12145,10 +13389,89 @@
                           "format": "date-time",
                           "nullable": true
                         },
+                        "effective_booked_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
                         "actual_exit_time": {
                           "type": "string",
                           "format": "date-time",
                           "nullable": true
+                        },
+                        "is_timer_paused": {
+                          "type": "boolean"
+                        },
+                        "pause_started_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "paused_minutes_total": {
+                          "type": "integer"
+                        },
+                        "extension_minutes_total": {
+                          "type": "integer"
+                        },
+                        "break_reason_required_after_minutes": {
+                          "type": "integer",
+                          "example": 10
+                        },
+                        "time_adjustments": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "pause_started",
+                                  "pause_completed",
+                                  "extension"
+                                ]
+                              },
+                              "started_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "ended_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "minutes": {
+                                "type": "integer"
+                              },
+                              "reason": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "notes": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "created_by": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "created_by_staff_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              }
+                            }
+                          }
                         },
                         "guardian_verification_mode": {
                           "type": "string",
@@ -12184,6 +13507,23 @@
                         "payment_mode": {
                           "type": "string",
                           "nullable": true
+                        },
+                        "payment_splits": {
+                          "type": "array",
+                          "nullable": true,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "mode": {
+                                "type": "string",
+                                "example": "cash"
+                              },
+                              "amount": {
+                                "type": "number",
+                                "example": 200
+                              }
+                            }
+                          }
                         },
                         "razorpay_order_id": {
                           "type": "string",
@@ -12428,10 +13768,89 @@
                             "format": "date-time",
                             "nullable": true
                           },
+                          "effective_booked_exit_time": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
                           "actual_exit_time": {
                             "type": "string",
                             "format": "date-time",
                             "nullable": true
+                          },
+                          "is_timer_paused": {
+                            "type": "boolean"
+                          },
+                          "pause_started_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "paused_minutes_total": {
+                            "type": "integer"
+                          },
+                          "extension_minutes_total": {
+                            "type": "integer"
+                          },
+                          "break_reason_required_after_minutes": {
+                            "type": "integer",
+                            "example": 10
+                          },
+                          "time_adjustments": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "pause_started",
+                                    "pause_completed",
+                                    "extension"
+                                  ]
+                                },
+                                "started_at": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "nullable": true
+                                },
+                                "ended_at": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "nullable": true
+                                },
+                                "minutes": {
+                                  "type": "integer"
+                                },
+                                "reason": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "notes": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "created_by": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "created_by_staff_id": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "created_at": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "nullable": true
+                                }
+                              }
+                            }
                           },
                           "guardian_verification_mode": {
                             "type": "string",
@@ -12467,6 +13886,23 @@
                           "payment_mode": {
                             "type": "string",
                             "nullable": true
+                          },
+                          "payment_splits": {
+                            "type": "array",
+                            "nullable": true,
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "mode": {
+                                  "type": "string",
+                                  "example": "cash"
+                                },
+                                "amount": {
+                                  "type": "number",
+                                  "example": 200
+                                }
+                              }
+                            }
                           },
                           "razorpay_order_id": {
                             "type": "string",
@@ -12579,11 +14015,55 @@
                   "ids": {
                     "type": "array",
                     "items": {
-                      "type": "string"
-                    }
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "minItems": 1,
+                    "maxItems": 100
                   },
                   "payment_mode": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": [
+                      "cash",
+                      "upi",
+                      "card",
+                      "bank_transfer",
+                      "other",
+                      "split"
+                    ],
+                    "example": "split"
+                  },
+                  "payment_splits": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "cash",
+                            "upi",
+                            "card",
+                            "bank_transfer",
+                            "other"
+                          ],
+                          "example": "cash"
+                        },
+                        "amount": {
+                          "type": "number",
+                          "minimum": 0.01,
+                          "maximum": 9999999.99,
+                          "example": 200
+                        }
+                      },
+                      "required": [
+                        "mode",
+                        "amount"
+                      ]
+                    },
+                    "maxItems": 5,
+                    "description": "Required when payment_mode is split. The split amount total must equal the selected pass total."
                   }
                 },
                 "required": [
@@ -12593,7 +14073,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Marks generated walk-in passes paid. Use payment_mode split with payment_splits when the payable amount is collected across multiple payment modes."
       }
     },
     "/api/v1/entry-exit/passes/razorpay-order": {
@@ -12905,10 +14386,89 @@
                           "format": "date-time",
                           "nullable": true
                         },
+                        "effective_booked_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
                         "actual_exit_time": {
                           "type": "string",
                           "format": "date-time",
                           "nullable": true
+                        },
+                        "is_timer_paused": {
+                          "type": "boolean"
+                        },
+                        "pause_started_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "paused_minutes_total": {
+                          "type": "integer"
+                        },
+                        "extension_minutes_total": {
+                          "type": "integer"
+                        },
+                        "break_reason_required_after_minutes": {
+                          "type": "integer",
+                          "example": 10
+                        },
+                        "time_adjustments": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "pause_started",
+                                  "pause_completed",
+                                  "extension"
+                                ]
+                              },
+                              "started_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "ended_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "minutes": {
+                                "type": "integer"
+                              },
+                              "reason": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "notes": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "created_by": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "created_by_staff_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              }
+                            }
+                          }
                         },
                         "guardian_verification_mode": {
                           "type": "string",
@@ -12944,6 +14504,23 @@
                         "payment_mode": {
                           "type": "string",
                           "nullable": true
+                        },
+                        "payment_splits": {
+                          "type": "array",
+                          "nullable": true,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "mode": {
+                                "type": "string",
+                                "example": "cash"
+                              },
+                              "amount": {
+                                "type": "number",
+                                "example": 200
+                              }
+                            }
+                          }
                         },
                         "razorpay_order_id": {
                           "type": "string",
@@ -13165,10 +14742,89 @@
                           "format": "date-time",
                           "nullable": true
                         },
+                        "effective_booked_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
                         "actual_exit_time": {
                           "type": "string",
                           "format": "date-time",
                           "nullable": true
+                        },
+                        "is_timer_paused": {
+                          "type": "boolean"
+                        },
+                        "pause_started_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "paused_minutes_total": {
+                          "type": "integer"
+                        },
+                        "extension_minutes_total": {
+                          "type": "integer"
+                        },
+                        "break_reason_required_after_minutes": {
+                          "type": "integer",
+                          "example": 10
+                        },
+                        "time_adjustments": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "pause_started",
+                                  "pause_completed",
+                                  "extension"
+                                ]
+                              },
+                              "started_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "ended_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "minutes": {
+                                "type": "integer"
+                              },
+                              "reason": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "notes": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "created_by": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "created_by_staff_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              }
+                            }
+                          }
                         },
                         "guardian_verification_mode": {
                           "type": "string",
@@ -13204,6 +14860,23 @@
                         "payment_mode": {
                           "type": "string",
                           "nullable": true
+                        },
+                        "payment_splits": {
+                          "type": "array",
+                          "nullable": true,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "mode": {
+                                "type": "string",
+                                "example": "cash"
+                              },
+                              "amount": {
+                                "type": "number",
+                                "example": 200
+                              }
+                            }
+                          }
                         },
                         "razorpay_order_id": {
                           "type": "string",
@@ -13400,10 +15073,89 @@
                           "format": "date-time",
                           "nullable": true
                         },
+                        "effective_booked_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
                         "actual_exit_time": {
                           "type": "string",
                           "format": "date-time",
                           "nullable": true
+                        },
+                        "is_timer_paused": {
+                          "type": "boolean"
+                        },
+                        "pause_started_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "paused_minutes_total": {
+                          "type": "integer"
+                        },
+                        "extension_minutes_total": {
+                          "type": "integer"
+                        },
+                        "break_reason_required_after_minutes": {
+                          "type": "integer",
+                          "example": 10
+                        },
+                        "time_adjustments": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "pause_started",
+                                  "pause_completed",
+                                  "extension"
+                                ]
+                              },
+                              "started_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "ended_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "minutes": {
+                                "type": "integer"
+                              },
+                              "reason": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "notes": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "created_by": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "created_by_staff_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              }
+                            }
+                          }
                         },
                         "guardian_verification_mode": {
                           "type": "string",
@@ -13439,6 +15191,23 @@
                         "payment_mode": {
                           "type": "string",
                           "nullable": true
+                        },
+                        "payment_splits": {
+                          "type": "array",
+                          "nullable": true,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "mode": {
+                                "type": "string",
+                                "example": "cash"
+                              },
+                              "amount": {
+                                "type": "number",
+                                "example": 200
+                              }
+                            }
+                          }
                         },
                         "razorpay_order_id": {
                           "type": "string",
@@ -13660,10 +15429,89 @@
                           "format": "date-time",
                           "nullable": true
                         },
+                        "effective_booked_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
                         "actual_exit_time": {
                           "type": "string",
                           "format": "date-time",
                           "nullable": true
+                        },
+                        "is_timer_paused": {
+                          "type": "boolean"
+                        },
+                        "pause_started_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "paused_minutes_total": {
+                          "type": "integer"
+                        },
+                        "extension_minutes_total": {
+                          "type": "integer"
+                        },
+                        "break_reason_required_after_minutes": {
+                          "type": "integer",
+                          "example": 10
+                        },
+                        "time_adjustments": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "pause_started",
+                                  "pause_completed",
+                                  "extension"
+                                ]
+                              },
+                              "started_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "ended_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "minutes": {
+                                "type": "integer"
+                              },
+                              "reason": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "notes": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "created_by": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "created_by_staff_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              }
+                            }
+                          }
                         },
                         "guardian_verification_mode": {
                           "type": "string",
@@ -13699,6 +15547,23 @@
                         "payment_mode": {
                           "type": "string",
                           "nullable": true
+                        },
+                        "payment_splits": {
+                          "type": "array",
+                          "nullable": true,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "mode": {
+                                "type": "string",
+                                "example": "cash"
+                              },
+                              "amount": {
+                                "type": "number",
+                                "example": 200
+                              }
+                            }
+                          }
                         },
                         "razorpay_order_id": {
                           "type": "string",
@@ -13828,6 +15693,1092 @@
         }
       }
     },
+    "/api/v1/entry-exit/passes/{log}/extend-timer": {
+      "post": {
+        "summary": "Extend Active Pass Time",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitPassesExtendTimer",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          },
+          "200": {
+            "description": "Pass time extended successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Pass time extended."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "location_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "location_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "customer_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "customer_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "parent_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "parent_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "child_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "child_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "booking_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "entry_type": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "pass_lifecycle_status": {
+                          "type": "string",
+                          "enum": [
+                            "payment_pending",
+                            "issued_not_scanned",
+                            "claimed_inside",
+                            "used_checked_out",
+                            "expired"
+                          ],
+                          "example": "issued_not_scanned"
+                        },
+                        "pass_lifecycle_label": {
+                          "type": "string",
+                          "example": "Issued / Not scanned"
+                        },
+                        "entry_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "booked_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "effective_booked_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "actual_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "is_timer_paused": {
+                          "type": "boolean"
+                        },
+                        "pause_started_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "paused_minutes_total": {
+                          "type": "integer"
+                        },
+                        "extension_minutes_total": {
+                          "type": "integer"
+                        },
+                        "break_reason_required_after_minutes": {
+                          "type": "integer",
+                          "example": 10
+                        },
+                        "time_adjustments": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "pause_started",
+                                  "pause_completed",
+                                  "extension"
+                                ]
+                              },
+                              "started_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "ended_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "minutes": {
+                                "type": "integer"
+                              },
+                              "reason": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "notes": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "created_by": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "created_by_staff_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "guardian_verification_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "guardian_verified_by": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "expected_duration_minutes": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "pass_price": {
+                          "type": "number"
+                        },
+                        "bill_base_amount": {
+                          "type": "number"
+                        },
+                        "bill_overtime_amount": {
+                          "type": "number"
+                        },
+                        "bill_total_amount": {
+                          "type": "number"
+                        },
+                        "payment_status": {
+                          "type": "string",
+                          "enum": [
+                            "pending",
+                            "paid"
+                          ]
+                        },
+                        "payment_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "payment_splits": {
+                          "type": "array",
+                          "nullable": true,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "mode": {
+                                "type": "string",
+                                "example": "cash"
+                              },
+                              "amount": {
+                                "type": "number",
+                                "example": 200
+                              }
+                            }
+                          }
+                        },
+                        "razorpay_order_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "order_NX1234567890AB"
+                        },
+                        "razorpay_payment_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "pay_NX1234567890AB"
+                        },
+                        "razorpay_signature": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "paid_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "issued_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "print_count": {
+                          "type": "integer"
+                        },
+                        "overtime_minutes": {
+                          "type": "number"
+                        },
+                        "overtime_charge": {
+                          "type": "number"
+                        },
+                        "overtime_paid": {
+                          "type": "boolean"
+                        },
+                        "overtime_payment_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "overtime_razorpay_order_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "order_OT1234567890AB"
+                        },
+                        "overtime_razorpay_payment_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "pay_OT1234567890AB"
+                        },
+                        "overtime_razorpay_signature": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "overtime_paid_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "overtime_amount_paid": {
+                          "type": "number"
+                        },
+                        "pass_expires_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "updated_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed or pass is not active"
+          }
+        },
+        "parameters": [
+          {
+            "name": "log",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "minutes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 240
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "notes": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "minutes",
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "description": "Adds staff-approved minutes to an active pass expected checkout. A reason is always required."
+      }
+    },
+    "/api/v1/entry-exit/passes/{log}/pause-timer": {
+      "post": {
+        "summary": "Pause Active Pass Timer",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitPassesPauseTimer",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          },
+          "200": {
+            "description": "Pass timer paused successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Pass timer paused."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "location_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "location_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "customer_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "customer_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "parent_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "parent_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "child_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "child_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "booking_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "entry_type": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "pass_lifecycle_status": {
+                          "type": "string",
+                          "enum": [
+                            "payment_pending",
+                            "issued_not_scanned",
+                            "claimed_inside",
+                            "used_checked_out",
+                            "expired"
+                          ],
+                          "example": "issued_not_scanned"
+                        },
+                        "pass_lifecycle_label": {
+                          "type": "string",
+                          "example": "Issued / Not scanned"
+                        },
+                        "entry_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "booked_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "effective_booked_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "actual_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "is_timer_paused": {
+                          "type": "boolean"
+                        },
+                        "pause_started_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "paused_minutes_total": {
+                          "type": "integer"
+                        },
+                        "extension_minutes_total": {
+                          "type": "integer"
+                        },
+                        "break_reason_required_after_minutes": {
+                          "type": "integer",
+                          "example": 10
+                        },
+                        "time_adjustments": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "pause_started",
+                                  "pause_completed",
+                                  "extension"
+                                ]
+                              },
+                              "started_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "ended_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "minutes": {
+                                "type": "integer"
+                              },
+                              "reason": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "notes": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "created_by": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "created_by_staff_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "guardian_verification_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "guardian_verified_by": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "expected_duration_minutes": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "pass_price": {
+                          "type": "number"
+                        },
+                        "bill_base_amount": {
+                          "type": "number"
+                        },
+                        "bill_overtime_amount": {
+                          "type": "number"
+                        },
+                        "bill_total_amount": {
+                          "type": "number"
+                        },
+                        "payment_status": {
+                          "type": "string",
+                          "enum": [
+                            "pending",
+                            "paid"
+                          ]
+                        },
+                        "payment_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "payment_splits": {
+                          "type": "array",
+                          "nullable": true,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "mode": {
+                                "type": "string",
+                                "example": "cash"
+                              },
+                              "amount": {
+                                "type": "number",
+                                "example": 200
+                              }
+                            }
+                          }
+                        },
+                        "razorpay_order_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "order_NX1234567890AB"
+                        },
+                        "razorpay_payment_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "pay_NX1234567890AB"
+                        },
+                        "razorpay_signature": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "paid_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "issued_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "print_count": {
+                          "type": "integer"
+                        },
+                        "overtime_minutes": {
+                          "type": "number"
+                        },
+                        "overtime_charge": {
+                          "type": "number"
+                        },
+                        "overtime_paid": {
+                          "type": "boolean"
+                        },
+                        "overtime_payment_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "overtime_razorpay_order_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "order_OT1234567890AB"
+                        },
+                        "overtime_razorpay_payment_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "pay_OT1234567890AB"
+                        },
+                        "overtime_razorpay_signature": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "overtime_paid_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "overtime_amount_paid": {
+                          "type": "number"
+                        },
+                        "pass_expires_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "updated_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Pass is not active or timer is already paused"
+          }
+        },
+        "parameters": [
+          {
+            "name": "log",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": []
+              }
+            }
+          }
+        },
+        "description": "Pauses time counting for an active inside session. Time is added back to the expected checkout when the timer is resumed."
+      }
+    },
+    "/api/v1/entry-exit/passes/{log}/resume-timer": {
+      "post": {
+        "summary": "Resume Active Pass Timer",
+        "tags": [
+          "Entry Exit"
+        ],
+        "operationId": "entryexitPassesResumeTimer",
+        "responses": {
+          "201": {
+            "description": "Successful response"
+          },
+          "200": {
+            "description": "Pass timer resumed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Pass timer resumed."
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "location_id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "location_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "customer_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "customer_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "parent_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "parent_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "child_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "child_name": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "booking_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "entry_type": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "pass_lifecycle_status": {
+                          "type": "string",
+                          "enum": [
+                            "payment_pending",
+                            "issued_not_scanned",
+                            "claimed_inside",
+                            "used_checked_out",
+                            "expired"
+                          ],
+                          "example": "issued_not_scanned"
+                        },
+                        "pass_lifecycle_label": {
+                          "type": "string",
+                          "example": "Issued / Not scanned"
+                        },
+                        "entry_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "booked_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "effective_booked_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "actual_exit_time": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "is_timer_paused": {
+                          "type": "boolean"
+                        },
+                        "pause_started_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "paused_minutes_total": {
+                          "type": "integer"
+                        },
+                        "extension_minutes_total": {
+                          "type": "integer"
+                        },
+                        "break_reason_required_after_minutes": {
+                          "type": "integer",
+                          "example": 10
+                        },
+                        "time_adjustments": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "pause_started",
+                                  "pause_completed",
+                                  "extension"
+                                ]
+                              },
+                              "started_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "ended_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              },
+                              "minutes": {
+                                "type": "integer"
+                              },
+                              "reason": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "notes": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "created_by": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "created_by_staff_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        },
+                        "guardian_verification_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "guardian_verified_by": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "expected_duration_minutes": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "pass_price": {
+                          "type": "number"
+                        },
+                        "bill_base_amount": {
+                          "type": "number"
+                        },
+                        "bill_overtime_amount": {
+                          "type": "number"
+                        },
+                        "bill_total_amount": {
+                          "type": "number"
+                        },
+                        "payment_status": {
+                          "type": "string",
+                          "enum": [
+                            "pending",
+                            "paid"
+                          ]
+                        },
+                        "payment_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "payment_splits": {
+                          "type": "array",
+                          "nullable": true,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "mode": {
+                                "type": "string",
+                                "example": "cash"
+                              },
+                              "amount": {
+                                "type": "number",
+                                "example": 200
+                              }
+                            }
+                          }
+                        },
+                        "razorpay_order_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "order_NX1234567890AB"
+                        },
+                        "razorpay_payment_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "pay_NX1234567890AB"
+                        },
+                        "razorpay_signature": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "paid_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "issued_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "print_count": {
+                          "type": "integer"
+                        },
+                        "overtime_minutes": {
+                          "type": "number"
+                        },
+                        "overtime_charge": {
+                          "type": "number"
+                        },
+                        "overtime_paid": {
+                          "type": "boolean"
+                        },
+                        "overtime_payment_mode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "overtime_razorpay_order_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "order_OT1234567890AB"
+                        },
+                        "overtime_razorpay_payment_id": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "pay_OT1234567890AB"
+                        },
+                        "overtime_razorpay_signature": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "overtime_paid_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "overtime_amount_paid": {
+                          "type": "number"
+                        },
+                        "pass_expires_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "updated_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Reason required or pass timer is not paused"
+          }
+        },
+        "parameters": [
+          {
+            "name": "log",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 120
+                  },
+                  "notes": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 1000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Resumes a paused active pass. If the break is over 10 minutes, reason is mandatory."
+      }
+    },
     "/api/v1/entry-exit/sessions/lookup": {
       "get": {
         "summary": "Lookup Open Sessions",
@@ -13925,10 +16876,89 @@
                             "format": "date-time",
                             "nullable": true
                           },
+                          "effective_booked_exit_time": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
                           "actual_exit_time": {
                             "type": "string",
                             "format": "date-time",
                             "nullable": true
+                          },
+                          "is_timer_paused": {
+                            "type": "boolean"
+                          },
+                          "pause_started_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "paused_minutes_total": {
+                            "type": "integer"
+                          },
+                          "extension_minutes_total": {
+                            "type": "integer"
+                          },
+                          "break_reason_required_after_minutes": {
+                            "type": "integer",
+                            "example": 10
+                          },
+                          "time_adjustments": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "pause_started",
+                                    "pause_completed",
+                                    "extension"
+                                  ]
+                                },
+                                "started_at": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "nullable": true
+                                },
+                                "ended_at": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "nullable": true
+                                },
+                                "minutes": {
+                                  "type": "integer"
+                                },
+                                "reason": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "notes": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "created_by": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "created_by_staff_id": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "created_at": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "nullable": true
+                                }
+                              }
+                            }
                           },
                           "guardian_verification_mode": {
                             "type": "string",
@@ -13964,6 +16994,23 @@
                           "payment_mode": {
                             "type": "string",
                             "nullable": true
+                          },
+                          "payment_splits": {
+                            "type": "array",
+                            "nullable": true,
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "mode": {
+                                  "type": "string",
+                                  "example": "cash"
+                                },
+                                "amount": {
+                                  "type": "number",
+                                  "example": 200
+                                }
+                              }
+                            }
                           },
                           "razorpay_order_id": {
                             "type": "string",

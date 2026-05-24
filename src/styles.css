@@ -1011,6 +1011,12 @@ label {
   margin-bottom: 0.4rem;
 }
 
+.history-pass-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .history-single-pass-shell {
   display: grid;
   grid-template-columns: 1fr;
@@ -1021,6 +1027,18 @@ label {
 
 .history-single-pass-shell .ticket-card {
   width: auto;
+}
+
+.ticket-print-count {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.85rem;
+  z-index: 2;
+  color: #111111;
+  font-size: 0.95rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .history-settlement-modal {
@@ -3144,14 +3162,14 @@ input:disabled {
 
 .payment-modal-card {
   width: 1100px;
-  height: 700px;
-  max-width: calc(100vw - 48px);
-  max-height: calc(100vh - 48px);
+  height: min(820px, calc(100vh - 28px));
+  max-width: calc(100vw - 36px);
+  max-height: calc(100vh - 28px);
   overflow: auto;
   background: #ffffff;
   border-radius: 28px;
   border: 1px solid #e5e7eb;
-  padding: 1.3rem;
+  padding: 1.15rem 1.3rem 1.2rem;
   box-shadow: 0 30px 60px rgba(15, 23, 42, 0.22);
   display: grid;
   grid-template-rows: auto auto auto auto auto;
@@ -3215,7 +3233,7 @@ input:disabled {
   display: grid;
   grid-template-columns: minmax(0, 2fr) 320px;
   gap: 1rem;
-  margin-top: 0.35rem;
+  margin-top: 0.2rem;
   align-items: stretch;
 }
 
@@ -3230,7 +3248,7 @@ input:disabled {
 
 .payment-pass-box {
   padding: 0.8rem;
-  height: 180px;
+  height: 150px;
   overflow: hidden;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -3262,7 +3280,7 @@ input:disabled {
 }
 
 .payment-total-box {
-  padding: 1.25rem;
+  padding: 1rem 1.1rem;
   background: #f8fafc;
 }
 
@@ -3274,8 +3292,8 @@ input:disabled {
 
 .payment-total-box strong {
   display: block;
-  margin: 0.55rem 0 1rem;
-  font-size: 2.1rem;
+  margin: 0.45rem 0 0.7rem;
+  font-size: 1.9rem;
   color: #0f172a;
 }
 
@@ -3286,11 +3304,11 @@ input:disabled {
 }
 
 .payment-section {
-  margin-top: 1.5rem;
+  margin-top: 1.05rem;
 }
 
 .payment-section h4 {
-  margin: 0 0 0.8rem;
+  margin: 0 0 0.65rem;
   font-size: 1rem;
 }
 
@@ -3304,7 +3322,7 @@ input:disabled {
   display: flex;
   align-items: center;
   gap: 0.9rem;
-  padding: 1rem 1.1rem;
+  padding: 0.85rem 1rem;
   font-size: 1rem;
   font-weight: 700;
   color: #334155;
@@ -3344,14 +3362,120 @@ input:disabled {
   background: #fbfcfe;
 }
 
+.payment-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.payment-mode-grid .payment-mode-tile,
+.payment-mode-grid.split .payment-mode-tile {
+  min-height: 52px;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.7rem 0.55rem;
+  font-size: 0.92rem;
+  white-space: nowrap;
+}
+
+.payment-mode-tile {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 0.95rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 1rem;
+  font-weight: 800;
+  text-align: left;
+}
+
+.payment-mode-tile.active {
+  border-color: #6366f1;
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.payment-check {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  color: #ffffff;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  font-size: 1.25rem;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.payment-check.active {
+  border-color: #4f46e5;
+  background: #4f46e5;
+}
+
+.payment-split-amount-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-top: 0.85rem;
+}
+
+.payment-split-amount {
+  min-height: 64px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 174px;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.payment-split-amount input {
+  margin: 0;
+  min-height: 46px;
+  border-radius: 14px;
+  background: #ffffff;
+  text-align: right;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.payment-split-note {
+  margin: 0.7rem 0 0;
+  color: #64748b;
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.payment-split-note.warning {
+  color: #b45309;
+}
+
 .payment-actions {
-  margin-top: 1.5rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid #eceff3;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 0;
   position: sticky;
   bottom: 0;
-  background: #ffffff;
-  padding-bottom: 0.25rem;
+  z-index: 4;
+  justify-content: flex-end;
+  justify-self: end;
+  width: fit-content;
+  margin-left: auto;
+  padding-bottom: 0;
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 18px 0 0 0;
 }
 
 .ticket-grid {
@@ -3369,6 +3493,7 @@ input:disabled {
 }
 
 .ticket-card {
+  position: relative;
   border: 2px solid #111111;
   border-radius: 18px;
   padding: 0;
@@ -3585,11 +3710,14 @@ input:disabled {
   .modal-actions,
   .payment-modal-top,
   .payment-plan-grid,
+  .payment-mode-grid,
+  .payment-split-amount-grid,
   .ticket-grid,
   .ticket-card,
   .ticket-meta-grid {
     display: grid;
     justify-content: initial;
+    grid-template-columns: 1fr;
   }
 
   .ticket-grid {

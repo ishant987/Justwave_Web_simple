@@ -1,850 +1,234 @@
-# Walk-In Module React Wrapper Handoff
+# Entry Exit Bill Dashboard API Flow
 
-## Purpose
+This note explains what is called by the `entry-exit/bill-dashboard` area and how the bill data is built.
 
-This document explains the existing walk-in module implemented in `Modules/EntryExit` so a separate React wrapper project can reuse the backend with a much simpler UI for non-technical operators.
+## Page Routes
 
-The current backend already supports the full walk-in lifecycle:
+The bill dashboard is a Laravel server-rendered web page, not a JavaScript SPA page. The Blade views mostly use normal links and GET forms.
 
-1. Customer/parent lookup
-2. Pass creation
-3. Pass payment
-4. QR entry scan
-5. Overtime settlement
-6. QR exit scan
-7. Exit OTP verification
-8. Occupancy and billing views
+| Purpose | Method | Route / URL | Route name | Controller |
+| --- | --- | --- | --- | --- |
+| Summary dashboard | GET | `/entry-exit/bill-dashboard` | `entry-exit.bill-dashboard.view` | `EntryExitController::billDashboardView` |
+| Bill table | GET | `/entry-exit/bill-dashboard/bills` | `entry-exit.bill-dashboard.bills` | `EntryExitController::billDashboardBillsView` |
+| Excel export | GET | `/entry-exit/bill-dashboard/bills/export` | `entry-exit.bill-dashboard.bills.export` | `EntryExitController::billDashboardBillsExport` |
+| JSON API version | GET | `/api/v1/entry-exit/bill-dashboard` | `entryexit.bill-dashboard.index` | `EntryExitApiController::billDashboard` |
 
-## Recommended Wrapper Goal
+All web routes are behind `auth`, `verified`, and `iam:entry_exit.view_logs`.
 
-Build the React project as a thin frontend over the existing Laravel APIs. Do not re-implement business logic in React. Keep the UI task-based:
+The API route is behind `auth:sanctum` and `iam:entry_exit.view_logs`.
 
-1. `New Walk-In`
-2. `Collect Payment`
-3. `Scan Entry`
-4. `Settle Overtime`
-5. `Scan Exit`
-6. `Live Occupancy`
-7. `Passes / Bills`
+## What The Web Page Calls
 
-For non-technical users, each screen should have one primary action, large buttons, minimal filters, and plain labels like:
+### `/entry-exit/bill-dashboard`
 
-- `Find Customer`
-- `Create Pass`
-- `Take Payment`
-- `Print Pass`
-- `Scan to Enter`
-- `Scan to Exit`
-- `Verify OTP`
+This is the first dashboard view. It loads:
 
-## Base Domain and API Prefix
+- Top summary cards: pending, generated today, all-time bills, amount today, amount this month.
+- Payment mode breakdown: Cash, UPI, Card, Bank Transfer, Other, Razorpay.
+- Location list for filters.
+- Filtered collection total for the selected summary period.
 
-The domain is environment-dependent.
+The page renders `Modules/EntryExit/resources/views/entry-exit/bill-dashboard-summary.blade.php`.
 
-- Laravel app base URL comes from `APP_URL`
-- Default local fallback in code: `http://localhost`
-- OpenAPI stub server in generated docs is only a placeholder: `http://my-default-host.com`
+The summary period form submits back to the same route:
 
-For the new wrapper, treat these as the real patterns:
+```text
+GET /entry-exit/bill-dashboard?summary_period=today
+GET /entry-exit/bill-dashboard?summary_period=monthly
+GET /entry-exit/bill-dashboard?summary_period=date&date_from=2026-05-24
+GET /entry-exit/bill-dashboard?summary_period=date_range&date_from=2026-05-01&date_to=2026-05-24
+```
 
-- App domain: `https://your-domain.com`
-- API base: `https://your-domain.com/api/v1`
-- Walk-in API base: `https://your-domain.com/api/v1/entry-exit`
-- Auth API base: `https://your-domain.com/api/v1/auth`
-- Core location API base: `https://your-domain.com/api/v1/core`
+The summary cards link to the bill table route with a `category` query string.
 
-## Authentication
+### `/entry-exit/bill-dashboard/bills`
 
-The mobile/wrapper flow should use Sanctum bearer tokens.
+This is the table page. It loads:
 
-### Login
+- The same top category cards.
+- Search, status, payment mode, collection type, branch, date, rows-per-page filters.
+- Paginated bill rows.
+- Filtered total for the current table query.
 
-- `POST /api/v1/auth/login`
+The page renders `Modules/EntryExit/resources/views/entry-exit/bill-dashboard.blade.php`.
 
-Payload:
+The filter form submits:
+
+```text
+GET /entry-exit/bill-dashboard/bills?category=all_time&status=all&payment_mode=all&collection_type=all&search=&sort=created_at&direction=desc&per_page=15
+```
+
+Sorting links submit the same route with `sort` and `direction`.
+
+Pagination is Laravel pagination with the current query string preserved.
+
+### `/entry-exit/bill-dashboard/bills/export`
+
+The Export Excel button calls this route with the current query string:
+
+```text
+GET /entry-exit/bill-dashboard/bills/export?...current_filters
+```
+
+It runs the same bill filter logic as the table, but returns an `.xlsx` stream.
+
+Export columns include bill ID, customer, phone, branch, staff, duration, status, generated time, entry time, exit time, pass collection, overtime collection, total collection, payment modes, and Razorpay IDs.
+
+## JSON API Endpoint
+
+The API endpoint is:
+
+```text
+GET /api/v1/entry-exit/bill-dashboard
+Authorization: Bearer <sanctum-token>
+```
+
+Supported query parameters are validated by `BillDashboardApiRequest`:
+
+| Parameter | Values / Type | Default |
+| --- | --- | --- |
+| `category` | `all_time`, `pending`, `generated_today`, `amount_today`, `amount_month` | `all_time` |
+| `status` | `all`, `pending`, `completed`, `active`, `expired` | `all` |
+| `location_id` | existing `locations.id` | empty |
+| `date_from` | date | empty |
+| `date_to` | date, after/equal `date_from` | empty |
+| `amount_min` | number >= 0 | empty |
+| `amount_max` | number >= 0 and >= `amount_min` | empty |
+| `search` | string, max 100 | empty |
+| `sort` | `bill`, `amount`, `created_at`, `duration`, `status`, `entry_time`, `exit_time` | `created_at` |
+| `direction` | `asc`, `desc` | `desc` |
+| `per_page` | integer 10-50 | `15` |
+
+Example:
+
+```text
+GET /api/v1/entry-exit/bill-dashboard?status=completed&search=Rahul&amount_min=300&amount_max=1000&sort=amount&direction=desc
+```
+
+Response shape:
 
 ```json
 {
-  "email": "staff@example.com",
-  "password": "password",
-  "device_name": "walkin-react-wrapper"
-}
-```
-
-Success response:
-
-```json
-{
-  "message": "Authenticated successfully.",
-  "token_type": "Bearer",
-  "access_token": "1|exampletokenvalue",
-  "user": {
-    "id": "uuid",
-    "name": "Jane Doe",
-    "email": "staff@example.com",
-    "roles": ["admin"],
-    "permissions": ["entry_exit.issue_pass"]
-  }
-}
-```
-
-Use header on all protected calls:
-
-```http
-Authorization: Bearer <access_token>
-Accept: application/json
-Content-Type: application/json
-```
-
-### Session helpers
-
-- `GET /api/v1/auth/me`
-- `POST /api/v1/auth/logout`
-
-## Permissions You Need
-
-The wrapper user must have backend permissions. Main ones:
-
-- `entry_exit.lookup`
-- `entry_exit.issue_pass`
-- `entry_exit.commit_entry`
-- `entry_exit.record_exit`
-- `entry_exit.guardian_verification`
-- `entry_exit.view_occupancy`
-- `entry_exit.view_logs`
-- `entry_exit.manage_duration_prices`
-- `entry_exit.manage_settings`
-
-Minimum practical staff setup for a full wrapper:
-
-- reception user: `lookup`, `issue_pass`, `view_logs`
-- gate entry user: `commit_entry`
-- gate exit user: `record_exit`
-- manager/admin: add `view_occupancy`, `manage_duration_prices`, `manage_settings`
-
-## Required Supporting API
-
-The walk-in creation API requires `location_id`.
-
-### Locations
-
-- `GET /api/v1/core/locations`
-
-Use this if your wrapper needs branch selection. If each operator is branch-locked in practice, load once at login and keep a default selected branch.
-
-## Main Walk-In API Map
-
-Base prefix for all endpoints below:
-
-`/api/v1/entry-exit`
-
-### 1. Customer / Parent Lookup
-
-- `GET /parents/search?query=...`
-- `GET /parents/lookup?phone=...`
-- `GET /sessions/lookup?phone=...`
-- `GET /passes/lookup?customer_id=...`
-- `GET /passes/lookup?phone=...`
-
-Use cases:
-
-- search previous customer/parent by name or phone
-- prefill walk-in form
-- check active/open sessions before creating a new pass
-- show full history for a customer
-
-### 2. Pass Creation and Payment
-
-- `POST /passes`
-- `GET /passes`
-- `POST /passes/mark-paid`
-- `POST /passes/razorpay-order`
-- `POST /passes/razorpay-verify`
-- `POST /passes/record-print`
-
-### 3. Entry / Exit Operations
-
-- `POST /passes/scan-entry`
-- `POST /passes/scan-exit`
-- `POST /passes/verify-exit-otp`
-- `POST /guardian-verification`
-
-### 4. Overtime Operations
-
-- `GET /overtime-settlements?phone=...`
-- `POST /overtime-settlements`
-- `POST /overtime-settlements/razorpay-order`
-- `POST /overtime-settlements/razorpay-verify`
-- `POST /passes/mark-overtime-paid`
-
-### 5. Monitoring and Reports
-
-- `GET /live-occupancy`
-- `GET /logs`
-- `GET /kids-status`
-- `GET /bill-dashboard`
-
-### 6. Duration Pricing and Rules
-
-- `GET /duration-prices`
-- `POST /duration-prices`
-- `DELETE /duration-prices/{id}`
-- `PUT /duration-prices/exit-grace`
-
-## Core Data Shapes the Wrapper Should Understand
-
-### EntryExitLog
-
-This is the main walk-in pass/session record.
-
-Important fields returned by many APIs:
-
-- `id`
-- `location_id`
-- `location_name`
-- `customer_id`
-- `customer_name`
-- `parent_id`
-- `parent_name`
-- `child_id`
-- `child_name`
-- `entry_type`
-- `entry_time`
-- `booked_exit_time`
-- `actual_exit_time`
-- `expected_duration_minutes`
-- `pass_price`
-- `bill_base_amount`
-- `bill_overtime_amount`
-- `bill_total_amount`
-- `payment_status`
-- `payment_mode`
-- `paid_at`
-- `issued_at`
-- `print_count`
-- `overtime_minutes`
-- `overtime_charge`
-- `overtime_paid`
-- `overtime_payment_mode`
-- `overtime_paid_at`
-- `overtime_amount_paid`
-- `pass_expires_at`
-- `pass_lifecycle_status`
-- `pass_lifecycle_label`
-
-### Pass lifecycle statuses
-
-- `payment_pending`
-- `issued_not_scanned`
-- `claimed_inside`
-- `used_checked_out`
-- `expired`
-
-### Payment modes
-
-- `cash`
-- `upi`
-- `card`
-- `bank_transfer`
-- `other`
-- `razorpay`
-
-## Frontend Flow You Should Implement
-
-## Screen 1: New Walk-In
-
-Recommended user flow:
-
-1. Search by phone
-2. If customer exists, prefill parent/child details
-3. Show active sessions if any
-4. Select existing child or create new child
-5. Select branch
-6. Select duration or duration price
-7. Create pass
-8. If payment required, move directly to payment step
-
-### Lookup existing customer
-
-#### `GET /parents/lookup?phone=9001112222`
-
-Typical success shape:
-
-```json
-{
-  "status": "ok",
   "data": {
-    "record_type": "parent",
-    "customer": {
-      "id": "customer-uuid",
-      "name": "Search Parent",
-      "phone": "9001112222"
+    "summary": {
+      "pending": 0,
+      "generated_today": 0,
+      "all_time": 0,
+      "amount_today": 0,
+      "amount_today_count": 0,
+      "amount_month": 0,
+      "amount_month_count": 0
     },
-    "parent": {
-      "id": "parent-uuid",
-      "name": "Search Parent",
-      "phone": "9001112222"
-    },
-    "children": [
-      {
-        "id": "child-uuid",
-        "name": "Kid 1",
-        "age": 5
+    "filtered_total": 0,
+    "filters": {},
+    "bills": {
+      "data": [],
+      "meta": {
+        "current_page": 1,
+        "from": null,
+        "last_page": 1,
+        "per_page": 15,
+        "to": null,
+        "total": 0
       }
-    ],
-    "active_sessions": []
+    }
   }
 }
 ```
 
-### Create pass
+Each API bill row is transformed by `EntryExitApiController::transformEntryExitLog` and includes IDs, names, lifecycle status, entry/exit times, pass amount, overtime amount, payment status/mode, Razorpay IDs, print count, and timestamps.
 
-#### `POST /passes`
+## Where The Data Comes From
 
-This endpoint supports:
+The main source table is:
 
-- direct customer walk-in
-- parent + existing child
-- parent + new child creation during pass issuance
-- multiple child passes in one request
-- duration by hours/minutes
-- duration by standard duration price row
-
-#### Simple existing parent + child example
-
-```json
-{
-  "location_id": "location-uuid",
-  "parent_id": "parent-uuid",
-  "phone": "9001112222",
-  "child_ids": ["child-uuid"],
-  "hours": 2
-}
+```text
+entry_exit_logs
 ```
 
-#### Existing customer without parent example
+The dashboard eager-loads these relationships:
 
-```json
-{
-  "location_id": "location-uuid",
-  "phone": "9001114444",
-  "customer_id": "customer-uuid",
-  "hours": 2
-}
+- `child`
+- `customer`
+- `parentGuardian`
+- `location`
+- `staff`
+
+The web table starts from `EntryExitController::billDashboardTransactionQuery()`, which only includes logs where:
+
+```text
+payment_status = paid OR overtime_paid = true
 ```
 
-#### Existing customer, create 3 children on the fly
+That means the web dashboard is focused on collected bill transactions.
 
-```json
-{
-  "location_id": "location-uuid",
-  "phone": "9001114444",
-  "customer_id": "customer-uuid",
-  "child_count": 3,
-  "child_names": ["API Child One", "", "API Child Three"],
-  "hours": 2
-}
+The API endpoint starts from `EntryExitApiController::filteredBillQuery()`, which loads `EntryExitLog` records and then applies filters. Its amount expression is:
+
+```text
+COALESCE(pass_price, 0) + COALESCE(overtime_charge, 0)
 ```
 
-#### Duration-price based example
+The web dashboard uses collected amounts:
 
-```json
-{
-  "location_id": "location-uuid",
-  "phone": "9001112222",
-  "parent_id": "parent-uuid",
-  "child_ids": ["child-1-uuid"],
-  "child_names": ["New Child"],
-  "child_count": 1,
-  "duration_price_id": "duration-price-uuid"
-}
+```text
+paid pass amount + paid overtime amount
 ```
 
-#### Validation notes
-
-- `location_id` is required
-- provide one of:
-  - `parent_id`
-  - `customer_id`
-  - `customer_name`
-- for duration provide one of:
-  - `hours`
-  - `duration_minutes`
-  - `duration_price_id`
-- if using `parent_id`, at least one child must exist or be created
-
-#### Success result
-
-- `201 Created`
-- returns `data[]` of passes
-- returns `payment.required`
-
-If `payment.required = true`, take user to payment immediately.
-
-#### Important error states
-
-- `409 already_inside`
-- `422 pass_pricing_inactive`
-- `500 unable to generate`
-
-## Screen 2: Collect Payment
-
-Use this after pass generation if returned passes are unpaid.
-
-### List/search passes
-
-- `GET /passes?status=pending&search=...`
-
-### Manual payment
-
-- `POST /passes/mark-paid`
-
-```json
-{
-  "ids": ["log-uuid-1", "log-uuid-2"],
-  "payment_mode": "upi"
-}
-```
-
-Success:
-
-- payment becomes `paid`
-- passes become printable
-
-### Razorpay payment
-
-#### Create order
-
-- `POST /passes/razorpay-order`
-
-```json
-{
-  "ids": ["log-uuid-1", "log-uuid-2"]
-}
-```
-
-Response includes:
-
-- `data.key`
-- `data.amount`
-- `data.currency`
-- `data.order_id`
-- `payment.razorpay_order_id`
-
-#### Verify payment
-
-- `POST /passes/razorpay-verify`
-
-```json
-{
-  "ids": ["log-uuid-1", "log-uuid-2"],
-  "razorpay_order_id": "order_xxx",
-  "razorpay_payment_id": "pay_xxx",
-  "razorpay_signature": "signature_xxx"
-}
-```
-
-### Record print
-
-- `POST /passes/record-print`
-
-```json
-{
-  "ids": ["log-uuid-1", "log-uuid-2"]
-}
-```
-
-Use this after successful print so the backend maintains `print_count`.
-
-## Screen 3: Scan Entry
-
-### Commit entry
-
-- `POST /passes/scan-entry`
-
-```json
-{
-  "scan_token": "entry-exit-log-uuid"
-}
-```
-
-Success:
-
-- marks `entry_time`
-- calculates `booked_exit_time` from scan time if `expected_duration_minutes` exists
-
-Handle these errors in UI:
-
-- invalid QR
-- payment pending
-- already inside
-- pass already used
-- pass expired
-
-## Screen 4: Settle Overtime
-
-This should be a separate simple screen for operators.
-
-### Find open sessions by phone
-
-- `GET /overtime-settlements?phone=9001112222`
-
-Each settlement item can return:
-
-- `settlement_status = due`
-- `settlement_status = settled`
-- `settlement_status = not_due`
-
-Also:
-
-- `can_settle`
-- `can_scan_exit`
-- `overtime_minutes`
-- `chargeable_minutes`
-- `overtime_charge`
-- `grace_minutes`
-
-### Manual overtime settlement
-
-- `POST /overtime-settlements`
-
-```json
-{
-  "id": "log-uuid",
-  "payment_mode": "cash"
-}
-```
-
-Alternative endpoint with same effect:
-
-- `POST /passes/mark-overtime-paid`
-
-### Razorpay overtime settlement
-
-#### Create order
-
-- `POST /overtime-settlements/razorpay-order`
-
-```json
-{
-  "id": "log-uuid"
-}
-```
-
-#### Verify
-
-- `POST /overtime-settlements/razorpay-verify`
-
-```json
-{
-  "id": "log-uuid",
-  "razorpay_order_id": "order_xxx",
-  "razorpay_payment_id": "pay_xxx",
-  "razorpay_signature": "signature_xxx"
-}
-```
-
-## Screen 5: Scan Exit
-
-### Start exit scan
-
-- `POST /passes/scan-exit`
-
-```json
-{
-  "scan_token": "entry-exit-log-uuid"
-}
-```
-
-Possible outcomes:
-
-### Outcome A: OTP required
-
-```json
-{
-  "status": "exit_otp_required",
-  "message": "Exit OTP sent to registered guardian phone number.",
-  "data": {
-    "id": "log-uuid",
-    "otp_expires_at": "2026-05-20T12:00:00.000000Z",
-    "otp_phone": "******2222",
-    "can_verify_exit": true,
-    "verify_url": "https://your-domain.com/api/v1/entry-exit/passes/verify-exit-otp"
-  }
-}
-```
-
-### Outcome B: overtime due
-
-```json
-{
-  "status": "overtime_due",
-  "message": "Overtime payment is due before exit can be recorded.",
-  "data": {
-    "id": "log-uuid",
-    "overtime_minutes": 6,
-    "chargeable_minutes": 10,
-    "overtime_charge": 25,
-    "grace_minutes": 10
-  }
-}
-```
-
-If overtime is due, redirect operator to the overtime payment step.
-
-### Verify exit OTP
-
-- `POST /passes/verify-exit-otp`
-
-```json
-{
-  "scan_token": "entry-exit-log-uuid",
-  "otp": "123456"
-}
-```
-
-Success:
-
-- records `actual_exit_time`
-- returns final overtime values
-- stores `guardian_verification_mode = otp`
-
-## Screen 6: Manual Guardian Verification
-
-Use only if your process wants a staff-driven verification flow.
-
-- `POST /guardian-verification`
-
-```json
-{
-  "entry_exit_log_id": "log-uuid",
-  "mode": "otp"
-}
-```
-
-Allowed modes:
-
-- `otp`
-- `id`
-
-This can also close the session if exit is still open.
-
-## Screen 7: Live Occupancy
-
-- `GET /live-occupancy`
-
-Use this for a TV/dashboard or a simple operator screen.
-
-Response contains:
-
-- `occupancy_count`
-- `active_sessions[]`
-
-## Screen 8: Bills / Passes / History
-
-### Pass list
-
-- `GET /passes?status=pending|paid&search=...&per_page=20`
-
-### Bill dashboard
-
-- `GET /bill-dashboard`
-
-Supported query params:
-
-- `category`
-- `status`
-- `location_id`
-- `date_from`
-- `date_to`
-- `amount_min`
-- `amount_max`
-- `search`
-- `sort`
-- `direction`
-- `per_page`
-
-Important status filters:
-
-- `all`
-- `pending`
-- `completed`
-- `active`
-- `expired`
-
-### Logs
-
-- `GET /logs`
-- optional `child_id`
-- optional `booking_id`
-
-### Kids status
-
-- `GET /kids-status`
-
-Good for a very simple “inside / outside” screen.
-
-## Pricing and Rules
-
-### List duration prices
-
-- `GET /duration-prices`
-- `GET /duration-prices?price_type=standard`
-- `GET /duration-prices?price_type=overtime`
-
-Each row returns:
-
-- `id`
-- `price_type`
-- `duration_minutes`
-- `duration_label`
-- `price`
-- `is_active`
-- `sort_order`
-
-### Create duration price
-
-- `POST /duration-prices`
-
-```json
-{
-  "price_type": "overtime",
-  "duration_minutes": 30,
-  "price": 75,
-  "is_active": true,
-  "sort_order": 1
-}
-```
-
-### Delete duration price
-
-- `DELETE /duration-prices/{id}`
-
-### Update exit grace minutes
-
-- `PUT /duration-prices/exit-grace`
-
-```json
-{
-  "exit_grace_minutes": 15
-}
-```
-
-## Rules the Frontend Must Respect
-
-### 1. Never create business logic locally
-
-Use backend responses as source of truth for:
-
-- overtime due
-- pass expiry
-- active session conflicts
-- payment state
-- lifecycle state
-
-### 2. Expect one QR token per log
-
-The scan token is the `EntryExitLog.id`.
-
-### 3. One customer can produce multiple pass logs
-
-Especially when multiple children are selected.
-
-### 4. Overtime can be settled before gate exit
-
-The backend supports settling overtime first, then doing exit OTP later.
-
-### 5. Settled overtime should not be recalculated later
-
-The service preserves the settled overtime amount even if gate exit happens later.
-
-## Recommended React App Structure
-
-Suggested routes:
-
-- `/login`
-- `/walkin/new`
-- `/walkin/payment`
-- `/walkin/scan-entry`
-- `/walkin/overtime`
-- `/walkin/scan-exit`
-- `/walkin/occupancy`
-- `/walkin/passes`
-- `/walkin/bills`
-
-Suggested shared services:
-
-- `authApi.ts`
-- `entryExitApi.ts`
-- `locationApi.ts`
-- `types/entryExit.ts`
-
-Suggested state approach:
-
-- React Query for server state
-- route-driven screens
-- local component state only for temporary form fields
-
-## Recommended “Very Simple UI” Patterns
-
-- Use a phone-number-first workflow
-- Auto-open the next screen after success
-- Hide advanced filters by default
-- Use one large primary CTA per page
-- Show backend message text directly after actions
-- Use green for success, amber for due/pending, red for blocked
-- Print automatically after payment if your branch process wants it
-- Show masked guardian phone during OTP flow
-
-## Important Error Cases to Handle Cleanly
-
-- invalid QR
-- customer not found
-- already inside
-- prices inactive
-- payment pending
-- pass expired
-- overtime due
-- wrong OTP
-- forbidden permission
-- Razorpay signature failure
-
-## Fastest MVP Integration Order
-
-1. Login
-2. Load locations
-3. Parent/customer lookup
-4. Create pass
-5. Mark pass paid
-6. Record print
-7. Scan entry
-8. Scan exit
-9. Verify OTP
-10. Add overtime settlement screen
-11. Add occupancy and bills
-
-## Source of Truth in This Repo
-
-Main implementation files:
-
+For overtime, the web side prefers `overtime_amount_paid` when present, otherwise `overtime_charge`.
+
+## Filter Logic
+
+Category filters:
+
+- `pending`: `actual_exit_time IS NULL`
+- `generated_today` / `amount_today`: `created_at` is today
+- `amount_month`: `created_at` is within the current month
+- `all_time`: no category date/status restriction
+
+Status filters:
+
+- `pending`: `actual_exit_time IS NULL`
+- `completed`: `actual_exit_time IS NOT NULL`
+- `active`: `entry_time IS NOT NULL` and `actual_exit_time IS NULL`
+- `expired`: `entry_time IS NULL`, `pass_expires_at IS NOT NULL`, and `pass_expires_at` is in the past
+
+Other filters:
+
+- `location_id`: filters by branch.
+- `date_from` / `date_to`: filters by `created_at` date.
+- `payment_mode` web only: matches pass payment mode, overtime payment mode, or split payment JSON.
+- `collection_type` web only:
+  - `pass`: paid pass rows with `pass_price > 0`
+  - `overtime`: overtime-paid rows with a positive overtime amount
+- `amount_min` / `amount_max` API only: filters by API total amount expression.
+- `search`: matches bill ID, customer name/phone, parent name/phone, child name, and branch name. The web table also searches Razorpay order/payment IDs.
+
+## Displayed Field Mapping
+
+| UI field | Source |
+| --- | --- |
+| Bill short code | `entry_exit_logs.id`, displayed as `WIB-` plus first 8 uppercase chars |
+| Customer name | `child.name`, else `parentGuardian.name`, else `customer.name`, else `Walk-in Guest` |
+| Phone | `parentGuardian.phone`, else `customer.phone` |
+| Branch | `location.name` |
+| Staff | `staff.name`, else `Reception` |
+| Duration | `expected_duration_minutes` |
+| Generated date/time | `created_at` |
+| Claimed/entry time | `entry_time` |
+| Used/exit time | `actual_exit_time` |
+| Pass amount | `EntryExitLog::collectedPassAmount()` |
+| Overtime amount | `EntryExitLog::collectedOvertimeAmount()` |
+| Total amount | `EntryExitLog::collectedBillTotal()` |
+| Payment details | `payment_mode`, `payment_splits`, `razorpay_payment_id`, `overtime_payment_mode`, `overtime_razorpay_payment_id` |
+
+## Important Files
+
+- `Modules/EntryExit/routes/web.php`
 - `Modules/EntryExit/routes/api.php`
+- `Modules/EntryExit/app/Http/Controllers/EntryExitController.php`
 - `Modules/EntryExit/app/Http/Controllers/Api/EntryExitApiController.php`
-- `Modules/EntryExit/app/Services/EntryExitService.php`
+- `Modules/EntryExit/app/Http/Requests/BillDashboardRequest.php`
+- `Modules/EntryExit/app/Http/Requests/BillDashboardApiRequest.php`
 - `Modules/EntryExit/app/Models/EntryExitLog.php`
-- `Modules/EntryExit/app/Http/Requests/*`
-- `tests/Feature/EntryExitApiTest.php`
-- `storage/api-docs/api-docs.json`
-
-## Final Integration Summary
-
-If you build the new React wrapper against the existing backend, the minimum backend domains you need are:
-
-- `https://your-domain.com/api/v1/auth/*`
-- `https://your-domain.com/api/v1/core/locations*`
-- `https://your-domain.com/api/v1/entry-exit/*`
-
-If you want, the next step can be a second doc that converts this into:
-
-1. a React page map
-2. a TypeScript API client contract
-3. exact request/response interfaces for each endpoint
+- `Modules/EntryExit/resources/views/entry-exit/bill-dashboard-summary.blade.php`
+- `Modules/EntryExit/resources/views/entry-exit/bill-dashboard.blade.php`

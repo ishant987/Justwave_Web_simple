@@ -5,7 +5,16 @@ import * as entryExitApi from '../api/entryExitApi';
 import * as locationApi from '../api/locationApi';
 import { useAuth } from '../hooks/useAuth';
 import { StatusBanner } from '../components/StatusBanner';
-import type { ChildRecord, EntryExitLog, PassCreatePayload, PaymentMode } from '../types/entryExit';
+import type { ChildRecord, EntryExitLog, PassCreatePayload, PassPaymentMode, PaymentSplit } from '../types/entryExit';
+import { buildPassPrintDocument } from '../utils/passPrint';
+
+const PAYMENT_SPLIT_OPTIONS: { mode: PassPaymentMode; label: string }[] = [
+  { mode: 'cash', label: 'Cash' },
+  { mode: 'upi', label: 'UPI' },
+  { mode: 'card', label: 'Card' },
+  { mode: 'bank_transfer', label: 'Bank Transfer' },
+  { mode: 'other', label: 'Other' },
+];
 
 interface DraftChild {
   id: string;
@@ -41,6 +50,42 @@ function escapeHtml(value: string): string {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+function centsFromAmount(value: number) {
+  return Math.round(value * 100);
+}
+
+function centsFromInput(value: string) {
+  return Math.max(0, Math.round((Number(value) || 0) * 100));
+}
+
+function formatAmountFromCents(cents: number) {
+  const amount = Math.max(0, cents) / 100;
+  return Number.isInteger(amount) ? String(amount) : amount.toFixed(2);
+}
+
+function buildEvenSplitAmounts(modes: PassPaymentMode[], total: number): Record<PassPaymentMode, string> {
+  const next: Record<PassPaymentMode, string> = {
+    cash: '0',
+    upi: '0',
+    card: '0',
+    bank_transfer: '0',
+    other: '0',
+  };
+  if (!modes.length) return next;
+
+  const totalCents = centsFromAmount(total);
+  const baseCents = Math.floor(totalCents / modes.length);
+  let remainderCents = totalCents - baseCents * modes.length;
+
+  modes.forEach((mode) => {
+    const amountCents = baseCents + (remainderCents > 0 ? 1 : 0);
+    next[mode] = formatAmountFromCents(amountCents);
+    remainderCents -= 1;
+  });
+
+  return next;
 }
 
 function printHtmlDocument(html: string) {
@@ -134,8 +179,16 @@ export function NewWalkInPage() {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isTicketOpen, setIsTicketOpen] = useState(false);
   const [createdPasses, setCreatedPasses] = useState<EntryExitLog[]>([]);
-  const [paymentMode, setPaymentMode] = useState<PaymentMode>('cash');
+  const [paymentMode, setPaymentMode] = useState<PassPaymentMode>('cash');
   const [paymentPlan, setPaymentPlan] = useState<'once' | 'parts'>('once');
+  const [selectedSplitModes, setSelectedSplitModes] = useState<PassPaymentMode[]>(['cash', 'upi']);
+  const [splitAmounts, setSplitAmounts] = useState<Record<PassPaymentMode, string>>({
+    cash: '0',
+    upi: '0',
+    card: '0',
+    bank_transfer: '0',
+    other: '0',
+  });
   const [toastMessage, setToastMessage] = useState('');
   const [qrByPassId, setQrByPassId] = useState<Record<string, string>>({});
   const [isEditingCustomerName, setIsEditingCustomerName] = useState(false);
@@ -225,8 +278,20 @@ export function NewWalkInPage() {
       const nextCreatedPasses = responses.flatMap((response) => response.data);
       const ids = nextCreatedPasses.map((item) => item.id);
 
-      if (ids.length && paymentPlan === 'once') {
-        await entryExitApi.markPassPaid(token!, ids, paymentMode);
+      if (ids.length) {
+        await entryExitApi.markPassPaid(
+          token!,
+          paymentPlan === 'parts'
+            ? {
+                ids,
+                payment_mode: 'split',
+                payment_splits: paymentSplits,
+              }
+            : {
+                ids,
+                payment_mode: paymentMode,
+              },
+        );
       }
 
       const qrEntries = await Promise.all(
@@ -248,180 +313,27 @@ export function NewWalkInPage() {
         await entryExitApi.recordPrint(token!, ids);
       }
 
-      const ticketHtml = nextCreatedPasses
-        .map((passItem) => {
-          const durationLabel = compactDurationLabel(
-            durationPriceMap[childDurationById[passItem.child_id || ''] || durationPriceId]?.duration_label,
-          );
-          const guardianName = passItem.parent_name || passItem.customer_name || lookupData?.parent?.name || '-';
-          const qrSrc = nextQrByPassId[passItem.id] || '';
+      await printHtmlDocument(
+        buildPassPrintDocument(
+          nextCreatedPasses.map((passItem) => {
+            const durationLabel = compactDurationLabel(
+              durationPriceMap[childDurationById[passItem.child_id || ''] || durationPriceId]?.duration_label,
+            );
+            const guardianName = passItem.parent_name || passItem.customer_name || lookupData?.parent?.name || '-';
 
-          return `
-            <section class="ticket-page">
-              <article class="ticket-sheet">
-                <div class="ticket-left">
-                  <div class="ticket-brand">JUSTWAVE</div>
-                  <div class="ticket-badge">CHILD PASS</div>
-                  <div class="ticket-admit">ADMIT ONE</div>
-                  <div class="ticket-child-name">${escapeHtml(passItem.child_name || 'Walk-In Child')}</div>
-                  <div class="ticket-meta-grid">
-                    <div>
-                      <span>TIME / DURATION</span>
-                      <strong>${escapeHtml(durationLabel)}</strong>
-                    </div>
-                    <div>
-                      <span>AMOUNT</span>
-                      <strong>Rs.${Number(passItem.bill_total_amount ?? passItem.pass_price ?? 0).toFixed(0)}</strong>
-                    </div>
-                    <div>
-                      <span>GUARDIAN</span>
-                      <strong>${escapeHtml(guardianName)}</strong>
-                    </div>
-                    <div>
-                      <span>PHONE</span>
-                      <strong>${escapeHtml(lookupPhone)}</strong>
-                    </div>
-                  </div>
-                </div>
-                <div class="ticket-right">
-                  <div class="ticket-qr-frame">
-                    ${qrSrc ? `<img src="${qrSrc}" alt="QR" class="ticket-qr-image" />` : ''}
-                  </div>
-                  <div class="ticket-code">${escapeHtml(passItem.id.slice(0, 8).toUpperCase())}</div>
-                </div>
-              </article>
-            </section>
-          `;
-        })
-        .join('');
-
-      await printHtmlDocument(`
-        <!doctype html>
-        <html>
-          <head>
-            <meta charset="utf-8" />
-            <title>Entry Tickets</title>
-            <style>
-              @page {
-                size: 12in 6in;
-                margin: 0;
-              }
-              * {
-                box-sizing: border-box;
-              }
-              html, body {
-                margin: 0;
-                padding: 0;
-                background: #ffffff;
-                font-family: Arial, Helvetica, sans-serif;
-              }
-              .ticket-page {
-                width: 12in;
-                height: 6in;
-                page-break-after: always;
-                break-after: page;
-                overflow: hidden;
-              }
-              .ticket-page:last-child {
-                page-break-after: auto;
-                break-after: auto;
-              }
-              .ticket-sheet {
-                width: 12in;
-                height: 6in;
-                border: 2px solid #111111;
-                display: grid;
-                grid-template-columns: minmax(0, 1.45fr) 3.2in;
-                overflow: hidden;
-              }
-              .ticket-left {
-                padding: 0.65in 0.7in 0.55in;
-              }
-              .ticket-right {
-                border-left: 3px dashed #111111;
-                padding: 0.45in;
-                display: grid;
-                align-content: center;
-                justify-items: center;
-                gap: 0.22in;
-              }
-              .ticket-brand {
-                font-size: 40pt;
-                font-weight: 900;
-                letter-spacing: 0.02em;
-                line-height: 0.95;
-              }
-              .ticket-badge {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                margin-top: 0.18in;
-                padding: 0.08in 0.22in;
-                border: 2px solid #111111;
-                border-radius: 0.2in;
-                font-size: 16pt;
-                font-weight: 900;
-                letter-spacing: 0.04em;
-              }
-              .ticket-admit {
-                margin-top: 0.4in;
-                font-size: 16pt;
-                font-weight: 900;
-                letter-spacing: 0.03em;
-              }
-              .ticket-child-name {
-                margin-top: 0.12in;
-                font-size: 42pt;
-                font-weight: 900;
-                line-height: 0.95;
-                text-transform: uppercase;
-                max-width: 100%;
-                word-break: break-word;
-              }
-              .ticket-meta-grid {
-                display: grid;
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 0.32in 0.4in;
-                margin-top: 0.75in;
-              }
-              .ticket-meta-grid span {
-                display: block;
-                margin-bottom: 0.08in;
-                font-size: 14pt;
-                font-weight: 900;
-              }
-              .ticket-meta-grid strong {
-                display: block;
-                font-size: 18pt;
-                font-weight: 900;
-                line-height: 1.15;
-                word-break: break-word;
-              }
-              .ticket-qr-frame {
-                width: 2.6in;
-                height: 2.6in;
-                border: 2px solid #111111;
-                border-radius: 0.22in;
-                display: grid;
-                place-items: center;
-                padding: 0.12in;
-                background: #ffffff;
-              }
-              .ticket-qr-image {
-                width: 100%;
-                height: 100%;
-                object-fit: contain;
-              }
-              .ticket-code {
-                font-size: 16pt;
-                font-weight: 900;
-                letter-spacing: 0.12in;
-              }
-            </style>
-          </head>
-          <body>${ticketHtml}</body>
-        </html>
-      `);
+            return {
+              amount: `Rs.${Number(passItem.bill_total_amount ?? passItem.pass_price ?? 0).toFixed(0)}`,
+              childName: passItem.child_name || 'Walk-In Child',
+              code: passItem.id.slice(0, 8).toUpperCase(),
+              durationLabel,
+              guardianName,
+              phone: lookupPhone,
+              qrSrc: nextQrByPassId[passItem.id] || '',
+            };
+          }),
+          'Entry Tickets',
+        ),
+      );
 
       return {
         createdPasses: nextCreatedPasses,
@@ -496,6 +408,21 @@ export function NewWalkInPage() {
       ),
     [childDurationById, draftChildren, durationPriceId, durationPriceMap, selectedChildIds, selectedDraftChildIds],
   );
+  const paymentSplits = useMemo<PaymentSplit[]>(
+    () =>
+      selectedSplitModes.map((mode) => ({
+        mode,
+        amount: centsFromInput(splitAmounts[mode]) / 100,
+      })),
+    [selectedSplitModes, splitAmounts],
+  );
+  const splitTotalCents = paymentSplits.reduce((sum, item) => sum + centsFromAmount(item.amount), 0);
+  const paymentTotalCents = centsFromAmount(paymentTotal);
+  const splitDifferenceCents = paymentTotalCents - splitTotalCents;
+  const isSplitPaymentValid =
+    selectedSplitModes.length > 0 &&
+    splitDifferenceCents === 0 &&
+    paymentSplits.every((item) => item.amount > 0);
   const hasLookupPhone = lookupPhone.trim().length > 0;
   const isNewCustomerFlowActive = manualCustomerName.trim().length > 0 || draftChildren.length > 0;
   const pendingPasses = useMemo<PendingPassPreview[]>(
@@ -649,8 +576,9 @@ export function NewWalkInPage() {
       return;
     }
     const existingDraftNames = draftChildren.map((child) => child.name);
-    setPendingChildCount(String(existingDraftNames.length));
-    setPendingChildNames(existingDraftNames);
+    const nextNames = existingDraftNames.length ? existingDraftNames : [''];
+    setPendingChildCount(String(nextNames.length));
+    setPendingChildNames(nextNames);
     setIsAddChildOpen(true);
   }
 
@@ -669,7 +597,7 @@ export function NewWalkInPage() {
   }
 
   function savePendingChildren() {
-    const cleanedNames = pendingChildNames.map((item) => item.trim()).filter(Boolean);
+    const cleanedNames = pendingChildNames.map((item, index) => item.trim() || `guestchild${index + 1}`);
     const nextDraftChildren = cleanedNames.map((name, index) => ({
         id: `draft-${index}-${name}`,
         name,
@@ -699,6 +627,44 @@ export function NewWalkInPage() {
     );
   }
 
+  function selectPaymentPlan(nextPlan: 'once' | 'parts') {
+    setPaymentPlan(nextPlan);
+    if (nextPlan === 'parts') {
+      setSplitAmounts(buildEvenSplitAmounts(selectedSplitModes, paymentTotal));
+    }
+  }
+
+  function toggleSplitMode(mode: PassPaymentMode) {
+    setSelectedSplitModes((current) => {
+      const nextModes = current.includes(mode)
+        ? current.length > 1
+          ? current.filter((item) => item !== mode)
+          : current
+        : [...current, mode];
+      setSplitAmounts(buildEvenSplitAmounts(nextModes, paymentTotal));
+      return nextModes;
+    });
+  }
+
+  function updateSplitAmount(mode: PassPaymentMode, value: string) {
+    const normalizedValue = value.replace(/[^\d.]/g, '');
+    setSplitAmounts((current) => {
+      const next = { ...current, [mode]: normalizedValue };
+      const adjustableMode = [...selectedSplitModes].reverse().find((item) => item !== mode);
+
+      if (adjustableMode) {
+        const usedCents = selectedSplitModes.reduce((sum, item) => {
+          if (item === adjustableMode) return sum;
+          const amount = item === mode ? normalizedValue : next[item];
+          return sum + centsFromInput(amount);
+        }, 0);
+        next[adjustableMode] = formatAmountFromCents(paymentTotalCents - usedCents);
+      }
+
+      return next;
+    });
+  }
+
   function handleCreatePass(event: FormEvent) {
     event.preventDefault();
 
@@ -711,12 +677,15 @@ export function NewWalkInPage() {
     setResultMessage('');
     setPaymentMode('cash');
     setPaymentPlan('once');
+    setSelectedSplitModes(['cash', 'upi']);
+    setSplitAmounts(buildEvenSplitAmounts(['cash', 'upi'], paymentTotal));
     setIsPaymentOpen(true);
   }
 
   const existingCustomerId = lookupData?.customer?.id;
   const customerNameValue = lookupData?.customer?.name || lookupData?.parent?.name || manualCustomerName;
   const customerNameInputValue = isEditingCustomerName ? editableCustomerName : customerNameValue;
+  const hasChildrenToShow = existingChildren.length > 0 || draftChildren.length > 0;
   const canSaveCustomerName =
     Boolean(existingCustomerId) &&
     editableCustomerName.trim().length > 0 &&
@@ -837,42 +806,73 @@ export function NewWalkInPage() {
 
               <div className="children-scroll-area">
                 <div className="children-grid">
-                  {existingChildren.length ? (
-                    existingChildren.map((child) => (
-                    <button
-                      type="button"
-                      key={child.id}
-                      className={
-                        insideChildIds.has(child.id)
-                          ? 'child-card inside'
-                          : selectedChildIds.includes(child.id)
-                            ? 'child-card active'
-                            : 'child-card'
-                      }
-                      onClick={() => toggleChild(child)}
-                      disabled={insideChildIds.has(child.id)}
-                    >
-                      <div className="child-main">
-                        <span className={selectedChildIds.includes(child.id) ? 'child-check active' : 'child-check'}>
-                          {selectedChildIds.includes(child.id) ? '✓' : ''}
-                        </span>
-                        <strong>{child.name}</strong>
-                        {insideChildIds.has(child.id) ? <span className="inside-badge">Inside</span> : null}
-                      </div>
-                      <select
-                        value={childDurationById[child.id] || durationPriceId}
-                        onClick={(event) => event.stopPropagation()}
-                        onChange={(event) => updateExistingChildDuration(child.id, event.target.value)}
-                        disabled={insideChildIds.has(child.id)}
-                      >
-                          {durationPrices.map((item) => (
-                            <option key={item.id} value={item.id}>
-                              {item.duration_label} - Rs.{item.price.toFixed(2)}
-                            </option>
-                          ))}
-                        </select>
-                      </button>
-                    ))
+                  {hasChildrenToShow ? (
+                    <>
+                      {existingChildren.map((child) => (
+                        <button
+                          type="button"
+                          key={child.id}
+                          className={
+                            insideChildIds.has(child.id)
+                              ? 'child-card inside'
+                              : selectedChildIds.includes(child.id)
+                                ? 'child-card active'
+                                : 'child-card'
+                          }
+                          onClick={() => toggleChild(child)}
+                          disabled={insideChildIds.has(child.id)}
+                        >
+                          <div className="child-main">
+                            <span className={selectedChildIds.includes(child.id) ? 'child-check active' : 'child-check'}>
+                              {selectedChildIds.includes(child.id) ? '✓' : ''}
+                            </span>
+                            <strong>{child.name}</strong>
+                            {insideChildIds.has(child.id) ? <span className="inside-badge">Inside</span> : null}
+                          </div>
+                          <select
+                            value={childDurationById[child.id] || durationPriceId}
+                            onClick={(event) => event.stopPropagation()}
+                            onChange={(event) => updateExistingChildDuration(child.id, event.target.value)}
+                            disabled={insideChildIds.has(child.id)}
+                          >
+                            {durationPrices.map((item) => (
+                              <option key={item.id} value={item.id}>
+                                {item.duration_label} - Rs.{item.price.toFixed(2)}
+                              </option>
+                            ))}
+                          </select>
+                        </button>
+                      ))}
+
+                      {draftChildren.map((child) => (
+                        <button
+                          type="button"
+                          key={child.id}
+                          className={selectedDraftChildIds.includes(child.id) ? 'child-card draft active' : 'child-card draft'}
+                          onClick={() => toggleDraftChild(child.id)}
+                        >
+                          <div className="child-main">
+                            <span className={selectedDraftChildIds.includes(child.id) ? 'child-check active' : 'child-check'}>
+                              {selectedDraftChildIds.includes(child.id) ? '✓' : ''}
+                            </span>
+                            <span className="new-child-pill">New</span>
+                            <strong>{child.name}</strong>
+                          </div>
+                          <select
+                            value={child.durationPriceId || durationPriceId}
+                            onClick={(event) => event.stopPropagation()}
+                            onChange={(event) => updateDraftChildDuration(child.id, event.target.value)}
+                          >
+                            {durationPrices.map((item) => (
+                              <option key={item.id} value={item.id}>
+                                {item.duration_label} - Rs.{item.price.toFixed(2)}
+                              </option>
+                            ))}
+                          </select>
+                          <span className="muted">New child</span>
+                        </button>
+                      ))}
+                    </>
                   ) : (
                     <div className="children-empty-state">
                       <div className="children-empty-art" aria-hidden="true">
@@ -1060,7 +1060,10 @@ export function NewWalkInPage() {
               <div className="payment-total-box">
                 <span>Total Payable</span>
                 <strong>Rs.{paymentTotal.toFixed(2)}</strong>
-                <small>Remaining: Rs.{paymentPlan === 'once' ? '0.00' : paymentTotal.toFixed(2)}</small>
+                <small>
+                  Remaining: Rs.
+                  {paymentPlan === 'once' ? '0.00' : Math.max(0, splitDifferenceCents / 100).toFixed(2)}
+                </small>
               </div>
             </div>
 
@@ -1070,7 +1073,7 @@ export function NewWalkInPage() {
                 <button
                   type="button"
                   className={paymentPlan === 'once' ? 'payment-plan active' : 'payment-plan'}
-                  onClick={() => setPaymentPlan('once')}
+                  onClick={() => selectPaymentPlan('once')}
                 >
                   <span className={paymentPlan === 'once' ? 'plan-radio active' : 'plan-radio'} />
                   Pay at once
@@ -1078,7 +1081,7 @@ export function NewWalkInPage() {
                 <button
                   type="button"
                   className={paymentPlan === 'parts' ? 'payment-plan active' : 'payment-plan'}
-                  onClick={() => setPaymentPlan('parts')}
+                  onClick={() => selectPaymentPlan('parts')}
                 >
                   <span className={paymentPlan === 'parts' ? 'plan-radio active' : 'plan-radio'} />
                   Pay in parts
@@ -1087,22 +1090,59 @@ export function NewWalkInPage() {
             </div>
 
             {paymentPlan === 'once' ? (
-              <div className="payment-mode-card">
-                <label>
-                  Payment Mode
-                  <select value={paymentMode} onChange={(event) => setPaymentMode(event.target.value as PaymentMode)}>
-                    <option value="cash">Cash</option>
-                    <option value="upi">UPI</option>
-                    <option value="card">Card</option>
-                    <option value="bank_transfer">Bank Transfer</option>
-                    <option value="other">Other</option>
-                  </select>
-                </label>
+              <div className="payment-section">
+                <h4>Payment Mode</h4>
+                <div className="payment-mode-grid">
+                  {PAYMENT_SPLIT_OPTIONS.map((option) => (
+                    <button
+                      type="button"
+                      key={option.mode}
+                      className={paymentMode === option.mode ? 'payment-mode-tile active' : 'payment-mode-tile'}
+                      onClick={() => setPaymentMode(option.mode)}
+                    >
+                      <span className={paymentMode === option.mode ? 'payment-check active' : 'payment-check'}>
+                        {paymentMode === option.mode ? '✓' : ''}
+                      </span>
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             ) : (
-              <div className="payment-mode-card">
-                <p className="muted">
-                  Split payment UI can be shown here, but the current backend payment API accepts only one payment mode per payment action.
+              <div className="payment-section">
+                <h4>Payment Split</h4>
+                <div className="payment-mode-grid split">
+                  {PAYMENT_SPLIT_OPTIONS.map((option) => {
+                    const isSelected = selectedSplitModes.includes(option.mode);
+                    return (
+                      <button
+                        type="button"
+                        key={option.mode}
+                        className={isSelected ? 'payment-mode-tile active' : 'payment-mode-tile'}
+                        onClick={() => toggleSplitMode(option.mode)}
+                      >
+                        <span className={isSelected ? 'payment-check active' : 'payment-check'}>{isSelected ? '✓' : ''}</span>
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="payment-split-amount-grid">
+                  {PAYMENT_SPLIT_OPTIONS.filter((option) => selectedSplitModes.includes(option.mode)).map((option) => (
+                    <label key={option.mode} className="payment-split-amount">
+                      <span>{option.label}</span>
+                      <input
+                        value={splitAmounts[option.mode]}
+                        onChange={(event) => updateSplitAmount(option.mode, event.target.value)}
+                        inputMode="decimal"
+                      />
+                    </label>
+                  ))}
+                </div>
+
+                <p className={isSplitPaymentValid ? 'payment-split-note' : 'payment-split-note warning'}>
+                  Amounts auto-adjust to match the total.
                 </p>
               </div>
             )}
@@ -1114,7 +1154,7 @@ export function NewWalkInPage() {
               <button
                 type="button"
                 className="primary-button"
-                disabled={paymentPlan === 'parts' || printMutation.isPending}
+                disabled={(paymentPlan === 'parts' && !isSplitPaymentValid) || printMutation.isPending}
                 onClick={() => {
                   setIsPaymentOpen(false);
                   setIsTicketOpen(true);
