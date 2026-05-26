@@ -28,17 +28,36 @@ export function LoginPage() {
 
   return (
     <div className="screen-center login-screen">
-      <form className="panel login-panel" onSubmit={handleSubmit}>
-        <p className="eyebrow">Staff Login</p>
-        <h1>Walk-In Reception</h1>
-        <p className="muted">Use your Laravel staff account to continue.</p>
-        <label>
-          Email
-          <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" required />
+      <form className="login-panel" onSubmit={handleSubmit}>
+        <div className="login-brand">
+          <img src="/logo2.svg" alt="Walk-In" />
+        </div>
+        <div className="login-copy">
+          <p className="eyebrow">Staff Login</p>
+          <h1>Welcome Back</h1>
+          <p className="muted">Sign in to manage walk-ins, passes, payments, and reception activity.</p>
+        </div>
+        <label className="login-field">
+          <span>Email</span>
+          <input
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            type="email"
+            autoComplete="email"
+            placeholder="staff@example.com"
+            required
+          />
         </label>
-        <label>
-          Password
-          <input value={password} onChange={(event) => setPassword(event.target.value)} type="password" required />
+        <label className="login-field">
+          <span>Password</span>
+          <input
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            type="password"
+            autoComplete="current-password"
+            placeholder="Enter your password"
+            required
+          />
         </label>
         {error ? <div className="status-banner danger">{error}</div> : null}
         <button className="primary-button" type="submit" disabled={loading}>
