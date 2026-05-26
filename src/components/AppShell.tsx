@@ -31,9 +31,6 @@ export function AppShell() {
       <header className="top-app-bar full-width">
         <nav className="top-app-nav">
           <span className="top-app-link active">Walk-In</span>
-          <span className="top-app-link">Bookings</span>
-          <span className="top-app-link">Kitchen</span>
-          <span className="top-app-link">Kisok</span>
         </nav>
         <div className="top-app-branch">Branch: {branchName}</div>
       </header>

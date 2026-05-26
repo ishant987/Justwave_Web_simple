@@ -87,6 +87,15 @@ function buildEvenSplitAmounts(modes: PassPaymentMode[], total: number): Record<
   return next;
 }
 
+function appendGroupedItem<T>(groups: Map<string, T[]>, key: string, item: T) {
+  groups.set(key, [...(groups.get(key) ?? []), item]);
+}
+
+function buildDefaultChildName(index: number, phone: string) {
+  const lastFour = phone.replace(/\D/g, '').slice(-4) || '0000';
+  return `${index + 1}Child${lastFour}`;
+}
+
 function printHtmlDocument(html: string) {
   return new Promise<void>((resolve, reject) => {
     const iframe = document.createElement('iframe');
@@ -238,19 +247,13 @@ export function NewWalkInPage() {
         baseIdentity.customer_name = manualCustomerName.trim();
       }
 
-      const requests: Promise<Awaited<ReturnType<typeof entryExitApi.createPass>>>[] = [];
+      const childIdsByDuration = new Map<string, string[]>();
+      const childNamesByDuration = new Map<string, string[]>();
 
       selectedChildIds.forEach((childId) => {
         const childDuration = childDurationById[childId] || durationPriceId;
         if (!childDuration) return;
-        requests.push(
-          entryExitApi.createPass(token!, {
-            ...sharedPayload,
-            ...baseIdentity,
-            child_ids: [childId],
-            duration_price_id: childDuration,
-          }),
-        );
+        appendGroupedItem(childIdsByDuration, childDuration, childId);
       });
 
       draftChildren
@@ -258,22 +261,46 @@ export function NewWalkInPage() {
         .forEach((child) => {
           const childDuration = child.durationPriceId || durationPriceId;
           if (!childDuration || !child.name.trim()) return;
-          requests.push(
-            entryExitApi.createPass(token!, {
-              ...sharedPayload,
-              ...baseIdentity,
-              child_names: [child.name.trim()],
-              child_count: 1,
-              duration_price_id: childDuration,
-            }),
-          );
+          appendGroupedItem(childNamesByDuration, childDuration, child.name.trim());
         });
 
-      if (!requests.length) {
+      const passPayloads: PassCreatePayload[] = [
+        ...Array.from(childIdsByDuration.entries()).map(([childDuration, childIds]) => ({
+          ...sharedPayload,
+          ...baseIdentity,
+          child_ids: childIds,
+          duration_price_id: childDuration,
+        })),
+        ...Array.from(childNamesByDuration.entries()).map(([childDuration, childNames]) => ({
+          ...sharedPayload,
+          ...baseIdentity,
+          child_names: childNames,
+          child_count: childNames.length,
+          duration_price_id: childDuration,
+        })),
+      ];
+
+      if (!passPayloads.length) {
         throw new Error('Select or add at least one child before printing tickets.');
       }
 
-      const responses = await Promise.all(requests);
+      const hasKnownIdentity = Boolean(lookupData?.parent?.id || lookupData?.customer?.id);
+      const responses: Awaited<ReturnType<typeof entryExitApi.createPass>>[] = [];
+
+      if (hasKnownIdentity) {
+        responses.push(...(await Promise.all(passPayloads.map((payload) => entryExitApi.createPass(token!, payload)))));
+      } else {
+        let createdCustomerId = '';
+        for (const payload of passPayloads) {
+          const response = await entryExitApi.createPass(token!, {
+            ...payload,
+            ...(createdCustomerId ? { customer_id: createdCustomerId, customer_name: undefined, phone: undefined } : baseIdentity),
+          });
+          responses.push(response);
+          createdCustomerId = createdCustomerId || response.data.find((item) => item.customer_id)?.customer_id || '';
+        }
+      }
+
       const nextCreatedPasses = responses.flatMap((response) => response.data);
       const ids = nextCreatedPasses.map((item) => item.id);
 
@@ -727,10 +754,8 @@ export function NewWalkInPage() {
     if (!hasLookupPhone) {
       return;
     }
-    const existingDraftNames = draftChildren.map((child) => child.name);
-    const nextNames = existingDraftNames.length ? existingDraftNames : [''];
-    setPendingChildCount(String(nextNames.length));
-    setPendingChildNames(nextNames);
+    setPendingChildCount('1');
+    setPendingChildNames(['']);
     setIsAddChildOpen(true);
   }
 
@@ -749,14 +774,17 @@ export function NewWalkInPage() {
   }
 
   function savePendingChildren() {
-    const cleanedNames = pendingChildNames.map((item, index) => item.trim() || `GuestChild${index + 1}`);
+    const existingDraftCount = draftChildren.length;
+    const cleanedNames = pendingChildNames.map(
+      (item, index) => item.trim() || buildDefaultChildName(existingDraftCount + index, lookupPhone),
+    );
     const nextDraftChildren = cleanedNames.map((name, index) => ({
-        id: `draft-${index}-${name}`,
-        name,
-        durationPriceId: draftChildren[index]?.durationPriceId || durationPriceId,
-      }));
-    setDraftChildren(nextDraftChildren);
-    setSelectedDraftChildIds(nextDraftChildren.map((child) => child.id));
+      id: `draft-${Date.now()}-${existingDraftCount + index}-${name}`,
+      name,
+      durationPriceId,
+    }));
+    setDraftChildren((current) => [...current, ...nextDraftChildren]);
+    setSelectedDraftChildIds((current) => [...current, ...nextDraftChildren.map((child) => child.id)]);
     setIsAddChildOpen(false);
   }
 
@@ -1153,6 +1181,8 @@ export function NewWalkInPage() {
                 type="number"
                 min="0"
                 value={pendingChildCount}
+                onFocus={(event) => event.currentTarget.select()}
+                onMouseUp={(event) => event.preventDefault()}
                 onChange={(event) => handlePendingChildCountChange(event.target.value)}
               />
             </label>
@@ -1161,11 +1191,11 @@ export function NewWalkInPage() {
               <div className="modal-name-list">
                 {pendingChildNames.map((name, index) => (
                   <label key={`pending-child-${index}`}>
-                    Child {index + 1} Name
+                    Child {draftChildren.length + index + 1} Name
                     <input
                       value={name}
                       onChange={(event) => updatePendingChildName(index, event.target.value)}
-                      placeholder={`Enter child ${index + 1} name`}
+                      placeholder={`Enter child ${draftChildren.length + index + 1} name`}
                     />
                   </label>
                 ))}

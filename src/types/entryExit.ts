@@ -151,7 +151,7 @@ export interface BillDashboardResponse {
 
 export interface PassCreatePayload {
   location_id: string;
-  phone: string;
+  phone?: string;
   parent_id?: string;
   customer_id?: string;
   customer_name?: string;
