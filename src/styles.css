@@ -2025,10 +2025,10 @@ label {
 }
 
 .login-panel {
-  width: min(460px, 100%);
+  width: min(560px, 100%);
   display: grid;
-  gap: 1.25rem;
-  padding: 2rem;
+  gap: 1.45rem;
+  padding: 2.45rem;
   border: 1px solid rgba(255, 255, 255, 0.72);
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.96);
@@ -2042,7 +2042,7 @@ label {
 }
 
 .login-brand img {
-  width: min(210px, 78%);
+  width: min(280px, 84%);
   height: auto;
   display: block;
 }

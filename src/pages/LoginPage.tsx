@@ -30,7 +30,7 @@ export function LoginPage() {
     <div className="screen-center login-screen">
       <form className="login-panel" onSubmit={handleSubmit}>
         <div className="login-brand">
-          <img src="/logo2.svg" alt="Walk-In" />
+          <img src="/logo.svg" alt="Walk-In" />
         </div>
         <div className="login-copy">
           <p className="eyebrow">Staff Login</p>
