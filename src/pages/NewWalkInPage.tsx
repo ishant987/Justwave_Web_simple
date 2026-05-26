@@ -6,6 +6,7 @@ import * as locationApi from '../api/locationApi';
 import { useAuth } from '../hooks/useAuth';
 import { StatusBanner } from '../components/StatusBanner';
 import type { ChildRecord, EntryExitLog, PassCreatePayload, PassPaymentMode, PaymentSplit } from '../types/entryExit';
+import { buildPassPrintDocument } from '../utils/passPrint';
 
 const PAYMENT_SPLIT_OPTIONS: { mode: PassPaymentMode; label: string }[] = [
   { mode: 'cash', label: 'Cash' },
@@ -49,13 +50,21 @@ function compactDurationLabel(label?: string | null): string {
   return label.replace(/\s*\([^)]*\)/g, '').trim();
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
+function formatAmountCompact(value?: number | null) {
+  const amount = Number(value ?? 0);
+  return Number.isInteger(amount) ? `Rs.${amount}` : `Rs.${amount.toFixed(2)}`;
+}
+
+function formatDurationLabel(minutes?: number | null) {
+  const totalMinutes = Number(minutes ?? 0) || 0;
+  if (!totalMinutes) return '40m';
+  if (totalMinutes % 60 === 0) return `${totalMinutes / 60}h`;
+  if (totalMinutes > 60) {
+    const hours = Math.floor(totalMinutes / 60);
+    const remainingMinutes = totalMinutes % 60;
+    return remainingMinutes ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+  }
+  return `${totalMinutes}m`;
 }
 
 function centsFromAmount(value: number) {
@@ -315,6 +324,10 @@ export function NewWalkInPage() {
       }
 
       const nextCreatedPasses = responses.flatMap((response) => normalizeListResponse(response.data));
+      if (!nextCreatedPasses.length) {
+        throw new Error('No entry passes were returned for printing.');
+      }
+
       const ids = nextCreatedPasses.map((item) => item.id);
 
       if (ids.length) {
@@ -352,184 +365,31 @@ export function NewWalkInPage() {
         await entryExitApi.recordPrint(token!, ids);
       }
 
-      const ticketHtml = nextCreatedPasses
-        .map((passItem) => {
-          const durationLabel = compactDurationLabel(
-            durationPriceMap[
-              durationPriceMap[childDurationById[passItem.child_id || '']]
-                ? childDurationById[passItem.child_id || '']
-                : effectiveDurationPriceId
-            ]?.duration_label,
-          );
-          const guardianName = passItem.parent_name || passItem.customer_name || lookupData?.parent?.name || '-';
-          const qrSrc = nextQrByPassId[passItem.id] || '';
+      await printHtmlDocument(
+        buildPassPrintDocument(
+          nextCreatedPasses.map((passItem) => {
+            const selectedDurationId = durationPriceMap[childDurationById[passItem.child_id || '']]
+              ? childDurationById[passItem.child_id || '']
+              : effectiveDurationPriceId;
+            const durationLabel = passItem.expected_duration_minutes
+              ? formatDurationLabel(passItem.expected_duration_minutes)
+              : compactDurationLabel(durationPriceMap[selectedDurationId]?.duration_label);
+            const guardianName = passItem.parent_name || passItem.customer_name || lookupData?.parent?.name || '-';
 
-          return `
-            <section class="ticket-page">
-              <article class="ticket-sheet">
-                <div class="ticket-left">
-                  <div class="ticket-brand">JUSTWAVE</div>
-                  <div class="ticket-badge">CHILD PASS</div>
-                  <div class="ticket-admit">ADMIT ONE</div>
-                  <div class="ticket-child-name">${escapeHtml(passItem.child_name || 'Walk-In Child')}</div>
-                  <div class="ticket-meta-grid">
-                    <div>
-                      <span>TIME / DURATION</span>
-                      <strong>${escapeHtml(durationLabel)}</strong>
-                    </div>
-                    <div>
-                      <span>AMOUNT</span>
-                      <strong>Rs.${Number(passItem.bill_total_amount ?? passItem.pass_price ?? 0).toFixed(0)}</strong>
-                    </div>
-                    <div>
-                      <span>GUARDIAN</span>
-                      <strong>${escapeHtml(guardianName)}</strong>
-                    </div>
-                    <div>
-                      <span>PHONE</span>
-                      <strong>${escapeHtml(lookupPhone)}</strong>
-                    </div>
-                  </div>
-                </div>
-                <div class="ticket-right">
-                  <div class="ticket-qr-frame">
-                    ${qrSrc ? `<img src="${qrSrc}" alt="QR" class="ticket-qr-image" />` : ''}
-                  </div>
-                  <div class="ticket-code">${escapeHtml(passItem.id.slice(0, 8).toUpperCase())}</div>
-                </div>
-              </article>
-            </section>
-          `;
-        })
-        .join('');
-
-      await printHtmlDocument(`
-        <!doctype html>
-        <html>
-          <head>
-            <meta charset="utf-8" />
-            <title>Entry Tickets</title>
-            <style>
-              @page {
-                size: 12in 6in;
-                margin: 0;
-              }
-              * {
-                box-sizing: border-box;
-              }
-              html, body {
-                margin: 0;
-                padding: 0;
-                background: #ffffff;
-                font-family: Arial, Helvetica, sans-serif;
-              }
-              .ticket-page {
-                width: 12in;
-                height: 6in;
-                page-break-after: always;
-                break-after: page;
-                overflow: hidden;
-              }
-              .ticket-page:last-child {
-                page-break-after: auto;
-                break-after: auto;
-              }
-              .ticket-sheet {
-                width: 12in;
-                height: 6in;
-                border: 2px solid #111111;
-                display: grid;
-                grid-template-columns: minmax(0, 1.45fr) 3.2in;
-                overflow: hidden;
-              }
-              .ticket-left {
-                padding: 0.65in 0.7in 0.55in;
-              }
-              .ticket-right {
-                border-left: 3px dashed #111111;
-                padding: 0.45in;
-                display: grid;
-                align-content: center;
-                justify-items: center;
-                gap: 0.22in;
-              }
-              .ticket-brand {
-                font-size: 40pt;
-                font-weight: 900;
-                letter-spacing: 0.02em;
-                line-height: 0.95;
-              }
-              .ticket-badge {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                margin-top: 0.18in;
-                padding: 0.08in 0.22in;
-                border: 2px solid #111111;
-                border-radius: 0.2in;
-                font-size: 16pt;
-                font-weight: 900;
-                letter-spacing: 0.04em;
-              }
-              .ticket-admit {
-                margin-top: 0.4in;
-                font-size: 16pt;
-                font-weight: 900;
-                letter-spacing: 0.03em;
-              }
-              .ticket-child-name {
-                margin-top: 0.12in;
-                font-size: 42pt;
-                font-weight: 900;
-                line-height: 0.95;
-                text-transform: uppercase;
-                max-width: 100%;
-                word-break: break-word;
-              }
-              .ticket-meta-grid {
-                display: grid;
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 0.32in 0.4in;
-                margin-top: 0.75in;
-              }
-              .ticket-meta-grid span {
-                display: block;
-                margin-bottom: 0.08in;
-                font-size: 14pt;
-                font-weight: 900;
-              }
-              .ticket-meta-grid strong {
-                display: block;
-                font-size: 18pt;
-                font-weight: 900;
-                line-height: 1.15;
-                word-break: break-word;
-              }
-              .ticket-qr-frame {
-                width: 2.6in;
-                height: 2.6in;
-                border: 2px solid #111111;
-                border-radius: 0.22in;
-                display: grid;
-                place-items: center;
-                padding: 0.12in;
-                background: #ffffff;
-              }
-              .ticket-qr-image {
-                width: 100%;
-                height: 100%;
-                object-fit: contain;
-              }
-              .ticket-code {
-                font-size: 16pt;
-                font-weight: 900;
-                letter-spacing: 0.12in;
-              }
-            </style>
-          </head>
-          <body>${ticketHtml}</body>
-        </html>
-      `);
+            return {
+              amount: formatAmountCompact(passItem.bill_total_amount ?? passItem.pass_price ?? 0),
+              childName: passItem.child_name || 'Walk-In Child',
+              code: passItem.id.slice(0, 8).toUpperCase(),
+              durationLabel,
+              guardianName,
+              phone: passItem.phone || lookupPhone || '-',
+              printCountLabel: 'Printed 1x',
+              qrSrc: nextQrByPassId[passItem.id] || '',
+            };
+          }),
+          'Entry Tickets',
+        ),
+      );
 
       return {
         createdPasses: nextCreatedPasses,
