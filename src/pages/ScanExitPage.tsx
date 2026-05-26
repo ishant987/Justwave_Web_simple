@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import * as entryExitApi from '../api/entryExitApi';
+import { TicketDetailsCard } from '../components/TicketDetailsCard';
 import { StatusBanner } from '../components/StatusBanner';
 import { useAuth } from '../hooks/useAuth';
+import { useFlash } from '../hooks/useFlash';
 import type { OvertimeSettlementItem, PaymentMode, ScanExitResponse } from '../types/entryExit';
 
 function normalizeSettlements(
@@ -55,6 +57,7 @@ function buildFallbackSettlement(data?: ScanExitResponse['data'] | null): Overti
 
 export function ScanExitPage() {
   const { token } = useAuth();
+  const { showFlash } = useFlash();
   const [scanToken, setScanToken] = useState('');
   const [otp, setOtp] = useState('');
   const [otpRequired, setOtpRequired] = useState(false);
@@ -70,6 +73,7 @@ export function ScanExitPage() {
     mutationFn: () => entryExitApi.scanExit(token!, scanToken),
     onSuccess: (response) => {
       setInfoMessage(response.message);
+      showFlash(response.message, response.status === 'overtime_due' ? 'warning' : 'info');
       setSettlementMessage('');
       setOtpRequired(response.status === 'exit_otp_required');
       setOtp('');
@@ -87,7 +91,9 @@ export function ScanExitPage() {
   const verifyMutation = useMutation({
     mutationFn: () => entryExitApi.verifyExitOtp(token!, scanToken, otp),
     onSuccess: (response) => {
-      setInfoMessage(response.message || 'Exit verified.');
+      const message = response.message || 'Exit verified.';
+      setInfoMessage(message);
+      showFlash(message, 'success');
       setSettlementMessage('');
       setOtpRequired(false);
       setOtp('');
@@ -105,8 +111,10 @@ export function ScanExitPage() {
       return entryExitApi.settleOvertime(token!, settlementRow.id, settlementMode);
     },
     onSuccess: async (response) => {
-      setSettlementMessage(response.message || 'Overtime settled.');
+      const message = response.message || 'Overtime settled.';
+      setSettlementMessage(message);
       setInfoMessage('Overtime settled. Scan exit again to complete checkout.');
+      showFlash(message, 'success');
       setSettlementRow(null);
       if (overtimePhone) {
         await overtimeQuery.refetch();
@@ -182,6 +190,8 @@ export function ScanExitPage() {
           />
         ) : null}
         {infoMessage ? <StatusBanner tone={overtimeDue ? 'warning' : 'info'} message={infoMessage} /> : null}
+
+        <TicketDetailsCard title="Scanned Exit Ticket" ticket={scannedPass} />
 
         {matchedSettlement ? (
           <div className="scan-overtime-card">
@@ -300,8 +310,6 @@ export function ScanExitPage() {
           </div>
         </div>
       ) : null}
-
-      {settlementMessage ? <StatusBanner tone="success" message={settlementMessage} /> : null}
     </div>
   );
 }

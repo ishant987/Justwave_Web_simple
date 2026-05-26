@@ -3,9 +3,11 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import QRCode from 'qrcode';
 import * as entryExitApi from '../api/entryExitApi';
 import * as locationApi from '../api/locationApi';
+import { ApiError } from '../api/http';
 import { useAuth } from '../hooks/useAuth';
+import { useFlash } from '../hooks/useFlash';
 import { StatusBanner } from '../components/StatusBanner';
-import type { ChildRecord, EntryExitLog, PassCreatePayload, PassPaymentMode, PaymentSplit } from '../types/entryExit';
+import type { ChildRecord, DurationPrice, EntryExitLog, Location, PassCreatePayload, PassPaymentMode, PaymentSplit } from '../types/entryExit';
 import { buildPassPrintDocument } from '../utils/passPrint';
 
 const PAYMENT_SPLIT_OPTIONS: { mode: PassPaymentMode; label: string }[] = [
@@ -33,16 +35,62 @@ interface PendingPassPreview {
   isDraft: boolean;
 }
 
-type ListResponsePayload<T> = { data?: T[] | { data?: T[] } } | T[] | undefined;
+type ListResponsePayload<T> =
+  | {
+      data?: T[] | { data?: T[]; entry_exit_logs?: T[]; logs?: T[]; passes?: T[]; items?: T[]; results?: T[] };
+      entry_exit_logs?: T[];
+      logs?: T[];
+      passes?: T[];
+      items?: T[];
+      results?: T[];
+    }
+  | T[]
+  | undefined;
 
-function normalizeListResponse<T>(payload: ListResponsePayload<T>): T[] {
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function normalizeListResponse<T>(payload: ListResponsePayload<T> | unknown): T[] {
   if (!payload) return [];
   if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload.data)) return payload.data;
-  if (payload.data && typeof payload.data === 'object' && Array.isArray(payload.data.data)) {
-    return payload.data.data;
+  if (!isRecord(payload)) return [];
+  if (typeof payload.id === 'string') return [payload as T];
+
+  for (const key of ['data', 'entry_exit_logs', 'logs', 'passes', 'items', 'results']) {
+    const value = payload[key];
+    if (Array.isArray(value)) return value as T[];
+    if (isRecord(value)) {
+      const nested = normalizeListResponse<T>(value);
+      if (nested.length) return nested;
+    }
   }
+
   return [];
+}
+
+function normalizeText(value?: string | null) {
+  return (value || '').trim().toLowerCase();
+}
+
+function uniquePassesById(items: EntryExitLog[]) {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (!item.id || seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
+}
+
+async function lookupPassesForFallback(token: string, query: string) {
+  try {
+    return await entryExitApi.lookupPasses(token, query);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return [];
+    }
+    throw error;
+  }
 }
 
 function compactDurationLabel(label?: string | null): string {
@@ -192,6 +240,7 @@ function UiIcon({ type }: { type: 'phone' | 'user' | 'children' | 'ticket' | 'pl
 
 export function NewWalkInPage() {
   const { token } = useAuth();
+  const { showFlash } = useFlash();
   const [lookupPhone, setLookupPhone] = useState('');
   const [selectedLocationId, setSelectedLocationId] = useState('');
   const [selectedChildIds, setSelectedChildIds] = useState<string[]>([]);
@@ -217,7 +266,6 @@ export function NewWalkInPage() {
     bank_transfer: '0',
     other: '0',
   });
-  const [toastMessage, setToastMessage] = useState('');
   const [qrByPassId, setQrByPassId] = useState<Record<string, string>>({});
   const [isEditingCustomerName, setIsEditingCustomerName] = useState(false);
   const [editableCustomerName, setEditableCustomerName] = useState('');
@@ -243,8 +291,7 @@ export function NewWalkInPage() {
     mutationFn: ({ customerId, name, phone }: { customerId: string; name: string; phone: string }) =>
       entryExitApi.updateCustomer(token!, customerId, { name, phone }),
     onSuccess: () => {
-      setToastMessage('Customer name updated successfully.');
-      window.setTimeout(() => setToastMessage(''), 2600);
+      showFlash('Customer name updated successfully.', 'success');
       setIsEditingCustomerName(false);
       const normalizedPhone = lookupPhone.replace(/\D/g, '').trim();
       if (normalizedPhone.length === 10) {
@@ -255,6 +302,7 @@ export function NewWalkInPage() {
 
   const printMutation = useMutation({
     mutationFn: async () => {
+      const passGenerationStartedAt = Date.now();
       const sharedPayload = {
         location_id: selectedLocationId,
         phone: lookupPhone,
@@ -286,21 +334,43 @@ export function NewWalkInPage() {
           appendGroupedItem(childNamesByDuration, childDuration, child.name.trim());
         });
 
+      const basePaymentPayload =
+        paymentPlan === 'parts'
+          ? ({
+              payment_mode: selectedSplitModes[0] || 'cash',
+            } satisfies Pick<PassCreatePayload, 'payment_mode'>)
+          : ({
+              payment_mode: paymentMode,
+            } satisfies Pick<PassCreatePayload, 'payment_mode'>);
+
       const passPayloads: PassCreatePayload[] = [
         ...Array.from(childIdsByDuration.entries()).map(([childDuration, childIds]) => ({
           ...sharedPayload,
           ...baseIdentity,
+          ...basePaymentPayload,
           child_ids: childIds,
           duration_price_id: childDuration,
         })),
         ...Array.from(childNamesByDuration.entries()).map(([childDuration, childNames]) => ({
           ...sharedPayload,
           ...baseIdentity,
+          ...basePaymentPayload,
           child_names: childNames,
           child_count: childNames.length,
           duration_price_id: childDuration,
         })),
       ];
+
+      const selectedChildNames = new Set(
+        [
+          ...selectedChildIds
+            .map((childId) => existingChildren.find((child) => child.id === childId)?.name)
+            .filter((name): name is string => Boolean(name)),
+          ...draftChildren
+            .filter((child) => selectedDraftChildIds.includes(child.id))
+            .map((child) => child.name),
+        ].map(normalizeText),
+      );
 
       if (!passPayloads.length) {
         throw new Error('Select or add at least one child before printing tickets.');
@@ -319,19 +389,51 @@ export function NewWalkInPage() {
             ...(createdCustomerId ? { customer_id: createdCustomerId, customer_name: undefined, phone: undefined } : baseIdentity),
           });
           responses.push(response);
-          createdCustomerId = createdCustomerId || normalizeListResponse(response.data).find((item) => item.customer_id)?.customer_id || '';
+          createdCustomerId = createdCustomerId || normalizeListResponse<EntryExitLog>(response).find((item) => item.customer_id)?.customer_id || '';
         }
       }
 
-      const nextCreatedPasses = responses.flatMap((response) => normalizeListResponse(response.data));
-      if (!nextCreatedPasses.length) {
-        throw new Error('No entry passes were returned for printing.');
+      let createdPasses = responses.flatMap((response) => normalizeListResponse<EntryExitLog>(response));
+      if (!createdPasses.length && lookupPhone) {
+        const lookupQuery = lookupData?.customer?.id
+          ? `customer_id=${encodeURIComponent(lookupData.customer.id)}`
+          : `phone=${encodeURIComponent(lookupPhone)}`;
+        const [pendingListResponse, allListResponse, lookupResponse] = await Promise.all([
+          entryExitApi.listPasses(token!, `status=pending&search=${encodeURIComponent(lookupPhone)}&per_page=50`),
+          entryExitApi.listPasses(token!, `search=${encodeURIComponent(lookupPhone)}&per_page=50`),
+          lookupPassesForFallback(token!, lookupQuery),
+        ]);
+        const fallbackPasses = uniquePassesById([
+          ...normalizeListResponse<EntryExitLog>(pendingListResponse),
+          ...normalizeListResponse<EntryExitLog>(allListResponse),
+          ...normalizeListResponse<EntryExitLog>(lookupResponse),
+        ]);
+        const recentMatchingPasses = fallbackPasses.filter((passItem) => {
+          const createdAt = passItem.created_at ? Date.parse(passItem.created_at) : NaN;
+          const isRecent = Number.isNaN(createdAt) || createdAt >= passGenerationStartedAt - 5 * 60 * 1000;
+          const childName = normalizeText(passItem.child_name);
+          const isSelectedChild = !selectedChildNames.size || selectedChildNames.has(childName);
+          return isRecent && isSelectedChild;
+        });
+
+        createdPasses = (recentMatchingPasses.length ? recentMatchingPasses : fallbackPasses).slice(
+          0,
+          Math.max(totalSelectedChildren, passPayloads.length),
+        );
       }
 
-      const ids = nextCreatedPasses.map((item) => item.id);
+      if (!createdPasses.length) {
+        throw new Error(
+          'No entry passes were returned for printing. Checked POST /entry-exit/passes, GET /entry-exit/passes, and GET /entry-exit/passes/lookup.',
+        );
+      }
 
-      if (ids.length) {
-        await entryExitApi.markPassPaid(
+      const ids = createdPasses.map((item) => item.id);
+      let printablePasses = createdPasses;
+
+      const hasPendingPasses = createdPasses.some((item) => item.payment_status !== 'paid');
+      if (ids.length && (hasPendingPasses || paymentPlan === 'parts')) {
+        const paidResponse = await entryExitApi.markPassPaid(
           token!,
           paymentPlan === 'parts'
             ? {
@@ -344,10 +446,14 @@ export function NewWalkInPage() {
                 payment_mode: paymentMode,
               },
         );
+        const paidPasses = normalizeListResponse<EntryExitLog>(paidResponse);
+        if (paidPasses.length) {
+          printablePasses = paidPasses;
+        }
       }
 
       const qrEntries = await Promise.all(
-        nextCreatedPasses.map(async (passItem) => {
+        printablePasses.map(async (passItem) => {
           const dataUrl = await QRCode.toDataURL(passItem.id, {
             margin: 1,
             width: 220,
@@ -367,7 +473,7 @@ export function NewWalkInPage() {
 
       await printHtmlDocument(
         buildPassPrintDocument(
-          nextCreatedPasses.map((passItem) => {
+          printablePasses.map((passItem) => {
             const selectedDurationId = durationPriceMap[childDurationById[passItem.child_id || '']]
               ? childDurationById[passItem.child_id || '']
               : effectiveDurationPriceId;
@@ -392,7 +498,7 @@ export function NewWalkInPage() {
       );
 
       return {
-        createdPasses: nextCreatedPasses,
+        createdPasses: printablePasses,
         qrByPassId: nextQrByPassId,
       };
     },
@@ -414,9 +520,9 @@ export function NewWalkInPage() {
     },
   });
 
-  const locations = normalizeListResponse(locationsQuery.data);
+  const locations = normalizeListResponse<Location>(locationsQuery.data);
   const durationPrices = useMemo(
-    () => sortDurationPrices(normalizeListResponse(durationPricesQuery.data).filter((item) => item.is_active !== false)),
+    () => sortDurationPrices(normalizeListResponse<DurationPrice>(durationPricesQuery.data).filter((item) => item.is_active !== false)),
     [durationPricesQuery.data],
   );
   const lookupData = lookupMutation.data?.data;
@@ -601,6 +707,7 @@ export function NewWalkInPage() {
     setSelectedChildIds([]);
     setDraftChildren([]);
     setResultMessage('');
+    lookupMutation.reset();
     lastLookupPhoneRef.current = normalizedPhone;
     lookupMutation.mutate(normalizedPhone);
   }
@@ -611,6 +718,7 @@ export function NewWalkInPage() {
     setSelectedChildIds([]);
     setDraftChildren([]);
     setResultMessage('');
+    lookupMutation.reset();
     lastLookupPhoneRef.current = normalizedPhone;
     lookupMutation.mutate(normalizedPhone);
   }
@@ -740,8 +848,7 @@ export function NewWalkInPage() {
     event.preventDefault();
 
     if (!pendingPasses.length) {
-      setToastMessage('Select or add at least one child before generating passes.');
-      window.setTimeout(() => setToastMessage(''), 2600);
+      showFlash('Select or add at least one child before generating passes.', 'warning');
       return;
     }
 
@@ -765,8 +872,6 @@ export function NewWalkInPage() {
 
   return (
     <div className="simple-page">
-      {toastMessage ? <div className="top-toast">{toastMessage}</div> : null}
-
       <section className="simple-card">
         <form className="simple-form full-height-form" onSubmit={handleCreatePass}>
           <div className="simple-top-row">
@@ -783,6 +888,7 @@ export function NewWalkInPage() {
                     setLookupPhone(normalizedPhone);
                     if (normalizedPhone.length < 10) {
                       lastLookupPhoneRef.current = '';
+                      lookupMutation.reset();
                     }
                     if (normalizedPhone.length === 10) {
                       triggerLookupForPhone(normalizedPhone);

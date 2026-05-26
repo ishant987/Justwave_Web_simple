@@ -161,14 +161,23 @@ export interface PassCreatePayload {
   hours?: number;
   duration_minutes?: number;
   duration_price_id?: string;
+  payment_mode?: PassPaymentMode | 'split';
+  payment_splits?: PaymentSplit[];
 }
 
 export interface PassCreateResponse {
   message?: string;
-  data: EntryExitLog[] | PaginatedList<EntryExitLog>;
+  data?: EntryExitLog[] | PaginatedList<EntryExitLog>;
   payment?: {
     required?: boolean;
+    provider?: string | null;
+    ids?: string[];
   };
+}
+
+export interface MarkPassPaidResponse {
+  message?: string;
+  data?: EntryExitLog[] | PaginatedList<EntryExitLog>;
 }
 
 export interface OvertimeSettlementItem extends EntryExitLog {

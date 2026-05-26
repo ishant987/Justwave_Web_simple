@@ -783,7 +783,7 @@
           "pass_lifecycle_status": {
             "type": "string",
             "enum": [
-              "payment_pending",
+              "payment_required",
               "issued_not_scanned",
               "claimed_inside",
               "used_checked_out",
@@ -1081,7 +1081,7 @@
               "pass_lifecycle_status": {
                 "type": "string",
                 "enum": [
-                  "payment_pending",
+                  "payment_required",
                   "issued_not_scanned",
                   "claimed_inside",
                   "used_checked_out",
@@ -1402,7 +1402,7 @@
         "properties": {
           "message": {
             "type": "string",
-            "example": "Payment verified. Passes issued and ready to print."
+            "example": "Payment verified. Passes generated and ready to print."
           },
           "data": {
             "type": "array",
@@ -1460,7 +1460,7 @@
                 "pass_lifecycle_status": {
                   "type": "string",
                   "enum": [
-                    "payment_pending",
+                    "payment_required",
                     "issued_not_scanned",
                     "claimed_inside",
                     "used_checked_out",
@@ -1766,7 +1766,7 @@
         "properties": {
           "message": {
             "type": "string",
-            "example": "Razorpay order created successfully."
+            "example": "Razorpay order created. Complete payment to generate entry passes."
           },
           "data": {
             "type": "object",
@@ -1856,7 +1856,7 @@
               },
               "status": {
                 "type": "string",
-                "example": "pending"
+                "example": "order_created"
               },
               "currency": {
                 "type": "string",
@@ -3331,14 +3331,72 @@
         "properties": {
           "ids": {
             "type": "array",
+            "nullable": true,
             "items": {
               "type": "string"
             }
+          },
+          "location_id": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 30
+          },
+          "customer_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "customer_name": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 191
+          },
+          "child_name": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 191
+          },
+          "child_names": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true,
+              "maxLength": 191
+            }
+          },
+          "child_dobs": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true,
+              "pattern": "^\\d{2}/\\d{2}/\\d{4}$"
+            }
+          },
+          "child_count": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 20
+          },
+          "parent_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "child_ids": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            }
+          },
+          "duration_price_id": {
+            "type": "string"
           }
-        },
-        "required": [
-          "ids"
-        ]
+        }
       },
       "PostEntryexitPassesRazorpayVerifyRequest": {
         "type": "object",
@@ -3346,6 +3404,7 @@
         "properties": {
           "ids": {
             "type": "array",
+            "nullable": true,
             "items": {
               "type": "string"
             }
@@ -3364,7 +3423,6 @@
           }
         },
         "required": [
-          "ids",
           "razorpay_order_id",
           "razorpay_payment_id",
           "razorpay_signature"
@@ -3505,6 +3563,27 @@
           "booking_id": {
             "type": "string",
             "nullable": true
+          },
+          "payment_mode": {
+            "type": "string",
+            "nullable": true
+          },
+          "payment_splits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "mode": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 9999999
+                }
+              }
+            }
           }
         },
         "required": [
@@ -8812,7 +8891,7 @@
                                   "pass_lifecycle_status": {
                                     "type": "string",
                                     "enum": [
-                                      "payment_pending",
+                                      "payment_required",
                                       "issued_not_scanned",
                                       "claimed_inside",
                                       "used_checked_out",
@@ -9656,7 +9735,7 @@
                         "pass_lifecycle_status": {
                           "type": "string",
                           "enum": [
-                            "payment_pending",
+                            "payment_required",
                             "issued_not_scanned",
                             "claimed_inside",
                             "used_checked_out",
@@ -9952,6 +10031,9 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "filters": {
+                      "type": "object"
+                    },
                     "data": {
                       "type": "array",
                       "items": {
@@ -9996,6 +10078,94 @@
           {
             "bearerAuth": []
           }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "checked-in",
+                "checked-out"
+              ]
+            }
+          },
+          {
+            "name": "location_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "customer_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "parent_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "child_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
         ]
       }
     },
@@ -10019,6 +10189,9 @@
                       "properties": {
                         "occupancy_count": {
                           "type": "integer"
+                        },
+                        "filters": {
+                          "type": "object"
                         },
                         "active_sessions": {
                           "type": "array",
@@ -10076,7 +10249,7 @@
                               "pass_lifecycle_status": {
                                 "type": "string",
                                 "enum": [
-                                  "payment_pending",
+                                  "payment_required",
                                   "issued_not_scanned",
                                   "claimed_inside",
                                   "used_checked_out",
@@ -10326,6 +10499,63 @@
           {
             "bearerAuth": []
           }
+        ],
+        "parameters": [
+          {
+            "name": "location_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "customer_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "parent_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "child_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          }
         ]
       }
     },
@@ -10344,6 +10574,9 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "filters": {
+                      "type": "object"
+                    },
                     "data": {
                       "type": "object",
                       "properties": {
@@ -10403,7 +10636,7 @@
                               "pass_lifecycle_status": {
                                 "type": "string",
                                 "enum": [
-                                  "payment_pending",
+                                  "payment_required",
                                   "issued_not_scanned",
                                   "claimed_inside",
                                   "used_checked_out",
@@ -10662,6 +10895,157 @@
           {
             "bearerAuth": []
           }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "pending",
+                "completed",
+                "active",
+                "expired"
+              ]
+            }
+          },
+          {
+            "name": "payment_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "paid"
+              ]
+            }
+          },
+          {
+            "name": "entry_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "walk_in",
+                "booking",
+                "package_pass"
+              ]
+            }
+          },
+          {
+            "name": "location_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "customer_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "parent_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "child_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "booking_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "created_at",
+                "entry_time",
+                "exit_time",
+                "duration",
+                "status"
+              ]
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 100
+            }
+          }
         ]
       }
     },
@@ -10747,7 +11131,7 @@
                               "pass_lifecycle_status": {
                                 "type": "string",
                                 "enum": [
-                                  "payment_pending",
+                                  "payment_required",
                                   "issued_not_scanned",
                                   "claimed_inside",
                                   "used_checked_out",
@@ -11114,7 +11498,7 @@
                         "pass_lifecycle_status": {
                           "type": "string",
                           "enum": [
-                            "payment_pending",
+                            "payment_required",
                             "issued_not_scanned",
                             "claimed_inside",
                             "used_checked_out",
@@ -11908,7 +12292,7 @@
                               "pass_lifecycle_status": {
                                 "type": "string",
                                 "enum": [
-                                  "payment_pending",
+                                  "payment_required",
                                   "issued_not_scanned",
                                   "claimed_inside",
                                   "used_checked_out",
@@ -12301,7 +12685,7 @@
                           "pass_lifecycle_status": {
                             "type": "string",
                             "enum": [
-                              "payment_pending",
+                              "payment_required",
                               "issued_not_scanned",
                               "claimed_inside",
                               "used_checked_out",
@@ -12544,19 +12928,12 @@
                       "properties": {
                         "required": {
                           "type": "boolean",
-                          "example": true
+                          "example": false
                         },
                         "provider": {
                           "type": "string",
-                          "example": "razorpay"
-                        },
-                        "create_order_url": {
-                          "type": "string",
-                          "example": "http://localhost:8000/api/v1/entry-exit/passes/razorpay-order"
-                        },
-                        "verify_url": {
-                          "type": "string",
-                          "example": "http://localhost:8000/api/v1/entry-exit/passes/razorpay-verify"
+                          "nullable": true,
+                          "example": "cash"
                         },
                         "ids": {
                           "type": "array",
@@ -12666,6 +13043,27 @@
                   "booking_id": {
                     "type": "string",
                     "nullable": true
+                  },
+                  "payment_mode": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "payment_splits": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "mode": {
+                          "type": "string"
+                        },
+                        "amount": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 9999999
+                        }
+                      }
+                    }
                   }
                 },
                 "required": [
@@ -12761,7 +13159,7 @@
                           "pass_lifecycle_status": {
                             "type": "string",
                             "enum": [
-                              "payment_pending",
+                              "payment_required",
                               "issued_not_scanned",
                               "claimed_inside",
                               "used_checked_out",
@@ -13367,7 +13765,7 @@
                         "pass_lifecycle_status": {
                           "type": "string",
                           "enum": [
-                            "payment_pending",
+                            "payment_required",
                             "issued_not_scanned",
                             "claimed_inside",
                             "used_checked_out",
@@ -13746,7 +14144,7 @@
                           "pass_lifecycle_status": {
                             "type": "string",
                             "enum": [
-                              "payment_pending",
+                              "payment_required",
                               "issued_not_scanned",
                               "claimed_inside",
                               "used_checked_out",
@@ -14126,19 +14524,77 @@
                 "properties": {
                   "ids": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                       "type": "string"
                     }
+                  },
+                  "location_id": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 30
+                  },
+                  "customer_id": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "customer_name": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 191
+                  },
+                  "child_name": {
+                    "type": "string",
+                    "nullable": true,
+                    "maxLength": 191
+                  },
+                  "child_names": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "string",
+                      "nullable": true,
+                      "maxLength": 191
+                    }
+                  },
+                  "child_dobs": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "string",
+                      "nullable": true,
+                      "pattern": "^\\d{2}/\\d{2}/\\d{4}$"
+                    }
+                  },
+                  "child_count": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 0,
+                    "maximum": 20
+                  },
+                  "parent_id": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "child_ids": {
+                    "type": "array",
+                    "nullable": true,
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "duration_price_id": {
+                    "type": "string"
                   }
-                },
-                "required": [
-                  "ids"
-                ]
+                }
               }
             }
           }
         },
-        "description": "Creates or reuses a pending Razorpay order for unpaid entry pass IDs. Android should use the returned checkout payload to open Razorpay Checkout."
+        "description": "Creates a Razorpay order from the intended pass payload. Entry passes are generated only after Razorpay verification succeeds."
       }
     },
     "/api/v1/entry-exit/passes/razorpay-verify": {
@@ -14187,6 +14643,7 @@
                 "properties": {
                   "ids": {
                     "type": "array",
+                    "nullable": true,
                     "items": {
                       "type": "string"
                     }
@@ -14205,7 +14662,6 @@
                   }
                 },
                 "required": [
-                  "ids",
                   "razorpay_order_id",
                   "razorpay_payment_id",
                   "razorpay_signature"
@@ -14214,7 +14670,7 @@
             }
           }
         },
-        "description": "Verifies Razorpay signature returned by Android Checkout, marks the selected passes paid, and stores Razorpay payment details."
+        "description": "Verifies Razorpay signature returned by Android Checkout, generates paid entry passes, and stores Razorpay payment details."
       }
     },
     "/api/v1/entry-exit/passes/record-print": {
@@ -14364,7 +14820,7 @@
                         "pass_lifecycle_status": {
                           "type": "string",
                           "enum": [
-                            "payment_pending",
+                            "payment_required",
                             "issued_not_scanned",
                             "claimed_inside",
                             "used_checked_out",
@@ -14720,7 +15176,7 @@
                         "pass_lifecycle_status": {
                           "type": "string",
                           "enum": [
-                            "payment_pending",
+                            "payment_required",
                             "issued_not_scanned",
                             "claimed_inside",
                             "used_checked_out",
@@ -15051,7 +15507,7 @@
                         "pass_lifecycle_status": {
                           "type": "string",
                           "enum": [
-                            "payment_pending",
+                            "payment_required",
                             "issued_not_scanned",
                             "claimed_inside",
                             "used_checked_out",
@@ -15407,7 +15863,7 @@
                         "pass_lifecycle_status": {
                           "type": "string",
                           "enum": [
-                            "payment_pending",
+                            "payment_required",
                             "issued_not_scanned",
                             "claimed_inside",
                             "used_checked_out",
@@ -15769,7 +16225,7 @@
                         "pass_lifecycle_status": {
                           "type": "string",
                           "enum": [
-                            "payment_pending",
+                            "payment_required",
                             "issued_not_scanned",
                             "claimed_inside",
                             "used_checked_out",
@@ -16140,7 +16596,7 @@
                         "pass_lifecycle_status": {
                           "type": "string",
                           "enum": [
-                            "payment_pending",
+                            "payment_required",
                             "issued_not_scanned",
                             "claimed_inside",
                             "used_checked_out",
@@ -16492,7 +16948,7 @@
                         "pass_lifecycle_status": {
                           "type": "string",
                           "enum": [
-                            "payment_pending",
+                            "payment_required",
                             "issued_not_scanned",
                             "claimed_inside",
                             "used_checked_out",
@@ -16854,7 +17310,7 @@
                           "pass_lifecycle_status": {
                             "type": "string",
                             "enum": [
-                              "payment_pending",
+                              "payment_required",
                               "issued_not_scanned",
                               "claimed_inside",
                               "used_checked_out",

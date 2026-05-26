@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { AppErrorBoundary } from './components/AppErrorBoundary';
 import { AuthProvider } from './context/AuthContext';
+import { FlashProvider } from './context/FlashContext';
 import './styles.css';
 
 const queryClient = new QueryClient();
@@ -14,9 +15,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <AppErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
+          <FlashProvider>
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+          </FlashProvider>
         </AuthProvider>
       </QueryClientProvider>
     </AppErrorBoundary>

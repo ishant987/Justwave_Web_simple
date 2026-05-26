@@ -1,648 +1,535 @@
-# Bill Dashboard Design Page Specification
+# Walk-In New Pass Process API Flow
 
-This document describes how to recreate the Entry Exit Bill Dashboard page, including the page layout, visible UI sections, filters, table columns, API endpoints, query parameters, and response fields.
+This note explains how a new walk-in pass is created, paid, printed, and later scanned in the Entry/Exit module.
 
-## Goal
+## Main Concept
 
-Build a bill dashboard that lets staff review walk-in pass billing activity, check pending sessions, view collection totals, filter bill records, and export bill rows.
-
-The existing Laravel page has two main screens:
-
-- Summary dashboard: `/entry-exit/bill-dashboard`
-- Detailed bill table: `/entry-exit/bill-dashboard/bills`
-
-The JSON API version for app or SPA use is:
-
-- `GET /api/v1/entry-exit/bill-dashboard`
-
-## Access
-
-Web pages require:
-
-- Authenticated user
-- Verified user
-- Permission: `entry_exit.view_logs`
-
-API calls require:
-
-- Sanctum bearer token
-- Permission: `entry_exit.view_logs`
-
-Use this header for API calls:
-
-```http
-Authorization: Bearer <token>
-Accept: application/json
-```
-
-## Page 1: Summary Dashboard
-
-Route:
-
-```text
-GET /entry-exit/bill-dashboard
-```
-
-Blade view:
-
-```text
-Modules/EntryExit/resources/views/entry-exit/bill-dashboard-summary.blade.php
-```
-
-### Visual Layout
-
-Use a full-width application layout with a constrained content area:
-
-```text
-Page padding: py-8
-Container: max-w-7xl, centered
-Main spacing: vertical gap between sections
-Cards: rounded-lg, bordered, subtle shadow
-Dark mode: supported with dark: classes
-```
-
-### Header Area
-
-Top header text:
-
-```text
-Track walk-in pass bills, pending sessions, and collection totals from one place.
-```
-
-Inside the page body, show:
-
-- Title: `Bill Dashboard`
-- Subtitle: `Payment-mode collection details for the selected filter.`
-- Primary action button: `Show All Bills`
-
-The `Show All Bills` button links to:
-
-```text
-/entry-exit/bill-dashboard/bills
-```
-
-### Summary Cards
-
-Display five clickable cards in a responsive grid:
-
-```text
-Mobile/tablet: 1-2 columns
-Desktop: 5 columns
-```
-
-Cards:
-
-| Card | Value | Hint | Click target |
-| --- | --- | --- | --- |
-| Pending | `summary.pending` | `Awaiting exit` | `/entry-exit/bill-dashboard/bills?category=pending` |
-| Generated Today | `summary.generated_today` | Current date, e.g. `24 May 2026` | `/entry-exit/bill-dashboard/bills?category=generated_today` |
-| All Time Bills | `summary.all_time` | `Every bill` | `/entry-exit/bill-dashboard/bills` |
-| Total Amount Today | `summary.amount_today` | Bill count from `summary.amount_today_count` | `/entry-exit/bill-dashboard/bills?category=amount_today` |
-| Total Amount Month | `summary.amount_month` | Current month, e.g. `May 2026` | `/entry-exit/bill-dashboard/bills?category=amount_month` |
-
-Suggested color intent:
-
-| Card | Style intent |
-| --- | --- |
-| Pending | Amber warning tone |
-| Generated Today | Sky/blue information tone |
-| All Time Bills | Neutral white/slate tone |
-| Total Amount Today | Emerald success tone |
-| Total Amount Month | Indigo monthly total tone |
-
-### Collection By Payment Mode Section
-
-Show this as a large bordered panel below the summary cards.
-
-Left side:
-
-- Heading: `Collection By Payment Mode`
-- Helper text: `Detailed today totals by Cash, UPI, Card, Bank Transfer, Other, and Razorpay.`
-
-Right side filter form:
-
-| Field | Type | Values |
-| --- | --- | --- |
-| `summary_period` | Select | `today`, `monthly`, `date_range`, `date` |
-| `date_from` | Date input | Visible for `date` and `date_range` |
-| `date_to` | Date input | Visible only for `date_range` |
-| Submit | Button | `Filter` |
-| Filtered total badge | Read-only display | `Filtered Total: Rs.0.00` |
-
-Example URLs:
-
-```text
-GET /entry-exit/bill-dashboard?summary_period=today
-GET /entry-exit/bill-dashboard?summary_period=monthly
-GET /entry-exit/bill-dashboard?summary_period=date&date_from=2026-05-24
-GET /entry-exit/bill-dashboard?summary_period=date_range&date_from=2026-05-01&date_to=2026-05-24
-```
-
-### Payment Mode Cards
-
-Below the filter row, display payment mode cards in a responsive grid:
-
-```text
-Desktop: 2-3 columns
-Each card: mode label, total amount, transaction count, and a small table
-```
-
-Payment modes shown by default:
-
-- Cash
-- UPI
-- Card
-- Bank Transfer
-- Other
-- Razorpay
-
-Each payment mode card shows:
-
-| Display | Data field |
-| --- | --- |
-| Payment mode label | `paymentModeBreakdown[*].label` |
-| Total amount | `paymentModeBreakdown[*].amount` |
-| Total transactions | `paymentModeBreakdown[*].transactions` |
-| Pass collection amount | `paymentModeBreakdown[*].pass_amount` |
-| Pass transaction count | `paymentModeBreakdown[*].pass_transactions` |
-| Overtime collection amount | `paymentModeBreakdown[*].overtime_amount` |
-| Overtime transaction count | `paymentModeBreakdown[*].overtime_transactions` |
-
-## Page 2: Detailed Bill Table
-
-Route:
-
-```text
-GET /entry-exit/bill-dashboard/bills
-```
-
-Blade view:
-
-```text
-Modules/EntryExit/resources/views/entry-exit/bill-dashboard.blade.php
-```
-
-### Visual Layout
-
-Use the same application layout and top header as the summary dashboard.
-
-Main sections:
-
-1. Five summary cards
-2. Filter panel
-3. Bill table panel
-
-The selected category card should show an active ring.
-
-### Summary Cards On Table Page
-
-Use the same five cards from the summary dashboard. Each card keeps the current query string except `page`, then changes `category`.
-
-Categories:
-
-```text
-all_time
-pending
-generated_today
-amount_today
-amount_month
-```
-
-### Filter Panel
-
-The filter panel is a bordered white/dark card with a GET form.
-
-Form action:
-
-```text
-GET /entry-exit/bill-dashboard/bills
-```
-
-Hidden fields:
-
-| Field | Purpose |
-| --- | --- |
-| `category` | Keeps selected category |
-| `sort` | Keeps selected sort |
-| `direction` | Keeps current sort direction |
-
-Visible filters:
-
-| Field | Type | Options / Behavior |
-| --- | --- | --- |
-| `search` | Text input | Searches bill ID, customer, phone, child, branch, Razorpay ID |
-| `status` | Select | `all`, `pending`, `active`, `completed`, `expired` |
-| `payment_mode` | Select | `all`, `cash`, `upi`, `card`, `bank_transfer`, `other`, `razorpay`, `split` |
-| `collection_type` | Select | `all`, `pass`, `overtime` |
-| `location_id` | Select | All branches, or locked to staff branch |
-| `date_from` | Date input | Filters `created_at >= date_from` |
-| `date_to` | Date input | Filters `created_at <= date_to` |
-| `per_page` | Select | `10`, `15`, `25`, `50` |
-
-Quick filter buttons:
-
-| Button | Behavior |
-| --- | --- |
-| All Time | Clears category/date range |
-| Pending | Sets `category=pending` |
-| Today | Sets `category=generated_today`, `date_from=today`, `date_to=today` |
-| This Month | Sets `category=amount_month` |
-
-Action buttons:
-
-| Button | Target |
-| --- | --- |
-| Dashboard | `/entry-exit/bill-dashboard` |
-| Reset | `/entry-exit/bill-dashboard/bills` |
-| Export Excel | `/entry-exit/bill-dashboard/bills/export` with current query |
-| Apply Filters | Submits the form |
-
-Example filter URL:
-
-```text
-GET /entry-exit/bill-dashboard/bills?category=all_time&status=all&payment_mode=all&collection_type=all&search=&sort=created_at&direction=desc&per_page=15
-```
-
-### Bill Table Header
-
-Above the table, show:
-
-- Heading: `Bills`
-- Count text: `Showing :first to :last of :total bills`
-- Filtered total badge: `Filtered Total: Rs.0.00`
-
-If pagination has multiple pages, show Laravel pagination above and below the table.
-
-### Bill Table Columns
-
-| Column | Sort key | Display |
-| --- | --- | --- |
-| Bill | `bill` | Short code and truncated UUID |
-| Customer | none | Customer/parent/child display name and phone |
-| Branch | none | Branch name and staff name |
-| Duration | `duration` | Duration minutes or `Flexible`, plus lifecycle time hint |
-| Amount | `amount` | Total amount, optional pass + overtime split, payment details |
-| Status | `status` | Colored lifecycle badge |
-| Generated | `created_at` | Date and time |
-
-Sortable headers toggle `direction` between `asc` and `desc`.
-
-Supported sort keys:
-
-```text
-bill
-amount
-created_at
-duration
-status
-entry_time
-exit_time
-```
-
-### Bill Row Display Mapping
-
-| UI field | Source |
-| --- | --- |
-| Bill short code | `WIB-` + first 8 uppercase chars of `entry_exit_logs.id` |
-| UUID subtitle | Truncated `entry_exit_logs.id` |
-| Customer name | `child.name`, else `parentGuardian.name`, else `customer.name`, else `Walk-in Guest` |
-| Phone | `parentGuardian.phone`, else `customer.phone`, else `No phone` |
-| Branch | `location.name`, else `Unknown` |
-| Staff | `staff.name`, else `Reception` |
-| Duration | `expected_duration_minutes`, else `Flexible` |
-| Used hint | `Used at actual_exit_time` |
-| Claimed hint | `Claimed at entry_time` |
-| Unscanned hint | `Entry not scanned` |
-| Pass amount | `collectedPassAmount()` |
-| Overtime amount | `collectedOvertimeAmount()` |
-| Total amount | `collectedBillTotal()` |
-| Payment details | Payment mode, split payments, Razorpay IDs from payment detail partial |
-| Generated date/time | `created_at` |
-
-### Status Badges
-
-| Condition | Label | Style intent |
-| --- | --- | --- |
-| `actual_exit_time` is not null | `Used / Checked out` | Slate/neutral |
-| `entry_time` is null and `pass_expires_at` is past | `Expired` | Rose/error |
-| `entry_time` is not null and no actual exit | `Claimed / Inside` | Sky/info |
-| Pass is paid but not scanned | `Issued / Not scanned` | Emerald/success |
-| Otherwise | `Payment Pending` | Amber/warning |
-
-### Empty State
-
-If no bills match the filters, show one centered row:
-
-```text
-No bills match the current filters.
-```
-
-## Export API
-
-Route:
-
-```text
-GET /entry-exit/bill-dashboard/bills/export
-```
-
-This endpoint accepts the same web table filters and streams an `.xlsx` file.
-
-Export filename format:
-
-```text
-entry-exit-bills-{collection_type}-{YYYYMMDD-HHMMSS}.xlsx
-```
-
-Export columns:
-
-| Column |
-| --- |
-| Bill ID |
-| Customer |
-| Phone |
-| Branch |
-| Staff |
-| Duration Minutes |
-| Status |
-| Generated At |
-| Entry Time |
-| Exit Time |
-| Pass Collection |
-| Overtime Collection |
-| Total Collection |
-| Payment Mode |
-| Overtime Payment Mode |
-| Razorpay Payment ID |
-| Overtime Razorpay Payment ID |
-
-## JSON API
-
-Endpoint:
-
-```text
-GET /api/v1/entry-exit/bill-dashboard
-```
-
-Use this endpoint if you are building the same page in a mobile app, SPA, or external frontend.
-
-### Query Parameters
-
-| Parameter | Type / Values | Default | Notes |
-| --- | --- | --- | --- |
-| `category` | `all_time`, `pending`, `generated_today`, `amount_today`, `amount_month` | `all_time` | Controls summary-card category filter |
-| `status` | `all`, `pending`, `completed`, `active`, `expired` | `all` | Filters lifecycle status |
-| `location_id` | Existing `locations.id` | empty | Branch filter |
-| `date_from` | Date | empty | Filters by `created_at` |
-| `date_to` | Date, after/equal `date_from` | empty | Filters by `created_at` |
-| `amount_min` | Number >= 0 | empty | API only |
-| `amount_max` | Number >= 0 and >= `amount_min` | empty | API only |
-| `search` | String, max 100 | empty | Searches bill/customer/phone/child/branch |
-| `sort` | `bill`, `amount`, `created_at`, `duration`, `status`, `entry_time`, `exit_time` | `created_at` | Sort field |
-| `direction` | `asc`, `desc` | `desc` | Sort direction |
-| `per_page` | Integer 10-50 | `15` | Pagination size |
-
-Example:
-
-```http
-GET /api/v1/entry-exit/bill-dashboard?status=completed&search=Rahul&amount_min=300&amount_max=1000&sort=amount&direction=desc&per_page=15
-Authorization: Bearer <token>
-Accept: application/json
-```
-
-### API Response Shape
-
-```json
-{
-  "data": {
-    "summary": {
-      "pending": 0,
-      "generated_today": 0,
-      "all_time": 0,
-      "amount_today": 0,
-      "amount_today_count": 0,
-      "amount_month": 0,
-      "amount_month_count": 0
-    },
-    "filtered_total": 0,
-    "filters": {
-      "category": "all_time",
-      "status": "all",
-      "location_id": "",
-      "date_from": "",
-      "date_to": "",
-      "amount_min": "",
-      "amount_max": "",
-      "search": "",
-      "sort": "created_at",
-      "direction": "desc",
-      "per_page": 15
-    },
-    "bills": {
-      "data": [],
-      "meta": {
-        "current_page": 1,
-        "from": null,
-        "last_page": 1,
-        "per_page": 15,
-        "to": null,
-        "total": 0
-      }
-    }
-  }
-}
-```
-
-### API Bill Object Fields
-
-Each item in `data.bills.data` contains:
-
-| Field | Notes |
-| --- | --- |
-| `id` | Entry exit log ID |
-| `location_id` | Branch ID |
-| `location_name` | Branch name |
-| `customer_id` | Customer ID |
-| `customer_name` | Customer name |
-| `parent_id` | Parent/guardian ID |
-| `parent_name` | Parent/guardian name |
-| `child_id` | Child ID |
-| `child_name` | Child name |
-| `booking_id` | Linked booking ID, if any |
-| `entry_type` | Entry type |
-| `pass_lifecycle_status` | Machine status |
-| `pass_lifecycle_label` | Human label |
-| `entry_time` | ISO timestamp |
-| `booked_exit_time` | ISO timestamp |
-| `effective_booked_exit_time` | ISO timestamp adjusted for pause/extension |
-| `actual_exit_time` | ISO timestamp |
-| `is_timer_paused` | Boolean |
-| `pause_started_at` | ISO timestamp |
-| `paused_minutes_total` | Integer |
-| `extension_minutes_total` | Integer |
-| `break_reason_required_after_minutes` | Integer setting |
-| `time_adjustments` | Latest loaded timer adjustments, usually empty for dashboard |
-| `guardian_verification_mode` | Verification mode |
-| `guardian_verified_by` | User/staff ID |
-| `expected_duration_minutes` | Pass duration |
-| `pass_price` | Pass price |
-| `bill_base_amount` | Same as pass price |
-| `bill_overtime_amount` | Overtime charge |
-| `bill_total_amount` | Pass + overtime |
-| `payment_status` | Pass payment status |
-| `payment_mode` | Pass payment mode |
-| `payment_splits` | Split payment array |
-| `razorpay_order_id` | Pass Razorpay order ID |
-| `razorpay_payment_id` | Pass Razorpay payment ID |
-| `razorpay_signature` | Pass Razorpay signature |
-| `paid_at` | Pass paid timestamp |
-| `issued_at` | Pass issued timestamp |
-| `print_count` | Number of pass prints |
-| `overtime_minutes` | Overtime minutes |
-| `overtime_charge` | Overtime charge |
-| `overtime_paid` | Boolean |
-| `overtime_payment_mode` | Overtime payment mode |
-| `overtime_razorpay_order_id` | Overtime Razorpay order ID |
-| `overtime_razorpay_payment_id` | Overtime Razorpay payment ID |
-| `overtime_razorpay_signature` | Overtime Razorpay signature |
-| `overtime_paid_at` | Overtime paid timestamp |
-| `overtime_amount_paid` | Actual overtime amount paid |
-| `pass_expires_at` | Pass expiry timestamp |
-| `created_at` | Created timestamp |
-| `updated_at` | Updated timestamp |
-
-### API Status Values
-
-`pass_lifecycle_status` can be:
-
-| Status | Label |
-| --- | --- |
-| `used_checked_out` | `Used / Checked out` |
-| `claimed_inside` | `Claimed / Inside` |
-| `expired` | `Expired` |
-| `issued_not_scanned` | `Issued / Not scanned` |
-| `payment_pending` | `Payment Pending` |
-
-## Filtering Logic
-
-### Category Filters
-
-| Category | Query logic |
-| --- | --- |
-| `pending` | `actual_exit_time IS NULL` |
-| `generated_today` | `created_at` is today |
-| `amount_today` | `created_at` is today |
-| `amount_month` | `created_at` is in the current month |
-| `all_time` | No category restriction |
-
-### Status Filters
-
-| Status | Query logic |
-| --- | --- |
-| `pending` | `actual_exit_time IS NULL` |
-| `completed` | `actual_exit_time IS NOT NULL` |
-| `active` | `entry_time IS NOT NULL` and `actual_exit_time IS NULL` |
-| `expired` | `entry_time IS NULL`, `pass_expires_at IS NOT NULL`, and `pass_expires_at` is past |
-
-### Web-Only Filters
-
-| Filter | Logic |
-| --- | --- |
-| `payment_mode` | Matches pass payment mode, overtime payment mode, or pass split mode |
-| `collection_type=pass` | Paid pass rows with `pass_price > 0` |
-| `collection_type=overtime` | Overtime-paid rows with positive overtime amount |
-
-### API-Only Filters
-
-| Filter | Logic |
-| --- | --- |
-| `amount_min` | `pass_price + overtime_charge >= amount_min` |
-| `amount_max` | `pass_price + overtime_charge <= amount_max` |
-
-## Data Source
-
-Main table:
+A walk-in pass is stored as one row in:
 
 ```text
 entry_exit_logs
 ```
 
-Relationships loaded:
+For every generated walk-in pass:
 
-- `child`
-- `customer`
-- `parentGuardian`
-- `location`
-- `staff`
+- `entry_type` is `walk_in`.
+- `customer_id` is always set.
+- `parent_id` is set when the pass belongs to a parent/guardian flow.
+- `child_id` is set for child passes.
+- `expected_duration_minutes` stores the selected pass duration.
+- `pass_price` stores the selected duration price.
+- `payment_status` is `pending` before payment and `paid` after payment.
+- `issued_at`, `paid_at`, and `pass_expires_at` are filled only after payment is completed.
+- The QR code text is the `entry_exit_logs.id` UUID.
 
-Web table base query includes only collected transactions:
+The pass is generated by `EntryExitService::issuePass()`.
+
+## Web Flow
+
+All web routes are under `/entry-exit` and require `auth`, `verified`, and the matching `iam:*` permission.
+
+| Step | Method | URL | Route name | Controller |
+| --- | --- | --- | --- | --- |
+| Open walk-in form | GET | `/entry-exit/manual-entry` | `entry-exit.manual-entry.view` | `EntryExitController::manualEntryView` |
+| Search existing parent/customer | GET | `/entry-exit/search-parents?query=...` | `entry-exit.search-parents` | `EntryExitController::searchParents` |
+| Lookup by phone | GET | `/entry-exit/lookup?phone=...` | `entry-exit.lookup` | `EntryExitController::lookupByPhone` |
+| Lookup open sessions | GET | `/entry-exit/lookup-sessions?phone=...` | `entry-exit.lookup.sessions` | `EntryExitController::lookupOpenSessionsByPhone` |
+| Prepare new walk-in pass | POST | `/entry-exit/manual-entry` | `entry-exit.manual-entry.store` | `EntryExitController::manualEntryStore` |
+| Cancel pending payment | POST | `/entry-exit/manual-entry/cancel-payment` | `entry-exit.manual-entry.cancel-payment` | `EntryExitController::manualEntryCancelPayment` |
+| Payment screen | GET | `/entry-exit/payment?ids=id1,id2` | `entry-exit.payment.view` | `EntryExitController::paymentView` |
+| Create Razorpay order | POST | `/entry-exit/payment/razorpay-order?ids=id1,id2` | `entry-exit.payment.razorpay-order` | `EntryExitController::createRazorpayOrder` |
+| Mark payment complete | POST | `/entry-exit/payment?ids=id1,id2` | `entry-exit.payment.store` | `EntryExitController::paymentStore` |
+| Print pass | GET | `/entry-exit/print-pass?ids=id1,id2` | `entry-exit.print-pass.view` | `EntryExitController::printPassView` |
+| Record print count | POST | `/entry-exit/print-pass/record-print?ids=id1,id2` | `entry-exit.print-pass.record-print` | `EntryExitController::recordPrint` |
+| Scan entry QR | POST | `/entry-exit/scan-entry` | `entry-exit.scan-entry.action` | `EntryExitController::qrScanEntryAction` |
+
+## Web Pass Creation
+
+The manual entry form submits:
 
 ```text
-payment_status = paid OR overtime_paid = true
+POST /entry-exit/manual-entry
 ```
 
-Web collected total expression:
+Important fields validated by `ManualEntryRequest`:
 
-```text
-paid pass amount + paid overtime amount
-```
+| Field | Use |
+| --- | --- |
+| `location_id` | Branch/location for the pass. |
+| `phone` | Customer phone. |
+| `customer_id` | Existing customer, optional. |
+| `customer_name` | Required when no existing customer/parent is selected. |
+| `parent_id` | Existing parent/guardian, optional. |
+| `child_ids[]` | Existing children to generate passes for. |
+| `child_count` / `child_name` / `child_names[]` | Used to create new child records during pass creation. |
+| `duration_price_id` | Preferred pricing option from `entry_pass_duration_prices`. |
+| `duration_minutes` / `hours` | Fallback duration when no duration price is selected. |
+| `child_duration_price_ids[child_id]` | Optional per-child duration price override. |
+| `new_child_duration_price_ids[]` | Duration prices for newly created children. |
 
-API total expression:
+Behavior:
 
-```text
-COALESCE(pass_price, 0) + COALESCE(overtime_charge, 0)
-```
+1. If pricing is inactive, pass generation stops with `Prices are not active. Contact admin.`
+2. Existing `parent_id` or `customer_id` is loaded when present.
+3. If no customer exists, a new `customers` row is created from `customer_name` and `phone`.
+4. If a parent pass includes children but no parent exists yet, a `parent_guardians` row is created.
+5. New child rows are created when `child_count`, `child_name`, or `child_names[]` are submitted.
+6. The service blocks pass creation if the same guest is already inside or already has an unscanned reusable pass.
+7. `duration_price_id` is resolved from active standard prices and supplies `duration_minutes` and `pass_price`.
+8. `EntryExitService::issuePass(..., requiresPayment: true)` creates one pending `entry_exit_logs` row per guest.
 
-## Recommended Frontend State
+For the web flow, newly prepared passes are not printable yet. They are payment-pending records.
 
-For a similar page in a frontend app, keep this state:
+JSON response when the request expects JSON:
 
 ```json
 {
-  "summary": {},
-  "filteredTotal": 0,
-  "filters": {
-    "category": "all_time",
-    "status": "all",
-    "location_id": "",
-    "date_from": "",
-    "date_to": "",
-    "amount_min": "",
-    "amount_max": "",
-    "search": "",
-    "sort": "created_at",
-    "direction": "desc",
-    "per_page": 15,
-    "page": 1
-  },
-  "bills": [],
-  "pagination": {},
-  "isLoading": false,
-  "error": null
+  "status": "ok",
+  "message": "Passes prepared. Complete payment to issue printable passes.",
+  "payment": {
+    "ids": "uuid-1,uuid-2",
+    "total": 500,
+    "total_label": "Rs.500.00",
+    "store_url": "https://example.com/entry-exit/payment?ids=uuid-1,uuid-2",
+    "print_url": "https://example.com/entry-exit/print-pass?ids=uuid-1,uuid-2",
+    "passes": []
+  }
 }
 ```
 
-## Implementation Checklist
+Normal browser response redirects to:
 
-1. Render the five summary cards at the top.
-2. Let each summary card update `category` and reload the bill list.
-3. Add the filter form with search, status, payment mode if using web routes, collection type if using web routes, branch, dates, and rows per page.
-4. Fetch `GET /api/v1/entry-exit/bill-dashboard` with current filters for API-based pages.
-5. Render the table from `data.bills.data`.
-6. Use `data.filtered_total` for the filtered total badge.
-7. Use `data.bills.meta` for pagination controls.
-8. Use lifecycle status to color the status badge.
-9. Preserve query strings when sorting, filtering, and paginating.
-10. Use the export web route when an Excel file is needed.
+```text
+GET /entry-exit/payment?ids=uuid-1,uuid-2
+```
 
-## Important Source Files
+## Web Payment
 
-- `Modules/EntryExit/routes/web.php`
-- `Modules/EntryExit/routes/api.php`
-- `Modules/EntryExit/app/Http/Controllers/EntryExitController.php`
-- `Modules/EntryExit/app/Http/Controllers/Api/EntryExitApiController.php`
-- `Modules/EntryExit/app/Http/Requests/BillDashboardRequest.php`
-- `Modules/EntryExit/app/Http/Requests/BillDashboardApiRequest.php`
-- `Modules/EntryExit/app/Models/EntryExitLog.php`
-- `Modules/EntryExit/resources/views/entry-exit/bill-dashboard-summary.blade.php`
-- `Modules/EntryExit/resources/views/entry-exit/bill-dashboard.blade.php`
-- `Modules/EntryExit/resources/views/entry-exit/partials/payment-details.blade.php`
+Payment is completed through:
+
+```text
+POST /entry-exit/payment?ids=uuid-1,uuid-2
+```
+
+Validated by `MarkEntryPassesPaidRequest`.
+
+Supported `payment_mode` values:
+
+```text
+cash, upi, card, bank_transfer, other, split, razorpay
+```
+
+For split payment, `payment_splits[]` must total the selected passes' `pass_price` amount.
+
+For Razorpay:
+
+1. `POST /entry-exit/payment/razorpay-order?ids=...` creates an order.
+2. The frontend collects payment in Razorpay Checkout.
+3. `POST /entry-exit/payment?ids=...` submits `payment_mode=razorpay`, `razorpay_order_id`, `razorpay_payment_id`, and `razorpay_signature`.
+4. The backend verifies the order/signature.
+
+After successful payment, `EntryExitService::markPassesPaid()` updates each log:
+
+- `payment_status = paid`
+- `payment_mode`
+- `payment_splits`, when applicable
+- Razorpay IDs/signature, when applicable
+- `paid_at = now()`
+- `issued_at = now()`
+- `pass_expires_at = now() + entry_exit.pass_expiry_minutes`
+- `booked_exit_time = null`
+
+Then the browser redirects to:
+
+```text
+GET /entry-exit/print-pass?ids=uuid-1,uuid-2
+```
+
+## Print Pass
+
+The print page loads paid logs only:
+
+```text
+GET /entry-exit/print-pass?ids=uuid-1,uuid-2
+```
+
+If any selected pass is unpaid, the page aborts with `403`.
+
+The printed ticket shows:
+
+| Printed field | Source |
+| --- | --- |
+| Guest name | `child.name`, else `customer.name`, else `Walk-in Guest` |
+| Guardian | `parentGuardian.name`, else `customer.name` |
+| Phone | `parentGuardian.phone`, else `customer.phone` |
+| Duration | `expected_duration_minutes` |
+| Amount | `pass_price` |
+| Location | `location.mall`, else `location.name` |
+| Short reference | first 8 uppercase characters of `entry_exit_logs.id` |
+| QR code text | full `entry_exit_logs.id` |
+
+After printing, the page calls:
+
+```text
+POST /entry-exit/print-pass/record-print?ids=uuid-1,uuid-2
+```
+
+That increments `entry_exit_logs.print_count`.
+
+## Entry Scan
+
+The scanner submits the QR text:
+
+```text
+POST /entry-exit/scan-entry
+```
+
+Payload:
+
+```json
+{
+  "scan_token": "entry-exit-log-uuid"
+}
+```
+
+The backend loads `EntryExitLog` by `scan_token` and calls `EntryExitService::commitEntry()`.
+
+Commit checks:
+
+- Payment must be complete.
+- The pass must not already be checked out.
+- The pass must not already be claimed/inside.
+- The pass must not be expired.
+
+On success, the log is updated:
+
+- `entry_time = now()`
+- `booked_exit_time = now() + expected_duration_minutes`
+
+Response:
+
+```json
+{
+  "status": "ok",
+  "message": "Entry successfully committed.",
+  "payload": {
+    "child_name": "Child Name",
+    "entry_time": "5:35 PM"
+  }
+}
+```
+
+## Sanctum API Flow
+
+API routes are under `/api/v1/entry-exit` and require `auth:sanctum`.
+
+| Step | Method | URL | Route name | Permission |
+| --- | --- | --- | --- | --- |
+| Search parents/customers | GET | `/api/v1/entry-exit/parents/search?query=...` | `api.entryexit.parents.search` | `entry_exit.lookup` or `entry_exit.issue_pass` |
+| Lookup parent/customer by phone | GET | `/api/v1/entry-exit/parents/lookup?phone=...` | `api.entryexit.parents.lookup` | `entry_exit.lookup` or `entry_exit.issue_pass` |
+| Lookup open sessions | GET | `/api/v1/entry-exit/sessions/lookup?phone=...` | `api.entryexit.sessions.lookup` | `entry_exit.lookup` or `entry_exit.issue_pass` |
+| List duration prices | GET | `/api/v1/entry-exit/duration-prices?price_type=standard` | `api.entryexit.duration-prices.index` | `entry_exit.access`, `entry_exit.issue_pass`, `entry_exit.manage_duration_prices`, or `entry_exit.manage_settings` |
+| Generate pass / cash-like payment | POST | `/api/v1/entry-exit/passes` | `api.entryexit.passes.store` | `entry_exit.issue_pass` |
+| Create pass Razorpay order | POST | `/api/v1/entry-exit/passes/razorpay-order` | `api.entryexit.passes.razorpay-order` | `entry_exit.issue_pass` |
+| Verify pass Razorpay payment | POST | `/api/v1/entry-exit/passes/razorpay-verify` | `api.entryexit.passes.razorpay-verify` | `entry_exit.issue_pass` |
+| Mark existing pending passes paid | POST | `/api/v1/entry-exit/passes/mark-paid` | `api.entryexit.passes.mark-paid` | `entry_exit.issue_pass` |
+| Record print count | POST | `/api/v1/entry-exit/passes/record-print` | `api.entryexit.passes.record-print` | `entry_exit.issue_pass` |
+| Scan entry | POST | `/api/v1/entry-exit/passes/scan-entry` | `api.entryexit.passes.scan-entry` | `entry_exit.commit_entry` |
+| List generated passes | GET | `/api/v1/entry-exit/passes` | `api.entryexit.passes.index` | `entry_exit.view_logs` |
+| Lookup customer pass history | GET | `/api/v1/entry-exit/passes/lookup` | `api.entryexit.passes.lookup` | authenticated customer/staff lookup rules |
+
+### API: Generate Walk-In Pass
+
+```text
+POST /api/v1/entry-exit/passes
+Authorization: Bearer <sanctum-token>
+```
+
+Validated by `IssueEntryPassRequest`.
+
+Example cash/UPI/card payload:
+
+```json
+{
+  "location_id": "location-uuid",
+  "phone": "9876543210",
+  "customer_name": "Rahul Sharma",
+  "child_count": 1,
+  "child_names": ["Aarav"],
+  "duration_price_id": "duration-price-uuid",
+  "payment_mode": "upi"
+}
+```
+
+Response:
+
+```json
+{
+  "message": "Entry passes generated successfully.",
+  "data": [
+    {
+      "id": "entry-log-uuid",
+      "entry_type": "walk_in",
+      "pass_lifecycle_status": "issued_not_scanned",
+      "customer_name": "Rahul Sharma",
+      "child_name": "Aarav",
+      "expected_duration_minutes": 60,
+      "pass_price": 250,
+      "payment_status": "paid",
+      "payment_mode": "upi",
+      "issued_at": "2026-05-27T12:00:00.000000Z",
+      "pass_expires_at": "2026-05-27T12:30:00.000000Z"
+    }
+  ],
+  "payment": {
+    "required": false,
+    "provider": "upi",
+    "ids": ["entry-log-uuid"]
+  }
+}
+```
+
+API behavior is slightly different from the web form: when `payment_mode` is cash/UPI/card/bank transfer/other/split, the API creates the pass and marks it paid in the same request.
+
+### API: Razorpay Before Pass Creation
+
+When `duration_price_id` is present and `payment_mode` is missing or `razorpay`, `POST /api/v1/entry-exit/passes` creates a Razorpay order instead of creating `entry_exit_logs`.
+
+The same can be done directly:
+
+```text
+POST /api/v1/entry-exit/passes/razorpay-order
+```
+
+Payload is the same pass payload, for example:
+
+```json
+{
+  "location_id": "location-uuid",
+  "phone": "9876543210",
+  "customer_name": "Rahul Sharma",
+  "child_count": 1,
+  "child_names": ["Aarav"],
+  "duration_price_id": "duration-price-uuid"
+}
+```
+
+Response:
+
+```json
+{
+  "message": "Razorpay order created. Complete payment to generate entry passes.",
+  "data": {
+    "key": "rzp_key",
+    "amount": 25000,
+    "currency": "INR",
+    "order_id": "order_xxx",
+    "name": "Simbaa Playzone",
+    "description": "Entry pass payment",
+    "prefill": {
+      "name": "Rahul Sharma",
+      "email": null,
+      "contact": "9876543210"
+    }
+  },
+  "payment": {
+    "provider": "razorpay",
+    "payment_type": "entry_pass",
+    "status": "order_created",
+    "currency": "INR",
+    "amount": 250,
+    "razorpay_order_id": "order_xxx",
+    "verify_url": "https://example.com/api/v1/entry-exit/passes/razorpay-verify"
+  }
+}
+```
+
+The backend caches the pass payload by Razorpay order id for 30 minutes. No `entry_exit_logs` rows are created yet.
+
+### API: Verify Razorpay And Generate Pass
+
+```text
+POST /api/v1/entry-exit/passes/razorpay-verify
+```
+
+Payload:
+
+```json
+{
+  "razorpay_order_id": "order_xxx",
+  "razorpay_payment_id": "pay_xxx",
+  "razorpay_signature": "signature"
+}
+```
+
+Behavior:
+
+1. The cached payload is loaded using `razorpay_order_id`.
+2. Razorpay signature is verified.
+3. Missing customer/parent/child records are created.
+4. `EntryExitService::issuePass(..., requiresPayment: false)` creates paid pass records.
+5. `EntryExitService::markPassesPaid(..., 'razorpay')` stores Razorpay payment details and pass expiry.
+6. The cached payload is removed.
+
+Response:
+
+```json
+{
+  "message": "Payment verified. Passes generated and ready to print.",
+  "data": [],
+  "payment": {
+    "ids": ["entry-log-uuid"],
+    "provider": "razorpay",
+    "payment_type": "entry_pass",
+    "status": "paid",
+    "currency": "INR",
+    "amount": 250,
+    "razorpay_order_id": "order_xxx",
+    "razorpay_payment_id": "pay_xxx"
+  }
+}
+```
+
+### API: Mark Existing Pending Passes Paid
+
+This endpoint is useful when pending `entry_exit_logs` already exist:
+
+```text
+POST /api/v1/entry-exit/passes/mark-paid
+```
+
+Payload:
+
+```json
+{
+  "ids": ["entry-log-uuid"],
+  "payment_mode": "cash"
+}
+```
+
+Split payment payload:
+
+```json
+{
+  "ids": ["entry-log-uuid-1", "entry-log-uuid-2"],
+  "payment_mode": "split",
+  "payment_splits": [
+    { "mode": "cash", "amount": 300 },
+    { "mode": "upi", "amount": 200 }
+  ]
+}
+```
+
+Response:
+
+```json
+{
+  "message": "Payment received. Passes issued and ready to print.",
+  "data": []
+}
+```
+
+### API: Record Print
+
+```text
+POST /api/v1/entry-exit/passes/record-print
+```
+
+Payload:
+
+```json
+{
+  "ids": ["entry-log-uuid"]
+}
+```
+
+Response:
+
+```json
+{
+  "print_counts": {
+    "entry-log-uuid": 1
+  }
+}
+```
+
+### API: Scan Entry
+
+```text
+POST /api/v1/entry-exit/passes/scan-entry
+```
+
+Payload:
+
+```json
+{
+  "scan_token": "entry-log-uuid"
+}
+```
+
+Response:
+
+```json
+{
+  "message": "Entry successfully committed.",
+  "data": {
+    "id": "entry-log-uuid",
+    "pass_lifecycle_status": "claimed_inside",
+    "entry_time": "2026-05-27T12:10:00.000000Z",
+    "booked_exit_time": "2026-05-27T13:10:00.000000Z"
+  }
+}
+```
+
+## How The Pass Is Generated Internally
+
+`EntryExitService::issuePass()` is the central generator.
+
+Inputs:
+
+- `Customer $customer`
+- `?ParentGuardian $parent`
+- `array $childIds`
+- `string $locationId`
+- `?string $staffId`
+- `?int $hours`
+- `?int $durationMinutes`
+- `?float $passPrice`
+- `bool $requiresPayment`
+
+Generation rules:
+
+1. Duplicate child IDs are removed.
+2. Guest is checked against active inside sessions.
+3. Guest is checked against unscanned reusable passes.
+4. Pass expiry minutes are read from `entry_exit.pass_expiry_minutes`, falling back to `config('entryexit.pass_expiry_minutes', 30)`.
+5. If `requiresPayment` is true:
+   - `payment_status = pending`
+   - `paid_at = null`
+   - `issued_at = null`
+   - `pass_expires_at = null`
+6. If `requiresPayment` is false:
+   - `payment_status = paid`
+   - `paid_at = now()`
+   - `issued_at = now()`
+   - `pass_expires_at = now() + expiry minutes`
+7. If no children are selected, one customer walk-in log is created.
+8. If children are selected, one log is created for each child.
+9. `booked_exit_time` stays null until QR entry scan.
+10. On scan, `booked_exit_time` becomes `entry_time + expected_duration_minutes`.
+
+## Important Failure Cases
+
+| Situation | Result |
+| --- | --- |
+| No active standard price while overtime price exists | `422`, `pass_pricing_inactive` / `Prices are not active. Contact admin.` |
+| Existing parent selected without child | Validation error. |
+| New customer without `customer_name` | Validation error. |
+| Guest already inside | `409` API or form error. |
+| Guest already has pending/usable unscanned pass | `409` API or form error. |
+| Print unpaid pass | `403`. |
+| Scan unpaid pass | Error: payment pending. |
+| Scan expired pass | Error: generate a new pass at reception. |
+| Scan already claimed pass | Error: guest is already inside. |
+| Scan used/checked-out pass | Error: generate a new pass. |
+

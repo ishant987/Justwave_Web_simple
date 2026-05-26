@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { NavLink, Outlet } from 'react-router-dom';
 import * as locationApi from '../api/locationApi';
 import { useAuth } from '../hooks/useAuth';
+import { useFlash } from '../hooks/useFlash';
 
 const links = [
   { to: '/walkin/new', label: 'New Walk-In' },
@@ -18,6 +19,7 @@ function normalizeLocations(payload: { data?: { id: string; name: string }[] } |
 
 export function AppShell() {
   const { token, user, logout } = useAuth();
+  const { flash, clearFlash } = useFlash();
   const locationsQuery = useQuery({
     queryKey: ['header-locations'],
     queryFn: () => locationApi.getLocations(token!),
@@ -63,6 +65,13 @@ export function AppShell() {
         </div>
       </aside>
       <main className="page-content">
+        {flash ? (
+          <div className="app-flash-wrap">
+            <button type="button" className={`app-flash ${flash.tone}`} onClick={clearFlash}>
+              <span>{flash.message}</span>
+            </button>
+          </div>
+        ) : null}
         <div className="page-scroll-shell">
           <Outlet />
         </div>

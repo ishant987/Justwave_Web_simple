@@ -63,6 +63,12 @@ function matchesVisitSearch(row: EntryExitLog, searchTerm: string) {
   return matchesText || matchesPhone;
 }
 
+function shouldApplyLocalVisitSearch(row: EntryExitLog, searchTerm: string) {
+  const phoneSearch = normalizePhoneSearchValue(searchTerm);
+  if (!phoneSearch) return true;
+  return Boolean(normalizePhoneSearchValue(row.phone));
+}
+
 function formatAmount(value?: number | null) {
   return `Rs.${Number(value ?? 0).toFixed(2)}`;
 }
@@ -169,6 +175,11 @@ function formatDate(value?: string | null) {
   }).format(date);
 }
 
+function getTodayDateInputValue() {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+}
+
 function formatDurationLabel(minutes?: number | null) {
   const totalMinutes = readNumber(minutes);
   if (!totalMinutes) return '40m';
@@ -268,7 +279,7 @@ export function VisitHistoryPage() {
   const visitDateInputRef = useRef<HTMLInputElement | null>(null);
   const [searchFilter, setSearchFilter] = useState('');
   const [activeSearchFilter, setActiveSearchFilter] = useState('');
-  const [visitDateFilter, setVisitDateFilter] = useState('');
+  const [visitDateFilter, setVisitDateFilter] = useState(() => getTodayDateInputValue());
   const [statusFilter, setStatusFilter] = useState<'all' | 'pass_issued' | 'inside' | 'checked_out'>('all');
   const [settlementFilter, setSettlementFilter] = useState<'all' | 'settled' | 'due' | 'none'>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -355,7 +366,7 @@ export function VisitHistoryPage() {
           ? `${visitDate.getFullYear()}-${String(visitDate.getMonth() + 1).padStart(2, '0')}-${String(visitDate.getDate()).padStart(2, '0')}`
           : '';
 
-      if (!matchesVisitSearch(row, searchTerm)) {
+      if (shouldApplyLocalVisitSearch(row, searchTerm) && !matchesVisitSearch(row, searchTerm)) {
         return false;
       }
 
@@ -427,7 +438,7 @@ export function VisitHistoryPage() {
   function clearFilters() {
     setSearchFilter('');
     setActiveSearchFilter('');
-    setVisitDateFilter('');
+    setVisitDateFilter(getTodayDateInputValue());
     setStatusFilter('all');
     setSettlementFilter('all');
     setCurrentPage(1);

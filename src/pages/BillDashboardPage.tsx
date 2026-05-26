@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import * as entryExitApi from '../api/entryExitApi';
 import { StatusBanner } from '../components/StatusBanner';
@@ -10,6 +10,7 @@ type BillCategory = NonNullable<BillDashboardQueryParams['category']>;
 type BillStatus = 'all' | 'pending' | 'completed' | 'active' | 'expired';
 type BillSort = 'bill' | 'created_at' | 'amount' | 'duration' | 'status' | 'entry_time' | 'exit_time';
 type BillDirection = 'asc' | 'desc';
+type QuickFilterKey = 'all_time' | 'pending' | 'today' | 'this_month';
 
 function readArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : [];
@@ -17,10 +18,6 @@ function readArray<T>(value: unknown): T[] {
 
 function readObject(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
-}
-
-function readOptionalObject(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
 }
 
 function readNumber(value: unknown) {
@@ -60,16 +57,6 @@ function formatMinutes(value?: number | null) {
   if (hours && remainingMinutes) return `${hours}h ${remainingMinutes}m`;
   if (hours) return `${hours}h`;
   return `${remainingMinutes}m`;
-}
-
-function paymentModeLabel(mode: PaymentModeKey) {
-  if (mode === 'upi') return 'UPI';
-  if (mode === 'bank_transfer') return 'Bank Transfer';
-  return mode.charAt(0).toUpperCase() + mode.slice(1);
-}
-
-function normalizeModeLabel(value: unknown) {
-  return readString(value).toLowerCase().replace(/[\s_-]/g, '');
 }
 
 function getBillStatusTone(row: EntryExitLog): BillStatus {
@@ -117,6 +104,16 @@ function isTodayBill(row: EntryExitLog) {
   );
 }
 
+function paymentModeLabel(mode: PaymentModeKey) {
+  if (mode === 'upi') return 'UPI';
+  if (mode === 'bank_transfer') return 'Bank Transfer';
+  return mode.charAt(0).toUpperCase() + mode.slice(1);
+}
+
+function normalizeModeLabel(value: unknown) {
+  return readString(value).toLowerCase().replace(/[\s_-]/g, '');
+}
+
 function normalizePaymentMode(value?: string | null): PaymentModeKey | null {
   if (value === 'cash' || value === 'upi' || value === 'card' || value === 'bank_transfer' || value === 'other' || value === 'razorpay') {
     return value;
@@ -158,6 +155,34 @@ function readPaymentModeBreakdown(data: Record<string, unknown>, mode: PaymentMo
   );
 }
 
+const defaultFilters = {
+  category: 'amount_today' as BillCategory,
+  status: 'all' as BillStatus,
+  search: '',
+  dateFrom: '',
+  dateTo: '',
+  amountMin: '',
+  amountMax: '',
+  sort: 'created_at' as BillSort,
+  direction: 'desc' as BillDirection,
+  perPage: 15,
+  page: 1,
+};
+
+function getQuickFilterKey(category: BillCategory): QuickFilterKey {
+  if (category === 'pending') return 'pending';
+  if (category === 'amount_month') return 'this_month';
+  if (category === 'generated_today' || category === 'amount_today') return 'today';
+  return 'all_time';
+}
+
+function getCategoryForQuickFilter(key: QuickFilterKey): BillCategory {
+  if (key === 'pending') return 'pending';
+  if (key === 'this_month') return 'amount_month';
+  if (key === 'today') return 'generated_today';
+  return 'all_time';
+}
+
 function buildBillDashboardParams(params: {
   category: BillCategory;
   status: BillStatus;
@@ -190,20 +215,9 @@ export function BillDashboardPage() {
   const { token } = useAuth();
   const billsSectionRef = useRef<HTMLElement | null>(null);
 
-  const [searchDraft, setSearchDraft] = useState('');
-  const [filters, setFilters] = useState({
-    category: 'all_time' as BillCategory,
-    status: 'all' as BillStatus,
-    search: '',
-    dateFrom: '',
-    dateTo: '',
-    amountMin: '',
-    amountMax: '',
-    sort: 'created_at' as BillSort,
-    direction: 'desc' as BillDirection,
-    perPage: 15,
-    page: 1,
-  });
+  const [isFilterViewOpen, setIsFilterViewOpen] = useState(false);
+  const [filterDrafts, setFilterDrafts] = useState(defaultFilters);
+  const [filters, setFilters] = useState(defaultFilters);
 
   const billDashboardParams = useMemo(() => buildBillDashboardParams(filters), [filters]);
 
@@ -262,9 +276,9 @@ export function BillDashboardPage() {
     () => [
       {
         key: 'pending' as BillCategory,
-        label: 'Pending Bills',
+        label: 'Pending',
         value: String(readNumber(summary.pending)),
-        hint: 'Awaiting exit completion',
+        hint: 'Awaiting exit',
         tone: 'pending',
       },
       {
@@ -278,21 +292,21 @@ export function BillDashboardPage() {
         key: 'all_time' as BillCategory,
         label: 'All Time Bills',
         value: String(readNumber(summary.all_time)),
-        hint: 'Total bills in system',
+        hint: 'Every bill',
         tone: 'all',
       },
       {
         key: 'amount_today' as BillCategory,
-        label: 'Amount Today',
+        label: 'Total Amount Today',
         value: formatAmount(amountTodayTotal),
         hint: `${readNumber(summary.amount_today_count)} bills`,
         tone: 'amount-today',
       },
       {
         key: 'amount_month' as BillCategory,
-        label: 'Amount This Month',
+        label: 'Total Amount Month',
         value: formatAmount(amountMonthTotal),
-        hint: `${readNumber(summary.amount_month_count ?? 0)} bills`,
+        hint: new Intl.DateTimeFormat('en-IN', { month: 'short', year: 'numeric' }).format(new Date()),
         tone: 'amount-month',
       },
     ],
@@ -367,97 +381,89 @@ export function BillDashboardPage() {
     return modes.map((mode) => {
       const item = readPaymentModeBreakdown(dataContainer, mode);
       const derivedItem = derived[mode];
-      const total = readNumber(
-        item.total_collected ??
-          item.collection_total ??
-          item.total_collection ??
-          item.total_amount ??
-          item.amount ??
-          item.value ??
-          item.total ??
-          derivedItem.total,
-      );
-      const txns = readNumber(item.transactions ?? item.transaction_count ?? item.txns ?? item.count ?? item.total_txns ?? derivedItem.txns);
-      const passAmount = readNumber(
-        item.pass_collection_amount ??
-          item.pass_collection ??
-          item.pass_amount ??
-          item.pass_total ??
-          derivedItem.passAmount,
-      );
-      const passCount = readNumber(
-        item.pass_transactions ?? item.pass_collection_count ?? item.pass_count ?? item.pass_txns ?? derivedItem.passCount,
-      );
-      const overtimeAmount = readNumber(
-        item.overtime_collection_amount ??
-          item.overtime_collection ??
-          item.overtime_amount ??
-          item.overtime_total ??
-          derivedItem.overtimeAmount,
-      );
-      const overtimeCount = readNumber(
-        item.overtime_transactions ??
-          item.overtime_collection_count ??
-          item.overtime_count ??
-          item.overtime_txns ??
-          derivedItem.overtimeCount,
-      );
-
       return {
         key: mode,
         label: readString(item.label) || paymentModeLabel(mode),
-        total,
-        txns,
-        passAmount,
-        passCount,
-        overtimeAmount,
-        overtimeCount,
+        total: readNumber(
+          item.total_collected ??
+            item.collection_total ??
+            item.total_collection ??
+            item.total_amount ??
+            item.amount ??
+            item.value ??
+            item.total ??
+            derivedItem.total,
+        ),
+        txns: readNumber(item.transactions ?? item.transaction_count ?? item.txns ?? item.count ?? item.total_txns ?? derivedItem.txns),
+        passAmount: readNumber(item.pass_collection_amount ?? item.pass_collection ?? item.pass_amount ?? item.pass_total ?? derivedItem.passAmount),
+        passCount: readNumber(item.pass_transactions ?? item.pass_collection_count ?? item.pass_count ?? item.pass_txns ?? derivedItem.passCount),
+        overtimeAmount: readNumber(
+          item.overtime_collection_amount ?? item.overtime_collection ?? item.overtime_amount ?? item.overtime_total ?? derivedItem.overtimeAmount,
+        ),
+        overtimeCount: readNumber(
+          item.overtime_transactions ?? item.overtime_collection_count ?? item.overtime_count ?? item.overtime_txns ?? derivedItem.overtimeCount,
+        ),
       };
     });
   }, [dataContainer, rows]);
 
-  function clearFilters() {
-    setSearchDraft('');
-    setFilters({
+  function showAllBills() {
+    const nextFilters: typeof defaultFilters = {
+      ...defaultFilters,
       category: 'all_time',
-      status: 'all',
-      search: '',
-      dateFrom: '',
-      dateTo: '',
-      amountMin: '',
-      amountMax: '',
-      sort: 'created_at',
-      direction: 'desc',
-      perPage: 15,
-      page: 1,
-    });
+    };
+    setIsFilterViewOpen(true);
+    setFilterDrafts(nextFilters);
+    setFilters(nextFilters);
   }
 
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setFilters((current) => {
-        const normalizedSearch = searchDraft.trim();
-        if (current.search === normalizedSearch) return current;
-        return {
-          ...current,
-          search: normalizedSearch,
-          page: 1,
-        };
-      });
-    }, 180);
+  function openFilterView(category: BillCategory) {
+    setIsFilterViewOpen(true);
+    setFilterDrafts((current) => ({ ...current, category, page: 1 }));
+    setFilters((current) => ({ ...current, category, page: 1 }));
+  }
 
-    return () => window.clearTimeout(timeoutId);
-  }, [searchDraft]);
+  function applyDashboardCollectionFilter() {
+    setFilters((current) => ({ ...current, category: filterDrafts.category, page: 1 }));
+  }
+
+  function applyFilters() {
+    setFilters({ ...filterDrafts, page: 1 });
+  }
+
+  function resetFilters() {
+    setFilterDrafts(defaultFilters);
+    setFilters(defaultFilters);
+    setIsFilterViewOpen(false);
+  }
+
+  const activeQuickFilter = getQuickFilterKey(filters.category);
+  const quickFilters: Array<{ key: QuickFilterKey; label: string }> = [
+    { key: 'all_time', label: 'All Time' },
+    { key: 'pending', label: 'Pending' },
+    { key: 'today', label: 'Today' },
+    { key: 'this_month', label: 'This Month' },
+  ];
 
   return (
     <div className="page-stack bill-dashboard-page">
+      <section className="bill-dashboard-hero">
+        <div>
+          <h2>Bill Dashboard</h2>
+          <p>Payment-mode collection details for the selected filter.</p>
+        </div>
+        <button type="button" className="bill-show-button" onClick={showAllBills}>
+          Show All Bills
+        </button>
+      </section>
+
       <section className="bill-summary-grid">
         {summaryCards.map((card) => (
           <button
             key={card.key}
             type="button"
             className={`bill-summary-card ${card.tone} ${filters.category === card.key ? 'active' : ''}`}
-            onClick={() => setFilters((current) => ({ ...current, category: card.key, page: 1 }))}
+            onClick={() => openFilterView(card.key)}
           >
             <span>{card.label}</span>
             <strong>{card.value}</strong>
@@ -466,174 +472,150 @@ export function BillDashboardPage() {
         ))}
       </section>
 
-      <section className="bill-collection-panel">
-        <div className="bill-collection-top">
-          <div className="bill-collection-copy">
-            <h3>Bill Dashboard</h3>
-            <p className="muted">Filters call the bill dashboard API and display the totals and bill rows returned by the backend.</p>
-          </div>
-
-          <div className="bill-filter-total bill-filter-total-desktop">Filtered Total: {formatAmount(filteredTotal)}</div>
-        </div>
-
-        <div className="bill-filters-card">
-          <div className="bill-filters-top">
-            <strong>Filters</strong>
-            <button type="button" className="bill-clear-button" onClick={clearFilters}>
-              Clear All
-            </button>
-          </div>
-
-          <div className="bill-filter-grid">
-            <div className="bill-filter-field bill-filter-search">
-              <input
-                value={searchDraft}
-                onChange={(event) => setSearchDraft(event.target.value)}
-                placeholder="Search child, parent, branch, booking..."
-              />
+      {!isFilterViewOpen ? (
+        <section className="bill-collection-panel">
+          <div className="bill-collection-top">
+            <div className="bill-collection-copy">
+              <h3>Collection By Payment Mode</h3>
+              <p className="muted">Detailed today totals by Cash, UPI, Card, Bank Transfer, Other, and Razorpay.</p>
             </div>
 
-            <div className="bill-filter-field">
-              <select
-                value={filters.category}
-                onChange={(event) =>
-                  setFilters((current) => ({ ...current, category: event.target.value as BillCategory, page: 1 }))
-                }
-              >
-                <option value="all_time">All Time</option>
-                <option value="pending">Pending</option>
-                <option value="generated_today">Generated Today</option>
-                <option value="amount_today">Amount Today</option>
-                <option value="amount_month">Amount This Month</option>
-              </select>
-            </div>
-
-            <div className="bill-filter-field">
-              <select
-                value={filters.status}
-                onChange={(event) =>
-                  setFilters((current) => ({ ...current, status: event.target.value as BillStatus, page: 1 }))
-                }
-              >
-                <option value="all">All Statuses</option>
-                <option value="pending">Pending</option>
-                <option value="active">Active</option>
-                <option value="completed">Completed</option>
-                <option value="expired">Expired</option>
-              </select>
-            </div>
-
-            <div className="bill-filter-field">
-              <input
-                type="date"
-                value={filters.dateFrom}
-                onChange={(event) => setFilters((current) => ({ ...current, dateFrom: event.target.value, page: 1 }))}
-              />
-            </div>
-
-            <div className="bill-filter-field">
-              <input
-                type="date"
-                value={filters.dateTo}
-                onChange={(event) => setFilters((current) => ({ ...current, dateTo: event.target.value, page: 1 }))}
-              />
-            </div>
-
-            <div className="bill-filter-field">
-              <input
-                type="number"
-                min="0"
-                value={filters.amountMin}
-                onChange={(event) => setFilters((current) => ({ ...current, amountMin: event.target.value, page: 1 }))}
-                placeholder="Min amount"
-              />
-            </div>
-
-            <div className="bill-filter-field">
-              <input
-                type="number"
-                min="0"
-                value={filters.amountMax}
-                onChange={(event) => setFilters((current) => ({ ...current, amountMax: event.target.value, page: 1 }))}
-                placeholder="Max amount"
-              />
-            </div>
-
-            <div className="bill-filter-field">
-              <select
-                value={filters.sort}
-                onChange={(event) => setFilters((current) => ({ ...current, sort: event.target.value as BillSort, page: 1 }))}
-              >
-                <option value="created_at">Sort: Created</option>
-                <option value="bill">Sort: Bill</option>
-                <option value="amount">Sort: Amount</option>
-                <option value="duration">Sort: Duration</option>
-                <option value="status">Sort: Status</option>
-                <option value="entry_time">Sort: Entry Time</option>
-                <option value="exit_time">Sort: Exit Time</option>
-              </select>
-            </div>
-
-            <div className="bill-filter-field">
-              <select
-                value={filters.direction}
-                onChange={(event) =>
-                  setFilters((current) => ({ ...current, direction: event.target.value as BillDirection, page: 1 }))
-                }
-              >
-                <option value="desc">Newest First</option>
-                <option value="asc">Oldest First</option>
-              </select>
-            </div>
-
-            <div className="bill-filter-field">
-              <select
-                value={filters.perPage}
-                onChange={(event) => setFilters((current) => ({ ...current, perPage: Number(event.target.value), page: 1 }))}
-              >
-                <option value={10}>10 rows</option>
-                <option value={15}>15 rows</option>
-                <option value={25}>25 rows</option>
-                <option value={50}>50 rows</option>
-              </select>
-            </div>
-
-          </div>
-        </div>
-
-        <div className="bill-mode-grid">
-          {paymentModeCards.map((card) => (
-            <article key={card.key} className="bill-mode-card">
-              <div className="bill-mode-header">
-                <span>{card.label}</span>
-                <small>{card.txns} txns</small>
+            <div className="bill-filter-strip">
+              <div className="bill-filter-field">
+                <select
+                  value={filterDrafts.category}
+                  onChange={(event) => setFilterDrafts((current) => ({ ...current, category: event.target.value as BillCategory }))}
+                >
+                  <option value="amount_today">Today</option>
+                  <option value="amount_month">This Month</option>
+                  <option value="all_time">All Time</option>
+                </select>
               </div>
-
-              <strong>{formatAmount(card.total)}</strong>
-
-              <div className="bill-mode-breakdown">
-                <div className="bill-mode-row">
-                  <div>
-                    <span>Pass Collection</span>
-                    <small>{card.passCount} pass txns</small>
-                  </div>
-                  <strong>{formatAmount(card.passAmount)}</strong>
+              <button type="button" className="bill-filter-button" onClick={applyDashboardCollectionFilter}>
+                Filter
+              </button>
+            </div>
+          </div>
+          <div className="bill-mode-grid">
+            {paymentModeCards.map((card) => (
+              <article key={card.key} className="bill-mode-card">
+                <div className="bill-mode-header">
+                  <span>{card.label}</span>
+                  <small>{card.txns} txns</small>
                 </div>
-
-                <div className="bill-mode-row">
-                  <div>
-                    <span>Overtime Collection</span>
-                    <small>{card.overtimeCount} overtime txns</small>
+                <strong>{formatAmount(card.total)}</strong>
+                <div className="bill-mode-breakdown">
+                  <div className="bill-mode-row">
+                    <div>
+                      <span>Pass collection</span>
+                      <small>{card.passCount} pass txns</small>
+                    </div>
+                    <strong>{formatAmount(card.passAmount)}</strong>
                   </div>
-                  <strong>{formatAmount(card.overtimeAmount)}</strong>
+                  <div className="bill-mode-row">
+                    <div>
+                      <span>Overtime collection</span>
+                      <small>{card.overtimeCount} overtime txns</small>
+                    </div>
+                    <strong>{formatAmount(card.overtimeAmount)}</strong>
+                  </div>
                 </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <>
+          <section className="bill-collection-panel">
+            <div className="bill-collection-copy">
+              <h3>Bills Filters</h3>
+              <p className="muted">Use the summary cards or quick buttons below to switch between Pending, Today, All Time, and This Month.</p>
+            </div>
+
+            <div className="bill-filters-layout">
+              <label className="bill-filter-field bill-filter-search">
+                <span>Search</span>
+                <input
+                  type="text"
+                  value={filterDrafts.search}
+                  onChange={(event) => setFilterDrafts((current) => ({ ...current, search: event.target.value }))}
+                  placeholder="Bill, customer, phone, child, branch, Razorpay ID"
+                />
+              </label>
+
+              <label className="bill-filter-field">
+                <span>Status</span>
+                <select
+                  value={filterDrafts.status}
+                  onChange={(event) => setFilterDrafts((current) => ({ ...current, status: event.target.value as BillStatus }))}
+                >
+                  <option value="all">All statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="active">Active</option>
+                  <option value="completed">Completed</option>
+                  <option value="expired">Expired</option>
+                </select>
+              </label>
+
+              <label className="bill-filter-field">
+                <span>Collection</span>
+                <select
+                  value={filterDrafts.category}
+                  onChange={(event) => setFilterDrafts((current) => ({ ...current, category: event.target.value as BillCategory }))}
+                >
+                  <option value="amount_today">Pass + Overtime</option>
+                  <option value="generated_today">Generated Today</option>
+                  <option value="pending">Pending</option>
+                  <option value="all_time">All Time</option>
+                  <option value="amount_month">This Month</option>
+                </select>
+              </label>
+
+              <label className="bill-filter-field">
+                <span>From</span>
+                <input
+                  type="date"
+                  value={filterDrafts.dateFrom}
+                  onChange={(event) => setFilterDrafts((current) => ({ ...current, dateFrom: event.target.value }))}
+                />
+              </label>
+
+              <label className="bill-filter-field">
+                <span>To</span>
+                <input
+                  type="date"
+                  value={filterDrafts.dateTo}
+                  onChange={(event) => setFilterDrafts((current) => ({ ...current, dateTo: event.target.value }))}
+                />
+              </label>
+              <div className="bill-filter-actions">
+                <button type="button" className="secondary-button" onClick={() => setIsFilterViewOpen(false)}>
+                  Dashboard
+                </button>
+                <button type="button" className="secondary-button" onClick={resetFilters}>
+                  Reset
+                </button>
+                <button type="button" className="primary-button" onClick={applyFilters}>
+                  Apply Filters
+                </button>
               </div>
-            </article>
-          ))}
-        </div>
-      </section>
+            </div>
 
-      <section ref={billsSectionRef} className="bill-table-panel">
+            <div className="bill-quick-filters">
+              {quickFilters.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  className={`bill-quick-filter ${activeQuickFilter === item.key ? 'active' : ''}`}
+                  onClick={() => openFilterView(getCategoryForQuickFilter(item.key))}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section ref={billsSectionRef} className="bill-table-panel">
         <div className="bill-table-top">
           <div>
             <p className="muted">
@@ -726,7 +708,9 @@ export function BillDashboardPage() {
             </button>
           </div>
         </div>
-      </section>
+          </section>
+        </>
+      )}
     </div>
   );
 }

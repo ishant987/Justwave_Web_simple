@@ -8,6 +8,7 @@ import type {
   PaginatedApiResponse,
   ParentLookupResponse,
   MarkPassPaidPayload,
+  MarkPassPaidResponse,
   PassCreatePayload,
   PassCreateResponse,
   PaymentMode,
@@ -48,8 +49,12 @@ export function listPasses(token: string, query: string) {
   return request<PaginatedApiResponse<EntryExitLog> | EntryExitLog[]>(`/entry-exit/passes${query ? `?${query}` : ''}`, { token });
 }
 
+export function lookupPasses(token: string, query: string) {
+  return request<{ data?: EntryExitLog[] } | EntryExitLog[]>(`/entry-exit/passes/lookup${query ? `?${query}` : ''}`, { token });
+}
+
 export function markPassPaid(token: string, payload: MarkPassPaidPayload) {
-  return request<{ message?: string }>('/entry-exit/passes/mark-paid', {
+  return request<MarkPassPaidResponse>('/entry-exit/passes/mark-paid', {
     method: 'POST',
     body: payload,
     token,
