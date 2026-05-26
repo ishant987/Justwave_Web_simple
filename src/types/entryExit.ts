@@ -165,7 +165,7 @@ export interface PassCreatePayload {
 
 export interface PassCreateResponse {
   message?: string;
-  data: EntryExitLog[];
+  data: EntryExitLog[] | PaginatedList<EntryExitLog>;
   payment?: {
     required?: boolean;
   };

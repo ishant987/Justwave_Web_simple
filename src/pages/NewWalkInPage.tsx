@@ -32,9 +32,16 @@ interface PendingPassPreview {
   isDraft: boolean;
 }
 
-function normalizeListResponse<T>(payload: { data?: T[] } | T[] | undefined): T[] {
+type ListResponsePayload<T> = { data?: T[] | { data?: T[] } } | T[] | undefined;
+
+function normalizeListResponse<T>(payload: ListResponsePayload<T>): T[] {
   if (!payload) return [];
-  return Array.isArray(payload) ? payload : payload.data ?? [];
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload.data)) return payload.data;
+  if (payload.data && typeof payload.data === 'object' && Array.isArray(payload.data.data)) {
+    return payload.data.data;
+  }
+  return [];
 }
 
 function compactDurationLabel(label?: string | null): string {
@@ -303,11 +310,11 @@ export function NewWalkInPage() {
             ...(createdCustomerId ? { customer_id: createdCustomerId, customer_name: undefined, phone: undefined } : baseIdentity),
           });
           responses.push(response);
-          createdCustomerId = createdCustomerId || response.data.find((item) => item.customer_id)?.customer_id || '';
+          createdCustomerId = createdCustomerId || normalizeListResponse(response.data).find((item) => item.customer_id)?.customer_id || '';
         }
       }
 
-      const nextCreatedPasses = responses.flatMap((response) => response.data);
+      const nextCreatedPasses = responses.flatMap((response) => normalizeListResponse(response.data));
       const ids = nextCreatedPasses.map((item) => item.id);
 
       if (ids.length) {
