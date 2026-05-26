@@ -42,6 +42,27 @@ function buildPassSearchValue(row: EntryExitLog | null) {
   return row.booking_id || row.child_id || row.child_name || row.parent_name || row.customer_name || row.id || '';
 }
 
+function normalizeSearchValue(value?: string | null) {
+  return (value || '').trim().toLowerCase();
+}
+
+function normalizePhoneSearchValue(value?: string | null) {
+  return (value || '').replace(/\D/g, '');
+}
+
+function matchesVisitSearch(row: EntryExitLog, searchTerm: string) {
+  const normalizedSearch = normalizeSearchValue(searchTerm);
+  if (!normalizedSearch) return true;
+
+  const searchableValues = [row.child_name, row.customer_name, row.parent_name, row.phone, row.booking_id, row.id].map(normalizeSearchValue);
+  const matchesText = searchableValues.some((value) => value.includes(normalizedSearch));
+
+  const phoneSearch = normalizePhoneSearchValue(searchTerm);
+  const matchesPhone = phoneSearch ? normalizePhoneSearchValue(row.phone).includes(phoneSearch) : false;
+
+  return matchesText || matchesPhone;
+}
+
 function formatAmount(value?: number | null) {
   return `Rs.${Number(value ?? 0).toFixed(2)}`;
 }
@@ -245,8 +266,8 @@ export function VisitHistoryPage() {
   const { token } = useAuth();
   const rowsPerPage = 25;
   const visitDateInputRef = useRef<HTMLInputElement | null>(null);
-  const [childNameFilter, setChildNameFilter] = useState('');
-  const [activeChildNameFilter, setActiveChildNameFilter] = useState('');
+  const [searchFilter, setSearchFilter] = useState('');
+  const [activeSearchFilter, setActiveSearchFilter] = useState('');
   const [visitDateFilter, setVisitDateFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pass_issued' | 'inside' | 'checked_out'>('all');
   const [settlementFilter, setSettlementFilter] = useState<'all' | 'settled' | 'due' | 'none'>('all');
@@ -261,9 +282,17 @@ export function VisitHistoryPage() {
   const [settlementPaymentModeById, setSettlementPaymentModeById] = useState<Record<string, PaymentMode>>({});
   const [showAllSettlementKids, setShowAllSettlementKids] = useState(false);
 
+  const visitHistoryQuery = useMemo(() => {
+    const params = new URLSearchParams({ per_page: '50' });
+    if (activeSearchFilter) {
+      params.set('search', activeSearchFilter);
+    }
+    return params.toString();
+  }, [activeSearchFilter]);
+
   const query = useQuery({
-    queryKey: ['visit-history'],
-    queryFn: () => entryExitApi.getVisitHistory(token!, 'per_page=50'),
+    queryKey: ['visit-history', visitHistoryQuery],
+    queryFn: () => entryExitApi.getVisitHistory(token!, visitHistoryQuery),
     enabled: !!token,
   });
 
@@ -308,8 +337,7 @@ export function VisitHistoryPage() {
   const rows = useMemo(() => normalizeLogs(query.data), [query.data]);
   const filteredRows = useMemo(() => {
     return rows.filter((row) => {
-      const childName = (row.child_name || '').toLowerCase();
-      const searchTerm = activeChildNameFilter.trim().toLowerCase();
+      const searchTerm = activeSearchFilter.trim();
       const status = getVisitStatus(row);
       const overtimeMinutes = readNumber(row.overtime_minutes);
       const overtimeCharge = readNumber(row.overtime_charge);
@@ -327,7 +355,7 @@ export function VisitHistoryPage() {
           ? `${visitDate.getFullYear()}-${String(visitDate.getMonth() + 1).padStart(2, '0')}-${String(visitDate.getDate()).padStart(2, '0')}`
           : '';
 
-      if (searchTerm && !childName.startsWith(searchTerm)) {
+      if (!matchesVisitSearch(row, searchTerm)) {
         return false;
       }
 
@@ -349,7 +377,7 @@ export function VisitHistoryPage() {
 
       return true;
     });
-  }, [activeChildNameFilter, rows, settlementFilter, statusFilter, visitDateFilter]);
+  }, [activeSearchFilter, rows, settlementFilter, statusFilter, visitDateFilter]);
   const settlementTicketsQuery = useQuery({
     queryKey: ['visit-history-settlement-tickets', settlementLookupPhone],
     queryFn: () => entryExitApi.getOvertimeSettlements(token!, settlementLookupPhone),
@@ -397,8 +425,8 @@ export function VisitHistoryPage() {
   });
 
   function clearFilters() {
-    setChildNameFilter('');
-    setActiveChildNameFilter('');
+    setSearchFilter('');
+    setActiveSearchFilter('');
     setVisitDateFilter('');
     setStatusFilter('all');
     setSettlementFilter('all');
@@ -416,28 +444,28 @@ export function VisitHistoryPage() {
   const showingTo = totalCount ? Math.min(safeCurrentPage * rowsPerPage, totalCount) : 0;
 
   useEffect(() => {
-    const normalized = childNameFilter.trim();
+    const normalized = searchFilter.trim();
 
     if (normalized.length === 0) {
-      setActiveChildNameFilter('');
+      setActiveSearchFilter('');
       return;
     }
 
     if (normalized.length < 2) {
-      setActiveChildNameFilter('');
+      setActiveSearchFilter('');
       return;
     }
 
     const timeoutId = window.setTimeout(() => {
-      setActiveChildNameFilter(normalized);
+      setActiveSearchFilter(normalized);
     }, 200);
 
     return () => window.clearTimeout(timeoutId);
-  }, [childNameFilter]);
+  }, [searchFilter]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeChildNameFilter, visitDateFilter, statusFilter, settlementFilter]);
+  }, [activeSearchFilter, visitDateFilter, statusFilter, settlementFilter]);
 
   useEffect(() => {
     if (currentPage > pageCount) {
@@ -580,10 +608,10 @@ export function VisitHistoryPage() {
         <div className="history-filter-grid">
           <div className="history-filter-input-wrap history-filter-input-search">
             <input
-              aria-label="Search by child name"
-              value={childNameFilter}
-              onChange={(event) => setChildNameFilter(event.target.value)}
-              placeholder="Search by child name..."
+              aria-label="Search visits by name or phone"
+              value={searchFilter}
+              onChange={(event) => setSearchFilter(event.target.value)}
+              placeholder="Search customer, parent, child, phone"
             />
             <span className="history-filter-icon" aria-hidden="true">
               <svg viewBox="0 0 20 20" fill="none">

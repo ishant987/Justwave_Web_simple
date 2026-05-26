@@ -91,6 +91,10 @@ function appendGroupedItem<T>(groups: Map<string, T[]>, key: string, item: T) {
   groups.set(key, [...(groups.get(key) ?? []), item]);
 }
 
+function sortDurationPrices<T extends { sort_order: number; duration_minutes: number }>(items: T[]) {
+  return [...items].sort((a, b) => a.sort_order - b.sort_order || a.duration_minutes - b.duration_minutes);
+}
+
 function buildDefaultChildName(index: number, phone: string) {
   const lastFour = phone.replace(/\D/g, '').slice(-4) || '0000';
   return `${index + 1}Child${lastFour}`;
@@ -251,7 +255,9 @@ export function NewWalkInPage() {
       const childNamesByDuration = new Map<string, string[]>();
 
       selectedChildIds.forEach((childId) => {
-        const childDuration = childDurationById[childId] || durationPriceId;
+        const childDuration = durationPriceMap[childDurationById[childId]]
+          ? childDurationById[childId]
+          : effectiveDurationPriceId;
         if (!childDuration) return;
         appendGroupedItem(childIdsByDuration, childDuration, childId);
       });
@@ -259,7 +265,7 @@ export function NewWalkInPage() {
       draftChildren
         .filter((child) => selectedDraftChildIds.includes(child.id))
         .forEach((child) => {
-          const childDuration = child.durationPriceId || durationPriceId;
+          const childDuration = durationPriceMap[child.durationPriceId] ? child.durationPriceId : effectiveDurationPriceId;
           if (!childDuration || !child.name.trim()) return;
           appendGroupedItem(childNamesByDuration, childDuration, child.name.trim());
         });
@@ -342,7 +348,11 @@ export function NewWalkInPage() {
       const ticketHtml = nextCreatedPasses
         .map((passItem) => {
           const durationLabel = compactDurationLabel(
-            durationPriceMap[childDurationById[passItem.child_id || ''] || durationPriceId]?.duration_label,
+            durationPriceMap[
+              durationPriceMap[childDurationById[passItem.child_id || '']]
+                ? childDurationById[passItem.child_id || '']
+                : effectiveDurationPriceId
+            ]?.duration_label,
           );
           const guardianName = passItem.parent_name || passItem.customer_name || lookupData?.parent?.name || '-';
           const qrSrc = nextQrByPassId[passItem.id] || '';
@@ -538,7 +548,10 @@ export function NewWalkInPage() {
   });
 
   const locations = normalizeListResponse(locationsQuery.data);
-  const durationPrices = normalizeListResponse(durationPricesQuery.data).filter((item) => item.is_active);
+  const durationPrices = useMemo(
+    () => sortDurationPrices(normalizeListResponse(durationPricesQuery.data).filter((item) => item.is_active !== false)),
+    [durationPricesQuery.data],
+  );
   const lookupData = lookupMutation.data?.data;
   const existingChildren = lookupData?.children ?? [];
   const activeSessions = lookupData?.active_sessions ?? [];
@@ -561,31 +574,37 @@ export function NewWalkInPage() {
     () => Object.fromEntries(durationPrices.map((item) => [item.id, item])),
     [durationPrices],
   );
+  const defaultDurationPriceId = durationPrices[0]?.id || '';
+  const effectiveDurationPriceId = durationPriceMap[durationPriceId] ? durationPriceId : defaultDurationPriceId;
   const totalSelectedChildren = selectedChildIds.length + selectedDraftChildIds.length;
   const totalAmount = useMemo(() => {
     const existingTotal = selectedChildIds.reduce((sum, childId) => {
-      const priceId = childDurationById[childId] || durationPriceId;
+      const priceId = durationPriceMap[childDurationById[childId]] ? childDurationById[childId] : effectiveDurationPriceId;
       return sum + (durationPriceMap[priceId]?.price ?? 0);
     }, 0);
     const draftTotal = draftChildren.reduce(
       (sum, child) =>
-        selectedDraftChildIds.includes(child.id) ? sum + (durationPriceMap[child.durationPriceId]?.price ?? 0) : sum,
+        selectedDraftChildIds.includes(child.id)
+          ? sum + (durationPriceMap[durationPriceMap[child.durationPriceId] ? child.durationPriceId : effectiveDurationPriceId]?.price ?? 0)
+          : sum,
       0,
     );
     return existingTotal + draftTotal;
-  }, [childDurationById, draftChildren, durationPriceId, durationPriceMap, selectedChildIds, selectedDraftChildIds]);
+  }, [childDurationById, draftChildren, durationPriceMap, effectiveDurationPriceId, selectedChildIds, selectedDraftChildIds]);
   const paymentTotal = useMemo(
     () =>
       selectedChildIds.reduce((sum, childId) => {
-        const priceId = childDurationById[childId] || durationPriceId;
+        const priceId = durationPriceMap[childDurationById[childId]] ? childDurationById[childId] : effectiveDurationPriceId;
         return sum + (durationPriceMap[priceId]?.price ?? 0);
       }, 0) +
       draftChildren.reduce(
         (sum, child) =>
-          selectedDraftChildIds.includes(child.id) ? sum + (durationPriceMap[child.durationPriceId]?.price ?? 0) : sum,
+          selectedDraftChildIds.includes(child.id)
+            ? sum + (durationPriceMap[durationPriceMap[child.durationPriceId] ? child.durationPriceId : effectiveDurationPriceId]?.price ?? 0)
+            : sum,
         0,
       ),
-    [childDurationById, draftChildren, durationPriceId, durationPriceMap, selectedChildIds, selectedDraftChildIds],
+    [childDurationById, draftChildren, durationPriceMap, effectiveDurationPriceId, selectedChildIds, selectedDraftChildIds],
   );
   const paymentSplits = useMemo<PaymentSplit[]>(
     () =>
@@ -609,7 +628,9 @@ export function NewWalkInPage() {
       ...existingChildren
         .filter((child) => selectedChildIds.includes(child.id))
         .map((child) => {
-          const selectedDurationPriceId = childDurationById[child.id] || durationPriceId;
+          const selectedDurationPriceId = durationPriceMap[childDurationById[child.id]]
+            ? childDurationById[child.id]
+            : effectiveDurationPriceId;
           return {
             childKey: child.id,
             childId: child.id,
@@ -623,21 +644,24 @@ export function NewWalkInPage() {
         }),
       ...draftChildren
         .filter((child) => selectedDraftChildIds.includes(child.id))
-        .map((child) => ({
-          childKey: child.id,
-          childName: child.name,
-          durationPriceId: child.durationPriceId || durationPriceId,
-          amount: durationPriceMap[child.durationPriceId || durationPriceId]?.price ?? 0,
-          guardianName: lookupData?.parent?.name || lookupData?.customer?.name || manualCustomerName || '-',
-          phone: lookupPhone,
-          isDraft: true,
-        })),
+        .map((child) => {
+          const selectedDurationPriceId = durationPriceMap[child.durationPriceId] ? child.durationPriceId : effectiveDurationPriceId;
+          return {
+            childKey: child.id,
+            childName: child.name,
+            durationPriceId: selectedDurationPriceId,
+            amount: durationPriceMap[selectedDurationPriceId]?.price ?? 0,
+            guardianName: lookupData?.parent?.name || lookupData?.customer?.name || manualCustomerName || '-',
+            phone: lookupPhone,
+            isDraft: true,
+          };
+        }),
     ],
     [
       childDurationById,
       draftChildren,
-      durationPriceId,
       durationPriceMap,
+      effectiveDurationPriceId,
       existingChildren,
       lookupData?.customer?.name,
       lookupData?.parent?.name,
@@ -655,18 +679,18 @@ export function NewWalkInPage() {
   }, [locations, selectedLocationId]);
 
   useEffect(() => {
-    if (!durationPriceId && durationPrices.length) {
-      setDurationPriceId(durationPrices[0].id);
+    if (defaultDurationPriceId && !durationPriceMap[durationPriceId]) {
+      setDurationPriceId(defaultDurationPriceId);
     }
-  }, [durationPriceId, durationPrices]);
+  }, [defaultDurationPriceId, durationPriceId, durationPriceMap]);
 
   useEffect(() => {
-    if (!durationPriceId) return;
+    if (!effectiveDurationPriceId) return;
     setChildDurationById((current) => {
       const next = { ...current };
       existingChildren.forEach((child) => {
-        if (!next[child.id]) {
-          next[child.id] = durationPriceId;
+        if (!durationPriceMap[next[child.id]]) {
+          next[child.id] = effectiveDurationPriceId;
         }
       });
       return next;
@@ -674,10 +698,10 @@ export function NewWalkInPage() {
     setDraftChildren((current) =>
       current.map((child) => ({
         ...child,
-        durationPriceId: child.durationPriceId || durationPriceId,
+        durationPriceId: durationPriceMap[child.durationPriceId] ? child.durationPriceId : effectiveDurationPriceId,
       })),
     );
-  }, [durationPriceId, existingChildren]);
+  }, [durationPriceMap, effectiveDurationPriceId, existingChildren]);
 
   useEffect(() => {
     setSelectedChildIds((current) => current.filter((id) => !insideChildIds.has(id)));
@@ -781,7 +805,7 @@ export function NewWalkInPage() {
     const nextDraftChildren = cleanedNames.map((name, index) => ({
       id: `draft-${Date.now()}-${existingDraftCount + index}-${name}`,
       name,
-      durationPriceId,
+      durationPriceId: effectiveDurationPriceId,
     }));
     setDraftChildren((current) => [...current, ...nextDraftChildren]);
     setSelectedDraftChildIds((current) => [...current, ...nextDraftChildren.map((child) => child.id)]);
@@ -1010,7 +1034,7 @@ export function NewWalkInPage() {
                             {insideChildIds.has(child.id) ? <span className="inside-badge">Inside</span> : null}
                           </div>
                           <select
-                            value={childDurationById[child.id] || durationPriceId}
+                            value={durationPriceMap[childDurationById[child.id]] ? childDurationById[child.id] : effectiveDurationPriceId}
                             onClick={(event) => event.stopPropagation()}
                             onChange={(event) => updateExistingChildDuration(child.id, event.target.value)}
                             disabled={insideChildIds.has(child.id)}
@@ -1039,7 +1063,7 @@ export function NewWalkInPage() {
                             <strong>{child.name}</strong>
                           </div>
                           <select
-                            value={child.durationPriceId || durationPriceId}
+                            value={durationPriceMap[child.durationPriceId] ? child.durationPriceId : effectiveDurationPriceId}
                             onClick={(event) => event.stopPropagation()}
                             onChange={(event) => updateDraftChildDuration(child.id, event.target.value)}
                           >
@@ -1110,7 +1134,7 @@ export function NewWalkInPage() {
                         <strong>{child.name}</strong>
                       </div>
                       <select
-                        value={child.durationPriceId || durationPriceId}
+                        value={durationPriceMap[child.durationPriceId] ? child.durationPriceId : effectiveDurationPriceId}
                         onClick={(event) => event.stopPropagation()}
                         onChange={(event) => updateDraftChildDuration(child.id, event.target.value)}
                       >
