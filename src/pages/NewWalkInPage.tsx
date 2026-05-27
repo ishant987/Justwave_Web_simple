@@ -203,6 +203,12 @@ function normalizePhone(value?: string | null) {
   return (value || '').replace(/\D/g, '').trim();
 }
 
+function isDuplicateParentPhoneError(error: unknown) {
+  if (!(error instanceof ApiError)) return false;
+  const message = error.message.toLowerCase();
+  return message.includes('duplicate') && message.includes('parent_guardians') && message.includes('phone');
+}
+
 function printHtmlDocument(html: string) {
   return new Promise<void>((resolve, reject) => {
     const iframe = document.createElement('iframe');
@@ -342,8 +348,16 @@ export function NewWalkInPage() {
   const printMutation = useMutation({
     mutationFn: async () => {
       const passGenerationStartedAt = Date.now();
+      const effectiveLocationId = locations.some((location) => location.id === selectedLocationId)
+        ? selectedLocationId
+        : locations[0]?.id || '';
+
+      if (!effectiveLocationId) {
+        throw new Error('Select a valid branch before printing tickets.');
+      }
+
       const sharedPayload = {
-        location_id: selectedLocationId,
+        location_id: effectiveLocationId,
         phone: lookupPhone,
       } satisfies Pick<PassCreatePayload, 'location_id' | 'phone'>;
 
@@ -379,6 +393,27 @@ export function NewWalkInPage() {
           return;
         }
 
+        const applyMatchedParent = (matchedParent: ParentLookupResponse['data']) => {
+          if (!matchedParent.parent?.id) return false;
+
+          baseIdentity = {
+            ...baseIdentity,
+            parent_id: matchedParent.parent.id,
+            customer_id: matchedParent.customer?.id || baseIdentity.customer_id,
+            customer_name: undefined,
+          };
+          return true;
+        };
+
+        try {
+          const lookupResponse = await entryExitApi.lookupParentByPhone(token!, lookupPhone);
+          if (lookupResponse.data && applyMatchedParent(lookupResponse.data)) {
+            return;
+          }
+        } catch (error) {
+          if (!(error instanceof ApiError) || error.status !== 404) throw error;
+        }
+
         try {
           const searchResponse = await entryExitApi.searchParents(token!, lookupPhone);
           const phone = normalizePhone(lookupPhone);
@@ -387,14 +422,7 @@ export function NewWalkInPage() {
             matches.find((item) => item.parent?.id && normalizePhone(item.parent.phone || item.customer?.phone) === phone) ??
             matches.find((item) => item.parent?.id);
 
-          if (!matchedParent?.parent?.id) return;
-
-          baseIdentity = {
-            ...baseIdentity,
-            parent_id: matchedParent.parent.id,
-            customer_id: matchedParent.customer?.id || baseIdentity.customer_id,
-            customer_name: undefined,
-          };
+          if (matchedParent) applyMatchedParent(matchedParent);
         } catch (error) {
           if (error instanceof ApiError && error.status === 404) return;
           throw error;
@@ -448,12 +476,34 @@ export function NewWalkInPage() {
       const hasKnownIdentity = Boolean(baseIdentity.parent_id || baseIdentity.customer_id);
       const responses: Awaited<ReturnType<typeof entryExitApi.createPass>>[] = [];
 
+      async function createPass(payload: PassCreatePayload) {
+        try {
+          return await entryExitApi.createPass(token!, payload);
+        } catch (error) {
+          if (!isDuplicateParentPhoneError(error) || payload.parent_id || !payload.child_names?.length) {
+            throw error;
+          }
+
+          await resolveExistingParentIdentity();
+
+          if (!baseIdentity.parent_id) {
+            throw error;
+          }
+
+          return entryExitApi.createPass(token!, {
+            ...payload,
+            ...baseIdentity,
+            customer_name: undefined,
+          });
+        }
+      }
+
       if (hasKnownIdentity) {
-        responses.push(...(await Promise.all(passPayloads.map((payload) => entryExitApi.createPass(token!, payload)))));
+        responses.push(...(await Promise.all(passPayloads.map((payload) => createPass(payload)))));
       } else {
         let createdCustomerId = '';
         for (const payload of passPayloads) {
-          const response = await entryExitApi.createPass(token!, {
+          const response = await createPass({
             ...payload,
             ...(createdCustomerId ? { customer_id: createdCustomerId, customer_name: undefined, phone: undefined } : baseIdentity),
           });
@@ -723,7 +773,8 @@ export function NewWalkInPage() {
   );
 
   useEffect(() => {
-    if (!selectedLocationId && locations.length) {
+    if (!locations.length) return;
+    if (!selectedLocationId || !locations.some((location) => location.id === selectedLocationId)) {
       setSelectedLocationId(locations[0].id);
     }
   }, [locations, selectedLocationId]);
@@ -1000,6 +1051,22 @@ export function NewWalkInPage() {
       <section className="simple-card">
         <form className="simple-form full-height-form" onSubmit={handleCreatePass}>
           <div className="simple-top-row">
+            <label className="simple-field">
+              <span className="simple-field-label">Branch</span>
+              <select
+                value={locations.some((location) => location.id === selectedLocationId) ? selectedLocationId : locations[0]?.id || ''}
+                onChange={(event) => setSelectedLocationId(event.target.value)}
+                disabled={!locations.length || locationsQuery.isLoading}
+              >
+                {!locations.length ? <option value="">No branch loaded</option> : null}
+                {locations.map((location) => (
+                  <option key={location.id} value={location.id}>
+                    {location.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
             <label className="simple-field">
               <span className="simple-field-label">Customer / Parent Phone Number</span>
               <div className="input-with-button input-shell">
