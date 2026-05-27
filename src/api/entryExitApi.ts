@@ -19,6 +19,13 @@ export function lookupParentByPhone(token: string, phone: string) {
   return request<ParentLookupResponse>(`/entry-exit/parents/lookup?phone=${encodeURIComponent(phone)}`, { token });
 }
 
+export function searchParents(token: string, query: string) {
+  return request<{ data?: ParentLookupResponse['data'][] } | ParentLookupResponse['data'][]>(
+    `/entry-exit/parents/search?query=${encodeURIComponent(query)}`,
+    { token },
+  );
+}
+
 export function getCustomer(token: string, customerId: string) {
   return request<{ data?: { id?: string; name?: string; phone?: string } } | { id?: string; name?: string; phone?: string }>(
     `/customers/${customerId}`,
