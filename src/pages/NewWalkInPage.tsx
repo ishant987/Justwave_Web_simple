@@ -164,6 +164,28 @@ function buildDefaultChildName(index: number, phone: string) {
   return `${index + 1}Child${lastFour}`;
 }
 
+function getDefaultChildSequence(name: string, phone: string) {
+  const lastFour = phone.replace(/\D/g, '').slice(-4) || '0000';
+  const normalizedName = normalizeText(name);
+  const suffix = `child${lastFour}`;
+  if (!normalizedName.endsWith(suffix)) return null;
+
+  const sequence = Number(normalizedName.slice(0, -suffix.length));
+  return Number.isInteger(sequence) && sequence > 0 ? sequence : null;
+}
+
+function buildNextDefaultChildName(usedNames: Set<string>, phone: string) {
+  let index = 0;
+  let candidate = buildDefaultChildName(index, phone);
+
+  while (usedNames.has(normalizeText(candidate))) {
+    index += 1;
+    candidate = buildDefaultChildName(index, phone);
+  }
+
+  return candidate;
+}
+
 function printHtmlDocument(html: string) {
   return new Promise<void>((resolve, reject) => {
     const iframe = document.createElement('iframe');
@@ -773,15 +795,52 @@ export function NewWalkInPage() {
   }
 
   function savePendingChildren() {
-    const existingDraftCount = draftChildren.length;
-    const cleanedNames = pendingChildNames.map(
-      (item, index) => item.trim() || buildDefaultChildName(existingDraftCount + index, lookupPhone),
-    );
-    const nextDraftChildren = cleanedNames.map((name, index) => ({
-      id: `draft-${Date.now()}-${existingDraftCount + index}-${name}`,
-      name,
-      durationPriceId: effectiveDurationPriceId,
-    }));
+    const existingSelectedIds = new Set(selectedChildIds);
+    const usedNames = new Set([...existingChildren, ...draftChildren].map((child) => normalizeText(child.name)).filter(Boolean));
+    const reusableDefaultChildren = existingChildren
+      .filter(
+        (child) =>
+          !insideChildIds.has(child.id) &&
+          !existingSelectedIds.has(child.id) &&
+          getDefaultChildSequence(child.name, lookupPhone) !== null,
+      )
+      .sort((firstChild, secondChild) => {
+        const firstSequence = getDefaultChildSequence(firstChild.name, lookupPhone) ?? Number.MAX_SAFE_INTEGER;
+        const secondSequence = getDefaultChildSequence(secondChild.name, lookupPhone) ?? Number.MAX_SAFE_INTEGER;
+        return firstSequence - secondSequence || firstChild.name.localeCompare(secondChild.name);
+      });
+    const nextSelectedChildIds: string[] = [];
+    const nextDraftChildren: DraftChild[] = [];
+
+    pendingChildNames.forEach((item, index) => {
+      const trimmedName = item.trim();
+      const reusableChild = trimmedName
+        ? existingChildren.find(
+            (child) =>
+              normalizeText(child.name) === normalizeText(trimmedName) &&
+              !insideChildIds.has(child.id) &&
+              !existingSelectedIds.has(child.id) &&
+              !nextSelectedChildIds.includes(child.id),
+          )
+        : reusableDefaultChildren.find((child) => !nextSelectedChildIds.includes(child.id));
+
+      if (reusableChild) {
+        nextSelectedChildIds.push(reusableChild.id);
+        return;
+      }
+
+      const fallbackName = trimmedName && !usedNames.has(normalizeText(trimmedName))
+        ? trimmedName
+        : buildNextDefaultChildName(usedNames, lookupPhone);
+      usedNames.add(normalizeText(fallbackName));
+      nextDraftChildren.push({
+        id: `draft-${Date.now()}-${draftChildren.length + index}-${fallbackName}`,
+        name: fallbackName,
+        durationPriceId: effectiveDurationPriceId,
+      });
+    });
+
+    setSelectedChildIds((current) => [...current, ...nextSelectedChildIds.filter((childId) => !current.includes(childId))]);
     setDraftChildren((current) => [...current, ...nextDraftChildren]);
     setSelectedDraftChildIds((current) => [...current, ...nextDraftChildren.map((child) => child.id)]);
     setIsAddChildOpen(false);
