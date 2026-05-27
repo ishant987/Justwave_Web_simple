@@ -21,6 +21,7 @@ const PAYMENT_SPLIT_OPTIONS: { mode: PassPaymentMode; label: string }[] = [
 interface DraftChild {
   id: string;
   name: string;
+  dob: string;
   durationPriceId: string;
 }
 
@@ -186,6 +187,13 @@ function buildNextDefaultChildName(usedNames: Set<string>, phone: string) {
   return candidate;
 }
 
+function formatDateInputForApi(value: string) {
+  if (!value) return null;
+  const [year, month, day] = value.split('-');
+  if (!year || !month || !day) return null;
+  return `${day}/${month}/${year}`;
+}
+
 function printHtmlDocument(html: string) {
   return new Promise<void>((resolve, reject) => {
     const iframe = document.createElement('iframe');
@@ -272,6 +280,7 @@ export function NewWalkInPage() {
   const [isAddChildOpen, setIsAddChildOpen] = useState(false);
   const [pendingChildCount, setPendingChildCount] = useState('1');
   const [pendingChildNames, setPendingChildNames] = useState<string[]>(['']);
+  const [pendingChildDobs, setPendingChildDobs] = useState<string[]>(['']);
   const [childDurationById, setChildDurationById] = useState<Record<string, string>>({});
   const [draftChildren, setDraftChildren] = useState<DraftChild[]>([]);
   const [selectedDraftChildIds, setSelectedDraftChildIds] = useState<string[]>([]);
@@ -338,7 +347,7 @@ export function NewWalkInPage() {
       }
 
       const childIdsByDuration = new Map<string, string[]>();
-      const childNamesByDuration = new Map<string, string[]>();
+      const childDetailsByDuration = new Map<string, { name: string; dob: string | null }[]>();
 
       selectedChildIds.forEach((childId) => {
         const childDuration = durationPriceMap[childDurationById[childId]]
@@ -353,7 +362,10 @@ export function NewWalkInPage() {
         .forEach((child) => {
           const childDuration = durationPriceMap[child.durationPriceId] ? child.durationPriceId : effectiveDurationPriceId;
           if (!childDuration || !child.name.trim()) return;
-          appendGroupedItem(childNamesByDuration, childDuration, child.name.trim());
+          appendGroupedItem(childDetailsByDuration, childDuration, {
+            name: child.name.trim(),
+            dob: formatDateInputForApi(child.dob),
+          });
         });
 
       const basePaymentPayload =
@@ -373,12 +385,13 @@ export function NewWalkInPage() {
           child_ids: childIds,
           duration_price_id: childDuration,
         })),
-        ...Array.from(childNamesByDuration.entries()).map(([childDuration, childNames]) => ({
+        ...Array.from(childDetailsByDuration.entries()).map(([childDuration, children]) => ({
           ...sharedPayload,
           ...baseIdentity,
           ...basePaymentPayload,
-          child_names: childNames,
-          child_count: childNames.length,
+          child_names: children.map((child) => child.name),
+          child_dobs: children.map((child) => child.dob),
+          child_count: children.length,
           duration_price_id: childDuration,
         })),
       ];
@@ -693,6 +706,7 @@ export function NewWalkInPage() {
     setDraftChildren((current) =>
       current.map((child) => ({
         ...child,
+        dob: child.dob || '',
         durationPriceId: durationPriceMap[child.durationPriceId] ? child.durationPriceId : effectiveDurationPriceId,
       })),
     );
@@ -777,6 +791,7 @@ export function NewWalkInPage() {
     }
     setPendingChildCount('1');
     setPendingChildNames(['']);
+    setPendingChildDobs(['']);
     setIsAddChildOpen(true);
   }
 
@@ -788,10 +803,15 @@ export function NewWalkInPage() {
       const next = Array.from({ length: safeCount }, (_, index) => current[index] ?? '');
       return next;
     });
+    setPendingChildDobs((current) => Array.from({ length: safeCount }, (_, index) => current[index] ?? ''));
   }
 
   function updatePendingChildName(index: number, value: string) {
     setPendingChildNames((current) => current.map((item, itemIndex) => (itemIndex === index ? value : item)));
+  }
+
+  function updatePendingChildDob(index: number, value: string) {
+    setPendingChildDobs((current) => current.map((item, itemIndex) => (itemIndex === index ? value : item)));
   }
 
   function savePendingChildren() {
@@ -814,6 +834,7 @@ export function NewWalkInPage() {
 
     pendingChildNames.forEach((item, index) => {
       const trimmedName = item.trim();
+      const dob = pendingChildDobs[index] || '';
       const reusableChild = trimmedName
         ? existingChildren.find(
             (child) =>
@@ -836,6 +857,7 @@ export function NewWalkInPage() {
       nextDraftChildren.push({
         id: `draft-${Date.now()}-${draftChildren.length + index}-${fallbackName}`,
         name: fallbackName,
+        dob,
         durationPriceId: effectiveDurationPriceId,
       });
     });
@@ -906,8 +928,15 @@ export function NewWalkInPage() {
   function handleCreatePass(event: FormEvent) {
     event.preventDefault();
 
+    printMutation.reset();
+
     if (!pendingPasses.length) {
       showFlash('Select or add at least one child before generating passes.', 'warning');
+      return;
+    }
+
+    if (!effectiveDurationPriceId) {
+      showFlash('Please wait for duration pricing to load before generating passes.', 'warning');
       return;
     }
 
@@ -1220,11 +1249,11 @@ export function NewWalkInPage() {
 
       {isAddChildOpen ? (
         <div className="modal-backdrop" onClick={() => setIsAddChildOpen(false)}>
-          <div className="modal-card" onClick={(event) => event.stopPropagation()}>
+          <div className="modal-card add-child-modal-card" onClick={(event) => event.stopPropagation()}>
             <div className="modal-header">
               <div>
                 <h3>Add Child</h3>
-                <p className="muted">Enter how many children you want to add, then fill their names.</p>
+                <p className="muted">Enter child details in one row.</p>
               </div>
               <button type="button" className="modal-close" onClick={() => setIsAddChildOpen(false)}>
                 ×
@@ -1246,14 +1275,24 @@ export function NewWalkInPage() {
             {pendingChildNames.length ? (
               <div className="modal-name-list">
                 {pendingChildNames.map((name, index) => (
-                  <label key={`pending-child-${index}`}>
-                    Child {draftChildren.length + index + 1} Name
-                    <input
-                      value={name}
-                      onChange={(event) => updatePendingChildName(index, event.target.value)}
-                      placeholder={`Enter child ${draftChildren.length + index + 1} name`}
-                    />
-                  </label>
+                  <div className="add-child-row" key={`pending-child-${index}`}>
+                    <label>
+                      Child {draftChildren.length + index + 1}
+                      <input
+                        value={name}
+                        onChange={(event) => updatePendingChildName(index, event.target.value)}
+                        placeholder={`Enter child ${draftChildren.length + index + 1} name`}
+                      />
+                    </label>
+                    <label>
+                      DOB
+                      <input
+                        type="date"
+                        value={pendingChildDobs[index] || ''}
+                        onChange={(event) => updatePendingChildDob(index, event.target.value)}
+                      />
+                    </label>
+                  </div>
                 ))}
               </div>
             ) : null}
@@ -1392,8 +1431,13 @@ export function NewWalkInPage() {
               <button
                 type="button"
                 className="primary-button"
-                disabled={(paymentPlan === 'parts' && !isSplitPaymentValid) || printMutation.isPending}
+                disabled={!pendingPasses.length || (paymentPlan === 'parts' && !isSplitPaymentValid) || printMutation.isPending}
                 onClick={() => {
+                  printMutation.reset();
+                  if (!pendingPasses.length) {
+                    showFlash('Select or add at least one child before opening tickets.', 'warning');
+                    return;
+                  }
                   setIsPaymentOpen(false);
                   setIsTicketOpen(true);
                 }}
@@ -1462,8 +1506,15 @@ export function NewWalkInPage() {
               <button
                 type="button"
                 className="primary-button"
-                disabled={printMutation.isPending}
-                onClick={() => printMutation.mutate()}
+                disabled={!pendingPasses.length || printMutation.isPending}
+                onClick={() => {
+                  printMutation.reset();
+                  if (!pendingPasses.length) {
+                    showFlash('Select or add at least one child before printing tickets.', 'warning');
+                    return;
+                  }
+                  printMutation.mutate();
+                }}
               >
                 {printMutation.isPending ? 'Preparing Print...' : 'Print Ticket'}
               </button>

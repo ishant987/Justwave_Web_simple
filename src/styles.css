@@ -1374,10 +1374,31 @@ label {
   text-transform: uppercase;
 }
 
+.bill-filters-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.bill-filter-top-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.bill-filter-top-actions .secondary-button {
+  min-height: 46px;
+  padding: 0 1.2rem;
+  border-radius: 10px;
+}
+
 .bill-filters-layout {
   margin-top: 1.5rem;
   display: grid;
-  grid-template-columns: minmax(260px, 2.1fr) repeat(4, minmax(140px, 1fr)) auto;
+  grid-template-columns: minmax(260px, 2.1fr) repeat(4, minmax(140px, 1fr));
   gap: 0.9rem;
   align-items: end;
 }
@@ -1693,6 +1714,15 @@ label {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .bill-filters-header {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .bill-filter-top-actions {
+    justify-content: flex-start;
+  }
+
   .bill-collection-top {
     grid-template-columns: 1fr;
   }
@@ -1762,6 +1792,7 @@ label {
   }
 
   .bill-show-button,
+  .bill-filter-top-actions .secondary-button,
   .bill-pagination .secondary-button,
   .bill-pagination .primary-button {
     width: 100%;
@@ -1782,6 +1813,11 @@ label {
 
   .bill-filter-actions {
     flex-direction: column;
+  }
+
+  .bill-filter-top-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .app-flash {
@@ -3348,6 +3384,15 @@ input:disabled {
   box-shadow: 0 30px 60px rgba(15, 23, 42, 0.18);
 }
 
+.add-child-modal-card {
+  width: 980px;
+  max-width: calc(100vw - 36px);
+  max-height: calc(100vh - 28px);
+  border-radius: 28px;
+  padding: 1.35rem 1.45rem 1.4rem;
+  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.22);
+}
+
 .modal-card.history-settlement-modal {
   width: min(1120px, calc(100vw - 120px));
   height: calc(100vh - 56px);
@@ -3435,6 +3480,21 @@ input:disabled {
   display: grid;
   gap: 0.9rem;
   margin-top: 1rem;
+}
+
+.add-child-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 1rem;
+  align-items: end;
+  padding: 0.95rem;
+  border: 1px solid #e5ebf3;
+  border-radius: 18px;
+  background: #f8fafc;
+}
+
+.add-child-row label {
+  margin: 0;
 }
 
 .payment-modal-top {
@@ -3916,6 +3976,7 @@ input:disabled {
   .simple-list-row,
   .modal-header,
   .modal-actions,
+  .add-child-row,
   .payment-modal-top,
   .payment-plan-grid,
   .payment-mode-grid,

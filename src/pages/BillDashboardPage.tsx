@@ -427,8 +427,10 @@ export function BillDashboardPage() {
     setFilters((current) => ({ ...current, category: filterDrafts.category, page: 1 }));
   }
 
-  function applyFilters() {
-    setFilters({ ...filterDrafts, page: 1 });
+  function updateFilterDrafts(nextPartialFilters: Partial<typeof defaultFilters>) {
+    const nextFilters = { ...filterDrafts, ...nextPartialFilters, page: 1 };
+    setFilterDrafts(nextFilters);
+    setFilters(nextFilters);
   }
 
   function resetFilters() {
@@ -527,9 +529,19 @@ export function BillDashboardPage() {
       ) : (
         <>
           <section className="bill-collection-panel">
-            <div className="bill-collection-copy">
-              <h3>Bills Filters</h3>
-              <p className="muted">Use the summary cards or quick buttons below to switch between Pending, Today, All Time, and This Month.</p>
+            <div className="bill-filters-header">
+              <div className="bill-collection-copy">
+                <h3>Bills Filters</h3>
+                <p className="muted">Use the summary cards or quick buttons below to switch between Pending, Today, All Time, and This Month.</p>
+              </div>
+              <div className="bill-filter-top-actions">
+                <button type="button" className="secondary-button" onClick={() => setIsFilterViewOpen(false)}>
+                  Dashboard
+                </button>
+                <button type="button" className="secondary-button" onClick={resetFilters}>
+                  Reset
+                </button>
+              </div>
             </div>
 
             <div className="bill-filters-layout">
@@ -538,7 +550,7 @@ export function BillDashboardPage() {
                 <input
                   type="text"
                   value={filterDrafts.search}
-                  onChange={(event) => setFilterDrafts((current) => ({ ...current, search: event.target.value }))}
+                  onChange={(event) => updateFilterDrafts({ search: event.target.value })}
                   placeholder="Bill, customer, phone, child, branch, Razorpay ID"
                 />
               </label>
@@ -547,7 +559,7 @@ export function BillDashboardPage() {
                 <span>Status</span>
                 <select
                   value={filterDrafts.status}
-                  onChange={(event) => setFilterDrafts((current) => ({ ...current, status: event.target.value as BillStatus }))}
+                  onChange={(event) => updateFilterDrafts({ status: event.target.value as BillStatus })}
                 >
                   <option value="all">All statuses</option>
                   <option value="pending">Pending</option>
@@ -561,7 +573,7 @@ export function BillDashboardPage() {
                 <span>Collection</span>
                 <select
                   value={filterDrafts.category}
-                  onChange={(event) => setFilterDrafts((current) => ({ ...current, category: event.target.value as BillCategory }))}
+                  onChange={(event) => updateFilterDrafts({ category: event.target.value as BillCategory })}
                 >
                   <option value="amount_today">Pass + Overtime</option>
                   <option value="generated_today">Generated Today</option>
@@ -576,7 +588,7 @@ export function BillDashboardPage() {
                 <input
                   type="date"
                   value={filterDrafts.dateFrom}
-                  onChange={(event) => setFilterDrafts((current) => ({ ...current, dateFrom: event.target.value }))}
+                  onChange={(event) => updateFilterDrafts({ dateFrom: event.target.value })}
                 />
               </label>
 
@@ -585,20 +597,9 @@ export function BillDashboardPage() {
                 <input
                   type="date"
                   value={filterDrafts.dateTo}
-                  onChange={(event) => setFilterDrafts((current) => ({ ...current, dateTo: event.target.value }))}
+                  onChange={(event) => updateFilterDrafts({ dateTo: event.target.value })}
                 />
               </label>
-              <div className="bill-filter-actions">
-                <button type="button" className="secondary-button" onClick={() => setIsFilterViewOpen(false)}>
-                  Dashboard
-                </button>
-                <button type="button" className="secondary-button" onClick={resetFilters}>
-                  Reset
-                </button>
-                <button type="button" className="primary-button" onClick={applyFilters}>
-                  Apply Filters
-                </button>
-              </div>
             </div>
 
             <div className="bill-quick-filters">
