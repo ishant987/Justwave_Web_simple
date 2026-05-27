@@ -7,16 +7,7 @@ import { ApiError } from '../api/http';
 import { useAuth } from '../hooks/useAuth';
 import { useFlash } from '../hooks/useFlash';
 import { StatusBanner } from '../components/StatusBanner';
-import type {
-  ChildRecord,
-  DurationPrice,
-  EntryExitLog,
-  Location,
-  ParentLookupResponse,
-  PassCreatePayload,
-  PassPaymentMode,
-  PaymentSplit,
-} from '../types/entryExit';
+import type { ChildRecord, DurationPrice, EntryExitLog, Location, PassCreatePayload, PassPaymentMode, PaymentSplit } from '../types/entryExit';
 import { buildPassPrintDocument } from '../utils/passPrint';
 
 const PAYMENT_SPLIT_OPTIONS: { mode: PassPaymentMode; label: string }[] = [
@@ -203,21 +194,6 @@ function formatDateInputForApi(value: string) {
   return `${day}/${month}/${year}`;
 }
 
-function normalizePhone(value?: string | null) {
-  return (value || '').replace(/\D/g, '').trim();
-}
-
-function isDuplicateParentPhoneError(error: unknown) {
-  if (!(error instanceof ApiError)) return false;
-  const message = error.message.toLowerCase();
-  return (
-    error.status === 500 &&
-    message.includes('duplicate') &&
-    message.includes('parent_guardians') &&
-    message.includes('phone')
-  );
-}
-
 function printHtmlDocument(html: string) {
   return new Promise<void>((resolve, reject) => {
     const iframe = document.createElement('iframe');
@@ -363,7 +339,7 @@ export function NewWalkInPage() {
         phone: lookupPhone,
       } satisfies Pick<PassCreatePayload, 'location_id' | 'phone'>;
 
-      let baseIdentity: Partial<PassCreatePayload> = {};
+      const baseIdentity: Partial<PassCreatePayload> = {};
       if (lookupData?.parent?.id) baseIdentity.parent_id = lookupData.parent.id;
       if (lookupData?.customer?.id) baseIdentity.customer_id = lookupData.customer.id;
       if (!lookupData?.parent?.id && !lookupData?.customer?.id && manualCustomerName.trim()) {
@@ -420,40 +396,6 @@ export function NewWalkInPage() {
         })),
       ];
 
-      async function resolveParentIdentity(identity: Partial<PassCreatePayload>) {
-        if (identity.parent_id || !childDetailsByDuration.size) return identity;
-
-        try {
-          const searchResponse = await entryExitApi.searchParents(token!, lookupPhone);
-          const phone = normalizePhone(lookupPhone);
-          const matches = normalizeListResponse<ParentLookupResponse['data']>(searchResponse);
-          const matchedParent =
-            matches.find((item) => item.parent?.id && normalizePhone(item.parent.phone || item.customer?.phone) === phone) ??
-            matches.find((item) => item.parent?.id);
-
-          if (!matchedParent?.parent?.id) return identity;
-
-          return {
-            ...identity,
-            parent_id: matchedParent.parent.id,
-            customer_id: matchedParent.customer?.id || identity.customer_id,
-            customer_name: undefined,
-          };
-        } catch (error) {
-          if (error instanceof ApiError && error.status === 404) {
-            return identity;
-          }
-          throw error;
-        }
-      }
-
-      baseIdentity = await resolveParentIdentity(baseIdentity);
-
-      const resolvedPassPayloads = passPayloads.map((payload) => ({
-        ...payload,
-        ...baseIdentity,
-      }));
-
       const selectedChildNames = new Set(
         [
           ...selectedChildIds
@@ -465,39 +407,19 @@ export function NewWalkInPage() {
         ].map(normalizeText),
       );
 
-      if (!resolvedPassPayloads.length) {
+      if (!passPayloads.length) {
         throw new Error('Select or add at least one child before printing tickets.');
       }
 
       const hasKnownIdentity = Boolean(lookupData?.parent?.id || lookupData?.customer?.id);
       const responses: Awaited<ReturnType<typeof entryExitApi.createPass>>[] = [];
 
-      async function createPassWithParentRetry(payload: PassCreatePayload) {
-        try {
-          return await entryExitApi.createPass(token!, payload);
-        } catch (error) {
-          if (!isDuplicateParentPhoneError(error) || payload.parent_id) {
-            throw error;
-          }
-
-          const retryIdentity = await resolveParentIdentity(payload);
-          if (!retryIdentity.parent_id) {
-            throw error;
-          }
-
-          return entryExitApi.createPass(token!, {
-            ...payload,
-            ...retryIdentity,
-          });
-        }
-      }
-
       if (hasKnownIdentity) {
-        responses.push(...(await Promise.all(resolvedPassPayloads.map((payload) => createPassWithParentRetry(payload)))));
+        responses.push(...(await Promise.all(passPayloads.map((payload) => entryExitApi.createPass(token!, payload)))));
       } else {
         let createdCustomerId = '';
-        for (const payload of resolvedPassPayloads) {
-          const response = await createPassWithParentRetry({
+        for (const payload of passPayloads) {
+          const response = await entryExitApi.createPass(token!, {
             ...payload,
             ...(createdCustomerId ? { customer_id: createdCustomerId, customer_name: undefined, phone: undefined } : baseIdentity),
           });
@@ -531,7 +453,7 @@ export function NewWalkInPage() {
 
         createdPasses = (recentMatchingPasses.length ? recentMatchingPasses : fallbackPasses).slice(
           0,
-          Math.max(totalSelectedChildren, resolvedPassPayloads.length),
+          Math.max(totalSelectedChildren, passPayloads.length),
         );
       }
 
