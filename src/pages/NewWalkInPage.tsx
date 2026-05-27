@@ -1052,22 +1052,6 @@ export function NewWalkInPage() {
         <form className="simple-form full-height-form" onSubmit={handleCreatePass}>
           <div className="simple-top-row">
             <label className="simple-field">
-              <span className="simple-field-label">Branch</span>
-              <select
-                value={locations.some((location) => location.id === selectedLocationId) ? selectedLocationId : locations[0]?.id || ''}
-                onChange={(event) => setSelectedLocationId(event.target.value)}
-                disabled={!locations.length || locationsQuery.isLoading}
-              >
-                {!locations.length ? <option value="">No branch loaded</option> : null}
-                {locations.map((location) => (
-                  <option key={location.id} value={location.id}>
-                    {location.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="simple-field">
               <span className="simple-field-label">Customer / Parent Phone Number</span>
               <div className="input-with-button input-shell">
                 <span className="input-leading-icon">
