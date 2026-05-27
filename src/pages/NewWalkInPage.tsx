@@ -7,7 +7,16 @@ import { ApiError } from '../api/http';
 import { useAuth } from '../hooks/useAuth';
 import { useFlash } from '../hooks/useFlash';
 import { StatusBanner } from '../components/StatusBanner';
-import type { ChildRecord, DurationPrice, EntryExitLog, Location, PassCreatePayload, PassPaymentMode, PaymentSplit } from '../types/entryExit';
+import type {
+  ChildRecord,
+  DurationPrice,
+  EntryExitLog,
+  Location,
+  ParentLookupResponse,
+  PassCreatePayload,
+  PassPaymentMode,
+  PaymentSplit,
+} from '../types/entryExit';
 import { buildPassPrintDocument } from '../utils/passPrint';
 
 const PAYMENT_SPLIT_OPTIONS: { mode: PassPaymentMode; label: string }[] = [
@@ -164,6 +173,36 @@ function buildDefaultChildName(index: number, phone: string) {
   return `${index + 1}Child${lastFour}`;
 }
 
+function getDefaultChildSequence(name: string, phone: string) {
+  const lastFour = phone.replace(/\D/g, '').slice(-4) || '0000';
+  const normalizedName = normalizeText(name);
+  const suffix = `child${lastFour}`;
+  if (!normalizedName.endsWith(suffix)) return null;
+
+  const sequence = Number(normalizedName.slice(0, -suffix.length));
+  return Number.isInteger(sequence) && sequence > 0 ? sequence : null;
+}
+
+function buildNextDefaultChildName(usedNames: Set<string>, phone: string) {
+  const highestSequence = Array.from(usedNames).reduce((maxSequence, name) => {
+    const sequence = getDefaultChildSequence(name, phone);
+    return sequence ? Math.max(maxSequence, sequence) : maxSequence;
+  }, 0);
+  let index = highestSequence;
+  let candidate = buildDefaultChildName(index, phone);
+
+  while (usedNames.has(normalizeText(candidate))) {
+    index += 1;
+    candidate = buildDefaultChildName(index, phone);
+  }
+
+  return candidate;
+}
+
+function normalizePhone(value?: string | null) {
+  return (value || '').replace(/\D/g, '').trim();
+}
+
 function printHtmlDocument(html: string) {
   return new Promise<void>((resolve, reject) => {
     const iframe = document.createElement('iframe');
@@ -308,7 +347,7 @@ export function NewWalkInPage() {
         phone: lookupPhone,
       } satisfies Pick<PassCreatePayload, 'location_id' | 'phone'>;
 
-      const baseIdentity: Partial<PassCreatePayload> = {};
+      let baseIdentity: Partial<PassCreatePayload> = {};
       if (lookupData?.parent?.id) baseIdentity.parent_id = lookupData.parent.id;
       if (lookupData?.customer?.id) baseIdentity.customer_id = lookupData.customer.id;
       if (!lookupData?.parent?.id && !lookupData?.customer?.id && manualCustomerName.trim()) {
@@ -319,6 +358,7 @@ export function NewWalkInPage() {
       const childNamesByDuration = new Map<string, string[]>();
 
       selectedChildIds.forEach((childId) => {
+        if (insideChildIds.has(childId)) return;
         const childDuration = durationPriceMap[childDurationById[childId]]
           ? childDurationById[childId]
           : effectiveDurationPriceId;
@@ -333,6 +373,35 @@ export function NewWalkInPage() {
           if (!childDuration || !child.name.trim()) return;
           appendGroupedItem(childNamesByDuration, childDuration, child.name.trim());
         });
+
+      async function resolveExistingParentIdentity() {
+        if (baseIdentity.parent_id || !childNamesByDuration.size || normalizePhone(lookupPhone).length < 2) {
+          return;
+        }
+
+        try {
+          const searchResponse = await entryExitApi.searchParents(token!, lookupPhone);
+          const phone = normalizePhone(lookupPhone);
+          const matches = normalizeListResponse<ParentLookupResponse['data']>(searchResponse);
+          const matchedParent =
+            matches.find((item) => item.parent?.id && normalizePhone(item.parent.phone || item.customer?.phone) === phone) ??
+            matches.find((item) => item.parent?.id);
+
+          if (!matchedParent?.parent?.id) return;
+
+          baseIdentity = {
+            ...baseIdentity,
+            parent_id: matchedParent.parent.id,
+            customer_id: matchedParent.customer?.id || baseIdentity.customer_id,
+            customer_name: undefined,
+          };
+        } catch (error) {
+          if (error instanceof ApiError && error.status === 404) return;
+          throw error;
+        }
+      }
+
+      await resolveExistingParentIdentity();
 
       const basePaymentPayload =
         paymentPlan === 'parts'
@@ -376,7 +445,7 @@ export function NewWalkInPage() {
         throw new Error('Select or add at least one child before printing tickets.');
       }
 
-      const hasKnownIdentity = Boolean(lookupData?.parent?.id || lookupData?.customer?.id);
+      const hasKnownIdentity = Boolean(baseIdentity.parent_id || baseIdentity.customer_id);
       const responses: Awaited<ReturnType<typeof entryExitApi.createPass>>[] = [];
 
       if (hasKnownIdentity) {
@@ -528,21 +597,29 @@ export function NewWalkInPage() {
   const lookupData = lookupMutation.data?.data;
   const existingChildren = lookupData?.children ?? [];
   const activeSessions = lookupData?.active_sessions ?? [];
-  const insideChildIds = useMemo(
-    () =>
-      new Set(
-        activeSessions
-          .filter(
-            (session) =>
-              !!session.child_id &&
-              (session.pass_lifecycle_status === 'claimed_inside' ||
-                session.pass_lifecycle_status === 'issued_not_scanned' ||
-                !session.actual_exit_time),
-          )
-          .map((session) => session.child_id as string),
-      ),
-    [activeSessions],
-  );
+  const insideChildIds = useMemo(() => {
+    const childIds = new Set<string>();
+    const childrenByName = new Map(existingChildren.map((child) => [normalizeText(child.name), child.id]));
+
+    activeSessions.forEach((session) => {
+      const isInside =
+        session.pass_lifecycle_status === 'claimed_inside' ||
+        session.pass_lifecycle_status === 'issued_not_scanned' ||
+        !session.actual_exit_time;
+      if (!isInside) return;
+
+      if (session.child_id) {
+        childIds.add(session.child_id);
+      }
+
+      const matchedChildId = childrenByName.get(normalizeText(session.child_name));
+      if (matchedChildId) {
+        childIds.add(matchedChildId);
+      }
+    });
+
+    return childIds;
+  }, [activeSessions, existingChildren]);
   const durationPriceMap = useMemo(
     () => Object.fromEntries(durationPrices.map((item) => [item.id, item])),
     [durationPrices],
@@ -681,6 +758,37 @@ export function NewWalkInPage() {
   }, [insideChildIds]);
 
   useEffect(() => {
+    setDraftChildren((current) => {
+      if (!current.length) return current;
+
+      const usedNames = new Set<string>();
+      existingChildren.forEach((child) => {
+        const normalizedName = normalizeText(child.name);
+        if (normalizedName) usedNames.add(normalizedName);
+      });
+      activeSessions.forEach((session) => {
+        const normalizedName = normalizeText(session.child_name);
+        if (normalizedName) usedNames.add(normalizedName);
+      });
+
+      let changed = false;
+      const next = current.map((child) => {
+        const normalizedName = normalizeText(child.name);
+        const nextName = normalizedName && !usedNames.has(normalizedName)
+          ? child.name
+          : buildNextDefaultChildName(usedNames, lookupPhone);
+        usedNames.add(normalizeText(nextName));
+
+        if (nextName === child.name) return child;
+        changed = true;
+        return { ...child, name: nextName };
+      });
+
+      return changed ? next : current;
+    });
+  }, [activeSessions, existingChildren, lookupPhone]);
+
+  useEffect(() => {
     setEditableCustomerName(lookupData?.customer?.name || lookupData?.parent?.name || '');
     setIsEditingCustomerName(false);
   }, [lookupData?.customer?.id, lookupData?.customer?.name, lookupData?.parent?.id, lookupData?.parent?.name]);
@@ -773,15 +881,32 @@ export function NewWalkInPage() {
   }
 
   function savePendingChildren() {
-    const existingDraftCount = draftChildren.length;
-    const cleanedNames = pendingChildNames.map(
-      (item, index) => item.trim() || buildDefaultChildName(existingDraftCount + index, lookupPhone),
-    );
-    const nextDraftChildren = cleanedNames.map((name, index) => ({
-      id: `draft-${Date.now()}-${existingDraftCount + index}-${name}`,
-      name,
-      durationPriceId: effectiveDurationPriceId,
-    }));
+    const usedNames = new Set<string>();
+    existingChildren.forEach((child) => {
+      const normalizedName = normalizeText(child.name);
+      if (normalizedName) usedNames.add(normalizedName);
+    });
+    activeSessions.forEach((session) => {
+      const normalizedName = normalizeText(session.child_name);
+      if (normalizedName) usedNames.add(normalizedName);
+    });
+    draftChildren.forEach((child) => {
+      const normalizedName = normalizeText(child.name);
+      if (normalizedName) usedNames.add(normalizedName);
+    });
+
+    const nextDraftChildren = pendingChildNames.map((item, index) => {
+      const trimmedName = item.trim();
+      const name = trimmedName && !usedNames.has(normalizeText(trimmedName))
+        ? trimmedName
+        : buildNextDefaultChildName(usedNames, lookupPhone);
+      usedNames.add(normalizeText(name));
+      return {
+        id: `draft-${Date.now()}-${draftChildren.length + index}-${name}`,
+        name,
+        durationPriceId: effectiveDurationPriceId,
+      };
+    });
     setDraftChildren((current) => [...current, ...nextDraftChildren]);
     setSelectedDraftChildIds((current) => [...current, ...nextDraftChildren.map((child) => child.id)]);
     setIsAddChildOpen(false);
