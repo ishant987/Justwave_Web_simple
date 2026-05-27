@@ -36,7 +36,6 @@ export interface ChildRecord {
   id: string;
   name: string;
   age?: number;
-  dob?: string | null;
 }
 
 export interface ParentLookupResponse {
@@ -159,7 +158,6 @@ export interface PassCreatePayload {
   child_ids?: string[];
   child_count?: number;
   child_names?: string[];
-  child_dobs?: (string | null)[];
   hours?: number;
   duration_minutes?: number;
   duration_price_id?: string;
