@@ -370,8 +370,64 @@ export function NewWalkInPage() {
         baseIdentity.customer_name = manualCustomerName.trim();
       }
 
+      let resolvedParentLookup = lookupData;
+
+      async function resolveParentIdentity(identity: Partial<PassCreatePayload>) {
+        if (identity.parent_id || !selectedDraftChildIds.length) return identity;
+
+        try {
+          const searchResponse = await entryExitApi.searchParents(token!, lookupPhone);
+          const phone = normalizePhone(lookupPhone);
+          const matches = normalizeListResponse<ParentLookupResponse['data']>(searchResponse);
+          const matchedParent =
+            matches.find((item) => item.parent?.id && normalizePhone(item.parent.phone || item.customer?.phone) === phone) ??
+            matches.find((item) => item.parent?.id);
+
+          if (!matchedParent?.parent?.id) return identity;
+
+          resolvedParentLookup = matchedParent;
+
+          return {
+            ...identity,
+            parent_id: matchedParent.parent.id,
+            customer_id: matchedParent.customer?.id || identity.customer_id,
+            customer_name: undefined,
+          };
+        } catch (error) {
+          if (error instanceof ApiError && error.status === 404) {
+            return identity;
+          }
+          throw error;
+        }
+      }
+
+      baseIdentity = await resolveParentIdentity(baseIdentity);
+
       const childIdsByDuration = new Map<string, string[]>();
       const childDetailsByDuration = new Map<string, { name: string; dob: string | null }[]>();
+      const knownChildrenByName = new Map<string, ChildRecord>();
+      const knownInsideChildIds = new Set(insideChildIds);
+      const usedChildNames = new Set<string>();
+
+      [...existingChildren, ...(resolvedParentLookup?.children ?? [])].forEach((child) => {
+        const normalizedName = normalizeText(child.name);
+        if (!normalizedName) return;
+        usedChildNames.add(normalizedName);
+        if (!knownChildrenByName.has(normalizedName)) {
+          knownChildrenByName.set(normalizedName, child);
+        }
+      });
+
+      resolvedParentLookup?.active_sessions?.forEach((session) => {
+        if (
+          session.child_id &&
+          (session.pass_lifecycle_status === 'claimed_inside' ||
+            session.pass_lifecycle_status === 'issued_not_scanned' ||
+            !session.actual_exit_time)
+        ) {
+          knownInsideChildIds.add(session.child_id);
+        }
+      });
 
       selectedChildIds.forEach((childId) => {
         const childDuration = durationPriceMap[childDurationById[childId]]
@@ -386,8 +442,25 @@ export function NewWalkInPage() {
         .forEach((child) => {
           const childDuration = durationPriceMap[child.durationPriceId] ? child.durationPriceId : effectiveDurationPriceId;
           if (!childDuration || !child.name.trim()) return;
+          const normalizedDraftName = normalizeText(child.name);
+          const matchedKnownChild = knownChildrenByName.get(normalizedDraftName);
+
+          if (matchedKnownChild && !knownInsideChildIds.has(matchedKnownChild.id)) {
+            appendGroupedItem(childIdsByDuration, childDuration, matchedKnownChild.id);
+            return;
+          }
+
+          if (matchedKnownChild && knownInsideChildIds.has(matchedKnownChild.id) && getDefaultChildSequence(child.name, lookupPhone) === null) {
+            throw new Error(`${child.name} is already inside. Please complete the exit scan first.`);
+          }
+
+          const childName =
+            usedChildNames.has(normalizedDraftName) && getDefaultChildSequence(child.name, lookupPhone) !== null
+              ? buildNextDefaultChildName(usedChildNames, lookupPhone)
+              : child.name.trim();
+          usedChildNames.add(normalizeText(childName));
           appendGroupedItem(childDetailsByDuration, childDuration, {
-            name: child.name.trim(),
+            name: childName,
             dob: formatDateInputForApi(child.dob),
           });
         });
@@ -419,35 +492,6 @@ export function NewWalkInPage() {
           duration_price_id: childDuration,
         })),
       ];
-
-      async function resolveParentIdentity(identity: Partial<PassCreatePayload>) {
-        if (identity.parent_id || !childDetailsByDuration.size) return identity;
-
-        try {
-          const searchResponse = await entryExitApi.searchParents(token!, lookupPhone);
-          const phone = normalizePhone(lookupPhone);
-          const matches = normalizeListResponse<ParentLookupResponse['data']>(searchResponse);
-          const matchedParent =
-            matches.find((item) => item.parent?.id && normalizePhone(item.parent.phone || item.customer?.phone) === phone) ??
-            matches.find((item) => item.parent?.id);
-
-          if (!matchedParent?.parent?.id) return identity;
-
-          return {
-            ...identity,
-            parent_id: matchedParent.parent.id,
-            customer_id: matchedParent.customer?.id || identity.customer_id,
-            customer_name: undefined,
-          };
-        } catch (error) {
-          if (error instanceof ApiError && error.status === 404) {
-            return identity;
-          }
-          throw error;
-        }
-      }
-
-      baseIdentity = await resolveParentIdentity(baseIdentity);
 
       const resolvedPassPayloads = passPayloads.map((payload) => ({
         ...payload,
