@@ -110,6 +110,106 @@ function readPaymentModeBreakdown(data: Record<string, unknown>, mode: PaymentMo
   );
 }
 
+function getSummaryPaymentModeValue(summary: Record<string, unknown>, mode: string, category: string): { total: number; count: number } {
+  const keys = Object.keys(summary);
+  const isToday = category === 'amount_today' || category === 'generated_today' || category === 'today';
+  const isMonth = category === 'amount_month' || category === 'this_month';
+  
+  let total = 0;
+  let count = 0;
+  
+  const totalCandidates = [
+    mode,
+    `${mode}_total`,
+    `${mode}_amount`,
+    `total_${mode}`,
+    `amount_${mode}`,
+  ];
+  
+  if (isToday) {
+    totalCandidates.unshift(
+      `${mode}_today`,
+      `today_${mode}`,
+      `amount_today_${mode}`,
+      `amount_${mode}_today`
+    );
+  } else if (isMonth) {
+    totalCandidates.unshift(
+      `${mode}_month`,
+      `month_${mode}`,
+      `amount_month_${mode}`,
+      `amount_${mode}_month`
+    );
+  }
+  
+  const countCandidates = [
+    `${mode}_count`,
+    `${mode}_txns`,
+    `${mode}_transactions`,
+    `count_${mode}`,
+    `txns_${mode}`,
+    `transactions_${mode}`,
+  ];
+  
+  if (isToday) {
+    countCandidates.unshift(
+      `${mode}_today_count`,
+      `${mode}_today_txns`,
+      `today_${mode}_count`,
+      `today_${mode}_txns`
+    );
+  } else if (isMonth) {
+    countCandidates.unshift(
+      `${mode}_month_count`,
+      `${mode}_month_txns`,
+      `month_${mode}_count`,
+      `month_${mode}_txns`
+    );
+  }
+
+  for (const cand of totalCandidates) {
+    const normCand = cand.toLowerCase().replace(/[\s_-]/g, '');
+    if (summary[cand] !== undefined) {
+      const val = summary[cand];
+      if (typeof val === 'number') {
+        total = val;
+        break;
+      }
+      if (typeof val === 'string' && !Number.isNaN(Number(val))) {
+        total = Number(val);
+        break;
+      }
+    }
+    const matchingKey = keys.find(k => k.toLowerCase().replace(/[\s_-]/g, '') === normCand);
+    if (matchingKey) {
+      total = Number(summary[matchingKey]) || 0;
+      break;
+    }
+  }
+
+  for (const cand of countCandidates) {
+    const normCand = cand.toLowerCase().replace(/[\s_-]/g, '');
+    if (summary[cand] !== undefined) {
+      const val = summary[cand];
+      if (typeof val === 'number') {
+        count = val;
+        break;
+      }
+      if (typeof val === 'string' && !Number.isNaN(Number(val))) {
+        count = Number(val);
+        break;
+      }
+    }
+    const matchingKey = keys.find(k => k.toLowerCase().replace(/[\s_-]/g, '') === normCand);
+    if (matchingKey) {
+      count = Number(summary[matchingKey]) || 0;
+      break;
+    }
+  }
+
+  return { total, count };
+}
+
 const defaultFilters = {
   category: 'amount_today' as BillCategory,
   status: 'all' as BillStatus,
@@ -209,23 +309,8 @@ export function BillDashboardPage() {
   const summaryObject = readObject(summary);
   const collectedRowsTotal = rows.reduce((sum, row) => sum + getApiBillAmount(row), 0);
   const collectedTodayRowsTotal = rows.filter(isTodayBill).reduce((sum, row) => sum + getApiBillAmount(row), 0);
-  const amountTodayTotal = readNumber(
-    dataContainer.collected_amount_today ??
-      dataContainer.amount_today_collected ??
-      summaryObject.collected_amount_today ??
-      summaryObject.amount_today_collected ??
-      (filters.category === 'amount_today' ? collectedRowsTotal || filteredTotal : undefined) ??
-      (collectedTodayRowsTotal || undefined) ??
-      summary.amount_today,
-  );
-  const amountMonthTotal = readNumber(
-    dataContainer.collected_amount_month ??
-      dataContainer.amount_month_collected ??
-      summaryObject.collected_amount_month ??
-      summaryObject.amount_month_collected ??
-      (filters.category === 'amount_month' ? collectedRowsTotal || filteredTotal : undefined) ??
-      summary.amount_month,
-  );
+  const amountTodayTotal = readNumber(summary.amount_today);
+  const amountMonthTotal = readNumber(summary.amount_month);
 
   const summaryCards = useMemo(
     () => [
@@ -334,29 +419,90 @@ export function BillDashboardPage() {
     });
 
     return modes.map((mode) => {
+      const summaryObject = readObject(summary);
       const item = readPaymentModeBreakdown(dataContainer, mode);
-      const derivedItem = derived[mode];
+      const summaryItem = readPaymentModeBreakdown(summaryObject, mode);
+
+      const { total: summaryAmount, count: summaryCount } = getSummaryPaymentModeValue(summaryObject, mode, filters.category);
+
       return {
         key: mode,
-        label: readString(item.label) || paymentModeLabel(mode),
+        label: readString(summaryItem.label) || readString(item.label) || paymentModeLabel(mode),
         total: readNumber(
-          item.total_collected ??
-            item.collection_total ??
-            item.total_collection ??
-            item.total_amount ??
-            item.amount ??
-            item.value ??
-            item.total ??
-            derivedItem.total,
+          summaryAmount ||
+            (summaryItem.total_collected ??
+              summaryItem.collection_total ??
+              summaryItem.total_collection ??
+              summaryItem.total_amount ??
+              summaryItem.amount ??
+              summaryItem.value ??
+              summaryItem.total ??
+              item.total_collected ??
+              item.collection_total ??
+              item.total_collection ??
+              item.total_amount ??
+              item.amount ??
+              item.value ??
+              item.total ??
+              0),
         ),
-        txns: readNumber(item.transactions ?? item.transaction_count ?? item.txns ?? item.count ?? item.total_txns ?? derivedItem.txns),
-        passAmount: readNumber(item.pass_collection_amount ?? item.pass_collection ?? item.pass_amount ?? item.pass_total ?? derivedItem.passAmount),
-        passCount: readNumber(item.pass_transactions ?? item.pass_collection_count ?? item.pass_count ?? item.pass_txns ?? derivedItem.passCount),
+        txns: readNumber(
+          summaryCount ||
+            (summaryItem.transactions ??
+              summaryItem.transaction_count ??
+              summaryItem.txns ??
+              summaryItem.count ??
+              summaryItem.total_txns ??
+              item.transactions ??
+              item.transaction_count ??
+              item.txns ??
+              item.count ??
+              item.total_txns ??
+              0),
+        ),
+        passAmount: readNumber(
+          summaryItem.pass_collection_amount ??
+            summaryItem.pass_collection ??
+            summaryItem.pass_amount ??
+            summaryItem.pass_total ??
+            item.pass_collection_amount ??
+            item.pass_collection ??
+            item.pass_amount ??
+            item.pass_total ??
+            0,
+        ),
+        passCount: readNumber(
+          summaryItem.pass_transactions ??
+            summaryItem.pass_collection_count ??
+            summaryItem.pass_count ??
+            summaryItem.pass_txns ??
+            item.pass_transactions ??
+            item.pass_collection_count ??
+            item.pass_count ??
+            item.pass_txns ??
+            0,
+        ),
         overtimeAmount: readNumber(
-          item.overtime_collection_amount ?? item.overtime_collection ?? item.overtime_amount ?? item.overtime_total ?? derivedItem.overtimeAmount,
+          summaryItem.overtime_collection_amount ??
+            summaryItem.overtime_collection ??
+            summaryItem.overtime_amount ??
+            summaryItem.overtime_total ??
+            item.overtime_collection_amount ??
+            item.overtime_collection ??
+            item.overtime_amount ??
+            item.overtime_total ??
+            0,
         ),
         overtimeCount: readNumber(
-          item.overtime_transactions ?? item.overtime_collection_count ?? item.overtime_count ?? item.overtime_txns ?? derivedItem.overtimeCount,
+          summaryItem.overtime_transactions ??
+            summaryItem.overtime_collection_count ??
+            summaryItem.overtime_count ??
+            summaryItem.overtime_txns ??
+            item.overtime_transactions ??
+            item.overtime_collection_count ??
+            item.overtime_count ??
+            item.overtime_txns ??
+            0,
         ),
       };
     });
