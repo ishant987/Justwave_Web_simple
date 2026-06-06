@@ -1,16 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import * as entryExitApi from '../api/entryExitApi';
+import { entryExitApi } from '../api/entryExitApi';
 import { useAuth } from '../hooks/useAuth';
-import type { EntryExitLog, PaginatedApiResponse } from '../types/entryExit';
-
-function normalizePasses(payload: PaginatedApiResponse<EntryExitLog> | EntryExitLog[] | undefined) {
-  if (!payload) return [];
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload.data)) return payload.data;
-  if (payload.data && Array.isArray(payload.data.data)) return payload.data.data;
-  return [];
-}
+import type { EntryExitLog } from '../types/entryExit';
+import { normalizeListResponse } from '../utils/normalization';
 
 export function GeneratedPassesPage() {
   const { token } = useAuth();
@@ -27,7 +20,7 @@ export function GeneratedPassesPage() {
     enabled: !!token,
   });
 
-  const passes = useMemo(() => normalizePasses(query.data), [query.data]);
+  const passes = useMemo(() => normalizeListResponse<EntryExitLog>(query.data), [query.data]);
 
   return (
     <div className="page-stack">

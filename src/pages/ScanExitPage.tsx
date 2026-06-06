@@ -1,46 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import * as entryExitApi from '../api/entryExitApi';
+import { entryExitApi } from '../api/entryExitApi';
 import { TicketDetailsCard } from '../components/TicketDetailsCard';
 import { StatusBanner } from '../components/StatusBanner';
 import { useAuth } from '../hooks/useAuth';
 import { useFlash } from '../hooks/useFlash';
 import type { OvertimeSettlementItem, PaymentMode, ScanExitResponse } from '../types/entryExit';
-
-function normalizeSettlements(
-  payload:
-    | { data?: OvertimeSettlementItem[] | { settlements?: OvertimeSettlementItem[] } }
-    | OvertimeSettlementItem[]
-    | undefined,
-) {
-  if (!payload) return [];
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload.data)) return payload.data;
-  if (payload.data && Array.isArray(payload.data.settlements)) return payload.data.settlements;
-  return [];
-}
-
-function readNumber(value: unknown) {
-  return typeof value === 'number' ? value : Number(value ?? 0) || 0;
-}
-
-function formatAmount(value?: number | null) {
-  return `Rs.${Number(value ?? 0).toFixed(2)}`;
-}
-
-function formatDateTime(value?: string | null) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true,
-  }).format(date);
-}
+import { normalizeListResponse, readNumber } from '../utils/normalization';
+import { formatAmount, formatDateTime } from '../utils/formatters';
 
 function buildFallbackSettlement(data?: ScanExitResponse['data'] | null): OvertimeSettlementItem | null {
   if (!data) return null;
@@ -123,7 +90,7 @@ export function ScanExitPage() {
   });
 
   const overtimeDue = scanMutation.data?.status === 'overtime_due';
-  const settlementRows = useMemo(() => normalizeSettlements(overtimeQuery.data), [overtimeQuery.data]);
+  const settlementRows = useMemo(() => normalizeListResponse<OvertimeSettlementItem>(overtimeQuery.data), [overtimeQuery.data]);
   const fallbackSettlement = useMemo(() => buildFallbackSettlement(scannedPass), [scannedPass]);
 
   const matchedSettlement = useMemo(() => {

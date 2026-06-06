@@ -1,8 +1,8 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import QRCode from 'qrcode';
-import * as entryExitApi from '../api/entryExitApi';
-import * as locationApi from '../api/locationApi';
+import { entryExitApi } from '../api/entryExitApi';
+import { locationApi } from '../api/locationApi';
 import { ApiError } from '../api/http';
 import { useAuth } from '../hooks/useAuth';
 import { useFlash } from '../hooks/useFlash';
@@ -18,6 +18,16 @@ import type {
   PaymentSplit,
 } from '../types/entryExit';
 import { buildPassPrintDocument } from '../utils/passPrint';
+import { compactDurationLabel, formatAmountCompact, formatDurationLabel } from '../utils/formatters';
+import {
+  normalizeListResponse,
+  normalizeText,
+  normalizePhone,
+  centsFromAmount,
+  centsFromInput,
+  formatAmountFromCents,
+  readNumber,
+} from '../utils/normalization';
 
 const PAYMENT_SPLIT_OPTIONS: { mode: PassPaymentMode; label: string }[] = [
   { mode: 'cash', label: 'Cash' },
@@ -42,99 +52,6 @@ interface PendingPassPreview {
   guardianName: string;
   phone: string;
   isDraft: boolean;
-}
-
-type ListResponsePayload<T> =
-  | {
-      data?: T[] | { data?: T[]; entry_exit_logs?: T[]; logs?: T[]; passes?: T[]; items?: T[]; results?: T[] };
-      entry_exit_logs?: T[];
-      logs?: T[];
-      passes?: T[];
-      items?: T[];
-      results?: T[];
-    }
-  | T[]
-  | undefined;
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
-function normalizeListResponse<T>(payload: ListResponsePayload<T> | unknown): T[] {
-  if (!payload) return [];
-  if (Array.isArray(payload)) return payload;
-  if (!isRecord(payload)) return [];
-  if (typeof payload.id === 'string') return [payload as T];
-
-  for (const key of ['data', 'entry_exit_logs', 'logs', 'passes', 'items', 'results']) {
-    const value = payload[key];
-    if (Array.isArray(value)) return value as T[];
-    if (isRecord(value)) {
-      const nested = normalizeListResponse<T>(value);
-      if (nested.length) return nested;
-    }
-  }
-
-  return [];
-}
-
-function normalizeText(value?: string | null) {
-  return (value || '').trim().toLowerCase();
-}
-
-function uniquePassesById(items: EntryExitLog[]) {
-  const seen = new Set<string>();
-  return items.filter((item) => {
-    if (!item.id || seen.has(item.id)) return false;
-    seen.add(item.id);
-    return true;
-  });
-}
-
-async function lookupPassesForFallback(token: string, query: string) {
-  try {
-    return await entryExitApi.lookupPasses(token, query);
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 404) {
-      return [];
-    }
-    throw error;
-  }
-}
-
-function compactDurationLabel(label?: string | null): string {
-  if (!label) return '40 mins';
-  return label.replace(/\s*\([^)]*\)/g, '').trim();
-}
-
-function formatAmountCompact(value?: number | null) {
-  const amount = Number(value ?? 0);
-  return Number.isInteger(amount) ? `Rs.${amount}` : `Rs.${amount.toFixed(2)}`;
-}
-
-function formatDurationLabel(minutes?: number | null) {
-  const totalMinutes = Number(minutes ?? 0) || 0;
-  if (!totalMinutes) return '40m';
-  if (totalMinutes % 60 === 0) return `${totalMinutes / 60}h`;
-  if (totalMinutes > 60) {
-    const hours = Math.floor(totalMinutes / 60);
-    const remainingMinutes = totalMinutes % 60;
-    return remainingMinutes ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
-  }
-  return `${totalMinutes}m`;
-}
-
-function centsFromAmount(value: number) {
-  return Math.round(value * 100);
-}
-
-function centsFromInput(value: string) {
-  return Math.max(0, Math.round((Number(value) || 0) * 100));
-}
-
-function formatAmountFromCents(cents: number) {
-  const amount = Math.max(0, cents) / 100;
-  return Number.isInteger(amount) ? String(amount) : amount.toFixed(2);
 }
 
 function buildEvenSplitAmounts(modes: PassPaymentMode[], total: number): Record<PassPaymentMode, string> {
@@ -199,10 +116,6 @@ function buildNextDefaultChildName(usedNames: Set<string>, phone: string) {
   return candidate;
 }
 
-function normalizePhone(value?: string | null) {
-  return (value || '').replace(/\D/g, '').trim();
-}
-
 function isDuplicateParentPhoneError(error: unknown) {
   if (!(error instanceof ApiError)) return false;
   const message = error.message.toLowerCase();
@@ -265,6 +178,26 @@ function printHtmlDocument(html: string) {
       };
     }
   });
+}
+
+function uniquePassesById(items: EntryExitLog[]) {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (!item.id || seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
+}
+
+async function lookupPassesForFallback(token: string, query: string) {
+  try {
+    return await entryExitApi.lookupPasses(token, query);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return [];
+    }
+    throw error;
+  }
 }
 
 function UiIcon({ type }: { type: 'phone' | 'user' | 'children' | 'ticket' | 'plus' }) {

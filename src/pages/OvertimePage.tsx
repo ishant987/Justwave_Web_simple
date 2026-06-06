@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import * as entryExitApi from '../api/entryExitApi';
+import { entryExitApi } from '../api/entryExitApi';
 import { StatusBanner } from '../components/StatusBanner';
 import { useAuth } from '../hooks/useAuth';
 import type { OvertimeSettlementItem, PaymentMode } from '../types/entryExit';
+import { formatAmount, formatDate, formatTime } from '../utils/formatters';
+import { readNumber } from '../utils/normalization';
 
 function normalizeSettlements(
   payload:
@@ -16,36 +18,6 @@ function normalizeSettlements(
   if (Array.isArray(payload.data)) return payload.data;
   if (payload.data && Array.isArray(payload.data.settlements)) return payload.data.settlements;
   return [];
-}
-
-function formatAmount(value?: number | null) {
-  return `Rs.${Number(value ?? 0).toFixed(2)}`;
-}
-
-function formatDate(value?: string | null) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(date);
-}
-
-function formatTime(value?: string | null) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('en-IN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true,
-  }).format(date);
-}
-
-function readNumber(value: unknown) {
-  return typeof value === 'number' ? value : Number(value ?? 0) || 0;
 }
 
 export function OvertimePage() {

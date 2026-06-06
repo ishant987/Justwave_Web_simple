@@ -4116,3 +4116,192 @@ input:disabled {
     letter-spacing: 0.12in;
   }
 }
+
+/* Centralized Mobile Navigation and Premium Responsive Optimization Styles */
+.mobile-top-header {
+  display: none;
+}
+.mobile-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .top-app-bar {
+    display: none !important;
+  }
+  .sidebar {
+    display: none !important;
+  }
+  .app-shell {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: 60px 1fr 64px !important;
+    height: 100vh !important;
+    overflow: hidden !important;
+    width: 100% !important;
+  }
+  #root {
+    width: 100% !important;
+    height: 100% !important;
+    transform: none !important;
+  }
+  .page-content {
+    grid-row: 2 !important;
+    grid-column: 1 !important;
+    padding: 12px 16px 80px !important;
+    height: 100% !important;
+    overflow-y: auto !important;
+  }
+  
+  /* Mobile Top Header */
+  .mobile-top-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    padding: 0 16px;
+    background: var(--jw-navy-deep);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(16, 44, 100, 0.1);
+    z-index: 100;
+  }
+  .mobile-brand-logo {
+    height: 28px;
+    width: auto;
+  }
+  .mobile-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .mobile-branch-tag {
+    font-size: 0.8rem;
+    font-weight: 700;
+    background: rgba(201, 151, 61, 0.25);
+    border: 1px solid var(--jw-gold);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+  .mobile-logout-btn {
+    background: none;
+    border: none;
+    color: #ff6b6b;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+  .mobile-logout-btn:active {
+    transform: scale(0.9);
+  }
+  .mobile-logout-btn .logout-icon {
+    width: 22px;
+    height: 22px;
+  }
+  
+  /* Mobile Bottom Navigation */
+  .mobile-bottom-nav {
+    display: flex !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 64px;
+    background: #ffffff;
+    border-top: 1px solid var(--jw-border);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.05);
+    z-index: 1000;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 8px;
+  }
+  .mobile-nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--jw-text-soft);
+    flex: 1;
+    height: 100%;
+    gap: 4px;
+    transition: color 0.2s ease;
+  }
+  .mobile-nav-link .nav-icon {
+    width: 22px;
+    height: 22px;
+  }
+  .mobile-nav-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+  .mobile-nav-link.active {
+    color: var(--jw-navy);
+  }
+  .mobile-nav-link.active .nav-icon {
+    stroke: var(--jw-navy);
+  }
+  
+  /* Form inputs & actions optimization */
+  input, select, textarea {
+    padding: 0.75rem 0.85rem;
+    font-size: 0.95rem;
+    border-radius: 10px;
+  }
+  .primary-button, .secondary-button {
+    min-height: 46px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    border-radius: 10px;
+  }
+  .hero-card, .panel, .occupancy-card {
+    padding: 1rem;
+    border-radius: 14px;
+  }
+  
+  /* Tables optimization to interactive cards */
+  .occupancy-table, .bill-table, .data-table {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: none;
+    border: none;
+  }
+  .occupancy-table-head, .bill-table-head, .data-table-head {
+    display: none !important;
+  }
+  .occupancy-table-row, .bill-table-row, .data-table-row, .history-pass-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px;
+    padding: 12px;
+    background: #ffffff;
+    border: 1px solid var(--jw-border);
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+  }
+  .occupancy-table-row > span, .bill-table-row > span, .data-table-row > span, .history-pass-row > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    font-size: 0.88rem;
+  }
+  .grid.two-col, .stats-grid.three, .toolbar-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+  .bill-summary-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px;
+  }
+  .bill-summary-card {
+    padding: 10px;
+    border-radius: 12px;
+  }
+  .bill-summary-card strong {
+    font-size: 1.25rem;
+  }
+}
+

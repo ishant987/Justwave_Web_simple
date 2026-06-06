@@ -1,34 +1,10 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import * as entryExitApi from '../api/entryExitApi';
+import { entryExitApi } from '../api/entryExitApi';
 import { StatusBanner } from '../components/StatusBanner';
 import { useAuth } from '../hooks/useAuth';
 import type { EntryExitLog } from '../types/entryExit';
-
-function formatDateTime(value?: string | null) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true,
-  }).format(date);
-}
-
-function formatTime(value?: string | null) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('en-IN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true,
-  }).format(date);
-}
+import { formatDateTime, formatTime } from '../utils/formatters';
 
 function normalizeSessions(payload: {
   occupancy_count?: number;

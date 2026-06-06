@@ -14,6 +14,7 @@ import type {
   PaymentMode,
   ScanExitResponse,
 } from '../types/entryExit';
+import type { IEntryExitApi } from './interfaces';
 
 export function lookupParentByPhone(token: string, phone: string) {
   return request<ParentLookupResponse>(`/entry-exit/parents/lookup?phone=${encodeURIComponent(phone)}`, { token });
@@ -136,3 +137,25 @@ export function getBillDashboard(token: string, params: BillDashboardQueryParams
 export function getVisitHistory(token: string, query: string) {
   return request<PaginatedApiResponse<EntryExitLog> | EntryExitLog[]>(`/entry-exit/logs${query ? `?${query}` : ''}`, { token });
 }
+
+export const entryExitApi: IEntryExitApi = {
+  lookupParentByPhone,
+  searchParents,
+  getCustomer,
+  updateCustomer,
+  getDurationPrices,
+  createPass,
+  listPasses,
+  lookupPasses,
+  markPassPaid,
+  recordPrint,
+  scanEntry,
+  getOvertimeSettlements,
+  settleOvertime,
+  scanExit,
+  verifyExitOtp,
+  getLiveOccupancy,
+  getBillDashboard,
+  getVisitHistory,
+};
+export default entryExitApi;

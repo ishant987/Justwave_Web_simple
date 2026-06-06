@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import * as entryExitApi from '../api/entryExitApi';
+import { entryExitApi } from '../api/entryExitApi';
 import { TicketDetailsCard } from '../components/TicketDetailsCard';
 import { StatusBanner } from '../components/StatusBanner';
 import { useAuth } from '../hooks/useAuth';

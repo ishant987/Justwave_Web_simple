@@ -1,18 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import * as entryExitApi from '../api/entryExitApi';
+import { entryExitApi } from '../api/entryExitApi';
 import { useAuth } from '../hooks/useAuth';
 import { StatusBanner } from '../components/StatusBanner';
-import type { EntryExitLog, PaginatedApiResponse, PassPaymentMode } from '../types/entryExit';
-
-function normalizePasses(payload: PaginatedApiResponse<EntryExitLog> | EntryExitLog[] | undefined) {
-  if (!payload) return [];
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload.data)) return payload.data;
-  if (payload.data && Array.isArray(payload.data.data)) return payload.data.data;
-  return [];
-}
+import type { EntryExitLog, PassPaymentMode } from '../types/entryExit';
+import { normalizeListResponse } from '../utils/normalization';
 
 function parseRouteState(state: unknown): { ids: string[]; phone: string } {
   if (!state || typeof state !== 'object') {
@@ -54,7 +47,7 @@ export function PaymentPage() {
     },
   });
 
-  const passes = useMemo(() => normalizePasses(passesQuery.data), [passesQuery.data]);
+  const passes = useMemo(() => normalizeListResponse<EntryExitLog>(passesQuery.data), [passesQuery.data]);
 
   return (
     <div className="page-stack">

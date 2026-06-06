@@ -1,9 +1,11 @@
 import { useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import * as entryExitApi from '../api/entryExitApi';
+import { entryExitApi } from '../api/entryExitApi';
 import { StatusBanner } from '../components/StatusBanner';
 import { useAuth } from '../hooks/useAuth';
 import type { BillDashboardQueryParams, BillDashboardResponse, EntryExitLog } from '../types/entryExit';
+import { formatAmount, formatDateTime, formatMinutes } from '../utils/formatters';
+import { readArray, readNumber, readObject, readString } from '../utils/normalization';
 
 type PaymentModeKey = 'cash' | 'upi' | 'card' | 'bank_transfer' | 'other' | 'razorpay';
 type BillCategory = NonNullable<BillDashboardQueryParams['category']>;
@@ -11,53 +13,6 @@ type BillStatus = 'all' | 'pending' | 'completed' | 'active' | 'expired';
 type BillSort = 'bill' | 'created_at' | 'amount' | 'duration' | 'status' | 'entry_time' | 'exit_time';
 type BillDirection = 'asc' | 'desc';
 type QuickFilterKey = 'all_time' | 'pending' | 'today' | 'this_month';
-
-function readArray<T>(value: unknown): T[] {
-  return Array.isArray(value) ? (value as T[]) : [];
-}
-
-function readObject(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
-}
-
-function readNumber(value: unknown) {
-  return typeof value === 'number' ? value : Number(value ?? 0) || 0;
-}
-
-function readString(value: unknown) {
-  return typeof value === 'string' ? value : '';
-}
-
-function formatAmount(value: number) {
-  return `Rs.${value.toLocaleString('en-IN', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
-
-function formatDateTime(value?: string | null) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true,
-  }).format(date);
-}
-
-function formatMinutes(value?: number | null) {
-  const minutes = readNumber(value);
-  if (!minutes) return '-';
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  if (hours && remainingMinutes) return `${hours}h ${remainingMinutes}m`;
-  if (hours) return `${hours}h`;
-  return `${remainingMinutes}m`;
-}
 
 function getBillStatusTone(row: EntryExitLog): BillStatus {
   if (row.pass_lifecycle_status === 'used_checked_out' || row.actual_exit_time) {
@@ -616,98 +571,98 @@ export function BillDashboardPage() {
           </section>
 
           <section ref={billsSectionRef} className="bill-table-panel">
-        <div className="bill-table-top">
-          <div>
-            <p className="muted">
-              {from && to ? `Showing ${from} to ${to} of ${totalRows || rows.length} bills` : `${rows.length} bills loaded`}
-            </p>
-          </div>
-          <strong className="bill-branch-label">{branchLabel}</strong>
-        </div>
-
-        {query.isError ? (
-          <StatusBanner
-            tone="danger"
-            message={query.error instanceof Error ? query.error.message : 'Could not load bill dashboard data.'}
-          />
-        ) : null}
-
-        <div className="bill-table">
-          <div className="bill-table-head">
-            <span>Bill</span>
-            <span>Guest</span>
-            <span>Duration</span>
-            <span>Amount</span>
-            <span>Payment</span>
-            <span>Status</span>
-            <span>Generated</span>
-          </div>
-
-          <div className="bill-table-body">
-            {rows.map((item, index) => {
-              const billCode = `WIB-${readString(item.id).slice(0, 8).toUpperCase()}`;
-              const customer =
-                readString(item.child_name) ||
-                readString(item.parent_name) ||
-                readString(item.customer_name) ||
-                'Walk-In Guest';
-              const amount = getApiBillAmount(item);
-              const billStatusTone = getBillStatusTone(item);
-              const billStatusLabel = item.pass_lifecycle_label || billStatusTone.replace('_', ' ');
-              const paymentLabel =
-                item.payment_status === 'paid'
-                  ? `${readString(item.payment_mode || 'cash').toUpperCase()}${item.overtime_paid ? ' + OT' : ''}`
-                  : 'Pending';
-
-              return (
-                <div key={`${billCode}-${index}`} className="bill-table-row">
-                  <span className="bill-code-cell">{billCode}</span>
-                  <span className="bill-guest-cell">
-                    <strong>{customer}</strong>
-                    <small>{readString(item.parent_name) || readString(item.customer_name) || '-'}</small>
-                  </span>
-                  <span>{formatMinutes(item.expected_duration_minutes)}</span>
-                  <span className="bill-amount-cell">{formatAmount(amount)}</span>
-                  <span>{paymentLabel}</span>
-                  <span>
-                    <span className={`bill-status-chip ${billStatusTone}`}>{billStatusLabel}</span>
-                  </span>
-                  <span>{formatDateTime(item.issued_at || item.created_at)}</span>
-                </div>
-              );
-            })}
-
-            {!query.isLoading && !rows.length ? (
-              <div className="bill-empty-state">
-                <p className="muted">No bills found for the current filters.</p>
+            <div className="bill-table-top">
+              <div>
+                <p className="muted">
+                  {from && to ? `Showing ${from} to ${to} of ${totalRows || rows.length} bills` : `${rows.length} bills loaded`}
+                </p>
               </div>
-            ) : null}
-          </div>
-        </div>
+              <strong className="bill-branch-label">{branchLabel}</strong>
+            </div>
 
-        <div className="bill-table-footer">
-          <span>
-            Page {currentPage} of {lastPage}
-          </span>
-          <div className="bill-pagination">
-            <button
-              type="button"
-              className="secondary-button"
-              disabled={currentPage <= 1 || query.isFetching}
-              onClick={() => setFilters((current) => ({ ...current, page: Math.max(1, current.page - 1) }))}
-            >
-              Previous
-            </button>
-            <button
-              type="button"
-              className="primary-button"
-              disabled={currentPage >= lastPage || query.isFetching}
-              onClick={() => setFilters((current) => ({ ...current, page: Math.min(lastPage, current.page + 1) }))}
-            >
-              Next
-            </button>
-          </div>
-        </div>
+            {query.isError ? (
+              <StatusBanner
+                tone="danger"
+                message={query.error instanceof Error ? query.error.message : 'Could not load bill dashboard data.'}
+              />
+            ) : null}
+
+            <div className="bill-table">
+              <div className="bill-table-head">
+                <span>Bill</span>
+                <span>Guest</span>
+                <span>Duration</span>
+                <span>Amount</span>
+                <span>Payment</span>
+                <span>Status</span>
+                <span>Generated</span>
+              </div>
+
+              <div className="bill-table-body">
+                {rows.map((item, index) => {
+                  const billCode = `WIB-${readString(item.id).slice(0, 8).toUpperCase()}`;
+                  const customer =
+                    readString(item.child_name) ||
+                    readString(item.parent_name) ||
+                    readString(item.customer_name) ||
+                    'Walk-In Guest';
+                  const amount = getApiBillAmount(item);
+                  const billStatusTone = getBillStatusTone(item);
+                  const billStatusLabel = item.pass_lifecycle_label || billStatusTone.replace('_', ' ');
+                  const paymentLabel =
+                    item.payment_status === 'paid'
+                      ? `${readString(item.payment_mode || 'cash').toUpperCase()}${item.overtime_paid ? ' + OT' : ''}`
+                      : 'Pending';
+
+                  return (
+                    <div key={`${billCode}-${index}`} className="bill-table-row">
+                      <span className="bill-code-cell">{billCode}</span>
+                      <span className="bill-guest-cell">
+                        <strong>{customer}</strong>
+                        <small>{readString(item.parent_name) || readString(item.customer_name) || '-'}</small>
+                      </span>
+                      <span>{formatMinutes(item.expected_duration_minutes)}</span>
+                      <span className="bill-amount-cell">{formatAmount(amount)}</span>
+                      <span>{paymentLabel}</span>
+                      <span>
+                        <span className={`bill-status-chip ${billStatusTone}`}>{billStatusLabel}</span>
+                      </span>
+                      <span>{formatDateTime(item.issued_at || item.created_at)}</span>
+                    </div>
+                  );
+                })}
+
+                {!query.isLoading && !rows.length ? (
+                  <div className="bill-empty-state">
+                    <p className="muted">No bills found for the current filters.</p>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="bill-table-footer">
+              <span>
+                Page {currentPage} of {lastPage}
+              </span>
+              <div className="bill-pagination">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  disabled={currentPage <= 1 || query.isFetching}
+                  onClick={() => setFilters((current) => ({ ...current, page: Math.max(1, current.page - 1) }))}
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  className="primary-button"
+                  disabled={currentPage >= lastPage || query.isFetching}
+                  onClick={() => setFilters((current) => ({ ...current, page: Math.min(lastPage, current.page + 1) }))}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
           </section>
         </>
       )}

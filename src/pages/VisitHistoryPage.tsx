@@ -1,19 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import QRCode from 'qrcode';
-import * as entryExitApi from '../api/entryExitApi';
+import { entryExitApi } from '../api/entryExitApi';
 import { useAuth } from '../hooks/useAuth';
 import { StatusBanner } from '../components/StatusBanner';
-import type { EntryExitLog, OvertimeSettlementItem, PaginatedApiResponse, PaymentMode } from '../types/entryExit';
+import type { EntryExitLog, OvertimeSettlementItem, PaymentMode } from '../types/entryExit';
 import { buildPassPrintDocument } from '../utils/passPrint';
-
-function normalizeLogs(payload: PaginatedApiResponse<EntryExitLog> | EntryExitLog[] | undefined) {
-  if (!payload) return [];
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload.data)) return payload.data;
-  if (payload.data && Array.isArray(payload.data.data)) return payload.data.data;
-  return [];
-}
+import {
+  formatAmount,
+  formatAmountCompact,
+  formatDateTime,
+  formatDate,
+  formatTime,
+  formatDurationLabel,
+} from '../utils/formatters';
+import {
+  normalizeListResponse,
+  normalizeText,
+  normalizePhone,
+  readNumber,
+  readString,
+} from '../utils/normalization';
 
 function extractCustomerPhone(
   payload: { data?: { phone?: string | null } } | { phone?: string | null } | undefined,
@@ -24,62 +31,28 @@ function extractCustomerPhone(
   return '';
 }
 
-function normalizeSettlements(
-  payload:
-    | { data?: OvertimeSettlementItem[] | { settlements?: OvertimeSettlementItem[] } }
-    | OvertimeSettlementItem[]
-    | undefined,
-) {
-  if (!payload) return [];
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload.data)) return payload.data;
-  if (payload.data && Array.isArray(payload.data.settlements)) return payload.data.settlements;
-  return [];
-}
-
 function buildPassSearchValue(row: EntryExitLog | null) {
   if (!row) return '';
   return row.booking_id || row.child_id || row.child_name || row.parent_name || row.customer_name || row.id || '';
 }
 
-function normalizeSearchValue(value?: string | null) {
-  return (value || '').trim().toLowerCase();
-}
-
-function normalizePhoneSearchValue(value?: string | null) {
-  return (value || '').replace(/\D/g, '');
-}
-
 function matchesVisitSearch(row: EntryExitLog, searchTerm: string) {
-  const normalizedSearch = normalizeSearchValue(searchTerm);
+  const normalizedSearch = normalizeText(searchTerm);
   if (!normalizedSearch) return true;
 
-  const searchableValues = [row.child_name, row.customer_name, row.parent_name, row.phone, row.booking_id, row.id].map(normalizeSearchValue);
+  const searchableValues = [row.child_name, row.customer_name, row.parent_name, row.phone, row.booking_id, row.id].map(normalizeText);
   const matchesText = searchableValues.some((value) => value.includes(normalizedSearch));
 
-  const phoneSearch = normalizePhoneSearchValue(searchTerm);
-  const matchesPhone = phoneSearch ? normalizePhoneSearchValue(row.phone).includes(phoneSearch) : false;
+  const phoneSearch = normalizePhone(searchTerm);
+  const matchesPhone = phoneSearch ? normalizePhone(row.phone).includes(phoneSearch) : false;
 
   return matchesText || matchesPhone;
 }
 
 function shouldApplyLocalVisitSearch(row: EntryExitLog, searchTerm: string) {
-  const phoneSearch = normalizePhoneSearchValue(searchTerm);
+  const phoneSearch = normalizePhone(searchTerm);
   if (!phoneSearch) return true;
-  return Boolean(normalizePhoneSearchValue(row.phone));
-}
-
-function formatAmount(value?: number | null) {
-  return `Rs.${Number(value ?? 0).toFixed(2)}`;
-}
-
-function formatAmountCompact(value?: number | null) {
-  const amount = Number(value ?? 0);
-  return Number.isInteger(amount) ? `Rs.${amount}` : `Rs.${amount.toFixed(2)}`;
-}
-
-function readNumber(value: unknown) {
-  return typeof value === 'number' ? value : Number(value ?? 0) || 0;
+  return Boolean(normalizePhone(row.phone));
 }
 
 function isPaymentCompleted(row?: EntryExitLog | null) {
@@ -139,60 +112,9 @@ function printHtmlDocument(html: string) {
   });
 }
 
-function formatDateTime(value?: string | null) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('en-IN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true,
-  }).format(date);
-}
-
-function formatTime(value?: string | null) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('en-IN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true,
-  }).format(date);
-}
-
-function formatDate(value?: string | null) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('en-IN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(date);
-}
-
 function getTodayDateInputValue() {
   const today = new Date();
   return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-}
-
-function formatDurationLabel(minutes?: number | null) {
-  const totalMinutes = readNumber(minutes);
-  if (!totalMinutes) return '40m';
-  if (totalMinutes % 60 === 0) {
-    const hours = totalMinutes / 60;
-    return `${hours}h`;
-  }
-  if (totalMinutes > 60) {
-    const hours = Math.floor(totalMinutes / 60);
-    const remainingMinutes = totalMinutes % 60;
-    return remainingMinutes ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
-  }
-  return `${totalMinutes}m`;
 }
 
 function getPassTimingRange(row: EntryExitLog) {
@@ -335,17 +257,17 @@ export function VisitHistoryPage() {
   });
 
   const selectedPassDetails = useMemo(
-    () => findMatchingPassDetails(normalizeLogs(selectedPassQuery.data), selectedPass),
+    () => findMatchingPassDetails(normalizeListResponse(selectedPassQuery.data), selectedPass),
     [selectedPassQuery.data, selectedPass],
   );
   const settlementPassDetails = useMemo(
-    () => findMatchingPassDetails(normalizeLogs(settlementPassQuery.data), settlementRow),
+    () => findMatchingPassDetails(normalizeListResponse(settlementPassQuery.data), settlementRow),
     [settlementPassQuery.data, settlementRow],
   );
   const selectedPassCustomerPhone = useMemo(() => extractCustomerPhone(selectedPassCustomerQuery.data), [selectedPassCustomerQuery.data]);
   const settlementCustomerPhone = useMemo(() => extractCustomerPhone(settlementCustomerQuery.data), [settlementCustomerQuery.data]);
 
-  const rows = useMemo(() => normalizeLogs(query.data), [query.data]);
+  const rows = useMemo(() => normalizeListResponse<EntryExitLog>(query.data), [query.data]);
   const filteredRows = useMemo(() => {
     return rows.filter((row) => {
       const searchTerm = activeSearchFilter.trim();
@@ -395,7 +317,7 @@ export function VisitHistoryPage() {
     enabled: !!token && !!settlementLookupPhone,
   });
   const settlementTickets = useMemo(() => {
-    const tickets = normalizeSettlements(settlementTicketsQuery.data);
+    const tickets = normalizeListResponse<OvertimeSettlementItem>(settlementTicketsQuery.data);
     if (!settlementRow || showAllSettlementKids) return tickets;
 
     return tickets.filter((item) => {
