@@ -40,6 +40,7 @@ const PAYMENT_SPLIT_OPTIONS: { mode: PassPaymentMode; label: string }[] = [
 interface DraftChild {
   id: string;
   name: string;
+  dob: string;
   durationPriceId: string;
 }
 
@@ -229,6 +230,8 @@ export function NewWalkInPage() {
   const [isAddChildOpen, setIsAddChildOpen] = useState(false);
   const [pendingChildCount, setPendingChildCount] = useState('1');
   const [pendingChildNames, setPendingChildNames] = useState<string[]>(['']);
+  const [pendingChildDobs, setPendingChildDobs] = useState<string[]>(['2025-01-01']);
+  const [isCustomChildCount, setIsCustomChildCount] = useState(false);
   const [childDurationById, setChildDurationById] = useState<Record<string, string>>({});
   const [draftChildren, setDraftChildren] = useState<DraftChild[]>([]);
   const [selectedDraftChildIds, setSelectedDraftChildIds] = useState<string[]>([]);
@@ -304,6 +307,7 @@ export function NewWalkInPage() {
 
       const childIdsByDuration = new Map<string, string[]>();
       const childNamesByDuration = new Map<string, string[]>();
+      const childDobsByDuration = new Map<string, string[]>();
 
       selectedChildIds.forEach((childId) => {
         if (insideChildIds.has(childId)) return;
@@ -320,6 +324,7 @@ export function NewWalkInPage() {
           const childDuration = durationPriceMap[child.durationPriceId] ? child.durationPriceId : effectiveDurationPriceId;
           if (!childDuration || !child.name.trim()) return;
           appendGroupedItem(childNamesByDuration, childDuration, child.name.trim());
+          appendGroupedItem(childDobsByDuration, childDuration, child.dob || '01/01/2025');
         });
 
       async function resolveExistingParentIdentity() {
@@ -387,6 +392,7 @@ export function NewWalkInPage() {
           ...baseIdentity,
           ...basePaymentPayload,
           child_names: childNames,
+          child_dobs: childDobsByDuration.get(childDuration) || [],
           child_count: childNames.length,
           duration_price_id: childDuration,
         })),
@@ -849,6 +855,8 @@ export function NewWalkInPage() {
     }
     setPendingChildCount('1');
     setPendingChildNames(['']);
+    setPendingChildDobs(['2025-01-01']);
+    setIsCustomChildCount(false);
     setIsAddChildOpen(true);
   }
 
@@ -860,10 +868,18 @@ export function NewWalkInPage() {
       const next = Array.from({ length: safeCount }, (_, index) => current[index] ?? '');
       return next;
     });
+    setPendingChildDobs((current) => {
+      const next = Array.from({ length: safeCount }, (_, index) => current[index] ?? '2025-01-01');
+      return next;
+    });
   }
 
   function updatePendingChildName(index: number, value: string) {
     setPendingChildNames((current) => current.map((item, itemIndex) => (itemIndex === index ? value : item)));
+  }
+
+  function updatePendingChildDob(index: number, value: string) {
+    setPendingChildDobs((current) => current.map((item, itemIndex) => (itemIndex === index ? value : item)));
   }
 
   function savePendingChildren() {
@@ -887,9 +903,15 @@ export function NewWalkInPage() {
         ? trimmedName
         : buildNextDefaultChildName(usedNames, lookupPhone);
       usedNames.add(normalizeText(name));
+
+      const htmlDob = pendingChildDobs[index] || '2025-01-01';
+      const parts = htmlDob.split('-');
+      const dob = parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : '01/01/2025';
+
       return {
         id: `draft-${Date.now()}-${draftChildren.length + index}-${name}`,
         name,
+        dob,
         durationPriceId: effectiveDurationPriceId,
       };
     });
@@ -1175,6 +1197,7 @@ export function NewWalkInPage() {
                             </span>
                             <span className="new-child-pill">New</span>
                             <strong>{child.name}</strong>
+                            <span className="child-dob-badge">{child.dob}</span>
                           </div>
                           <select
                             value={durationPriceMap[child.durationPriceId] ? child.durationPriceId : effectiveDurationPriceId}
@@ -1246,6 +1269,7 @@ export function NewWalkInPage() {
                         </span>
                         <span className="new-child-pill">New</span>
                         <strong>{child.name}</strong>
+                        <span className="child-dob-badge">{child.dob}</span>
                       </div>
                       <select
                         value={durationPriceMap[child.durationPriceId] ? child.durationPriceId : effectiveDurationPriceId}
@@ -1313,29 +1337,67 @@ export function NewWalkInPage() {
               </button>
             </div>
 
-            <label>
-              Number of Children
-              <input
-                type="number"
-                min="0"
-                value={pendingChildCount}
-                onFocus={(event) => event.currentTarget.select()}
-                onMouseUp={(event) => event.preventDefault()}
-                onChange={(event) => handlePendingChildCountChange(event.target.value)}
-              />
-            </label>
+            <div className="simple-field-label" style={{ marginBottom: '0.5rem' }}>Number of Children</div>
+            <div className="child-count-selector">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                <button
+                  key={num}
+                  type="button"
+                  className={!isCustomChildCount && Number(pendingChildCount) === num ? "count-pill active" : "count-pill"}
+                  onClick={() => {
+                    setIsCustomChildCount(false);
+                    handlePendingChildCountChange(String(num));
+                  }}
+                >
+                  {num}
+                </button>
+              ))}
+              <button
+                type="button"
+                className={isCustomChildCount ? "count-pill active" : "count-pill"}
+                onClick={() => {
+                  setIsCustomChildCount(true);
+                }}
+              >
+                Custom
+              </button>
+            </div>
+
+            {isCustomChildCount ? (
+              <label className="simple-field custom-count-field">
+                <input
+                  type="number"
+                  min="0"
+                  value={pendingChildCount}
+                  onFocus={(event) => event.currentTarget.select()}
+                  onMouseUp={(event) => event.preventDefault()}
+                  placeholder="Enter number of children"
+                  onChange={(event) => handlePendingChildCountChange(event.target.value)}
+                />
+              </label>
+            ) : null}
 
             {pendingChildNames.length ? (
               <div className="modal-name-list">
                 {pendingChildNames.map((name, index) => (
-                  <label key={`pending-child-${index}`}>
-                    Child {draftChildren.length + index + 1} Name
-                    <input
-                      value={name}
-                      onChange={(event) => updatePendingChildName(index, event.target.value)}
-                      placeholder={`Enter child ${draftChildren.length + index + 1} name`}
-                    />
-                  </label>
+                  <div key={`pending-child-${index}`} className="modal-child-input-group">
+                    <label>
+                      Child {draftChildren.length + index + 1} Name
+                      <input
+                        value={name}
+                        onChange={(event) => updatePendingChildName(index, event.target.value)}
+                        placeholder={`Enter child ${draftChildren.length + index + 1} name`}
+                      />
+                    </label>
+                    <label>
+                      Date of Birth
+                      <input
+                        type="date"
+                        value={pendingChildDobs[index] || '2025-01-01'}
+                        onChange={(event) => updatePendingChildDob(index, event.target.value)}
+                      />
+                    </label>
+                  </div>
                 ))}
               </div>
             ) : null}

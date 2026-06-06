@@ -158,6 +158,7 @@ export interface PassCreatePayload {
   child_ids?: string[];
   child_count?: number;
   child_names?: string[];
+  child_dobs?: string[];
   hours?: number;
   duration_minutes?: number;
   duration_price_id?: string;
