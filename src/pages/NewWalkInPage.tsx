@@ -223,7 +223,8 @@ export function NewWalkInPage() {
   const [selectedLocationId, setSelectedLocationId] = useState('');
   const [selectedChildIds, setSelectedChildIds] = useState<string[]>([]);
   const [durationPriceId, setDurationPriceId] = useState('');
-  const [manualCustomerName, setManualCustomerName] = useState('');
+  const [manualCustomerName, setManualCustomerName] = useState('Your Name');
+  const [showCustomParentName, setShowCustomParentName] = useState(false);
   const [resultMessage, setResultMessage] = useState('');
   const [isAddChildOpen, setIsAddChildOpen] = useState(false);
   const [pendingChildCount, setPendingChildCount] = useState('1');
@@ -565,7 +566,8 @@ export function NewWalkInPage() {
       setSelectedDraftChildIds([]);
       setDraftChildren([]);
       setChildDurationById({});
-      setManualCustomerName('');
+      setManualCustomerName('Your Name');
+      setShowCustomParentName(false);
       setLookupPhone('');
       lastLookupPhoneRef.current = '';
       window.location.replace('/walkin/new');
@@ -578,8 +580,8 @@ export function NewWalkInPage() {
     [durationPricesQuery.data],
   );
   const lookupData = lookupMutation.data?.data;
-  const existingChildren = lookupData?.children ?? [];
-  const activeSessions = lookupData?.active_sessions ?? [];
+  const existingChildren = useMemo(() => lookupData?.children ?? [], [lookupData?.children]);
+  const activeSessions = useMemo(() => lookupData?.active_sessions ?? [], [lookupData?.active_sessions]);
   const insideChildIds = useMemo(() => {
     const childIds = new Set<string>();
     const childrenByName = new Map(existingChildren.map((child) => [normalizeText(child.name), child.id]));
@@ -1017,49 +1019,79 @@ export function NewWalkInPage() {
               </div>
             </label>
 
-            <label className="simple-field">
-              <span className="simple-field-label">Customer Name</span>
-              <div className="input-shell input-shell-static customer-name-shell">
-                <span className="input-leading-icon">
-                  <UiIcon type="user" />
-                </span>
-                <input
-                  value={customerNameInputValue}
-                  onChange={(event) => {
-                    if (isEditingCustomerName) {
-                      setEditableCustomerName(event.target.value);
-                      return;
-                    }
-                    setManualCustomerName(event.target.value);
-                  }}
-                  placeholder="Required if this phone is new"
-                  disabled={!hasLookupPhone || (Boolean(existingCustomerId) && !isEditingCustomerName)}
-                />
-                {existingCustomerId ? (
-                  <div className="customer-name-actions">
-                    {isEditingCustomerName ? (
-                      <>
-                        <button type="button" className="inline-action-button compact" onClick={saveCustomerName} disabled={!canSaveCustomerName}>
-                          {updateCustomerMutation.isPending ? 'Saving...' : 'Save'}
+            {existingCustomerId || showCustomParentName ? (
+              <label className="simple-field">
+                <span className="simple-field-label">Customer Name</span>
+                <div className="input-shell input-shell-static customer-name-shell">
+                  <span className="input-leading-icon">
+                    <UiIcon type="user" />
+                  </span>
+                  <input
+                    value={customerNameInputValue}
+                    onChange={(event) => {
+                      if (isEditingCustomerName) {
+                        setEditableCustomerName(event.target.value);
+                        return;
+                      }
+                      setManualCustomerName(event.target.value);
+                    }}
+                    placeholder="Required if this phone is new"
+                    disabled={!hasLookupPhone || (Boolean(existingCustomerId) && !isEditingCustomerName)}
+                  />
+                  {existingCustomerId ? (
+                    <div className="customer-name-actions">
+                      {isEditingCustomerName ? (
+                        <>
+                          <button type="button" className="inline-action-button compact" onClick={saveCustomerName} disabled={!canSaveCustomerName}>
+                            {updateCustomerMutation.isPending ? 'Saving...' : 'Save'}
+                          </button>
+                          <button
+                            type="button"
+                            className="inline-action-button compact muted-action"
+                            onClick={cancelEditingCustomerName}
+                            disabled={updateCustomerMutation.isPending}
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button type="button" className="inline-action-button compact" onClick={startEditingCustomerName}>
+                          Edit
                         </button>
-                        <button
-                          type="button"
-                          className="inline-action-button compact muted-action"
-                          onClick={cancelEditingCustomerName}
-                          disabled={updateCustomerMutation.isPending}
-                        >
-                          Cancel
-                        </button>
-                      </>
-                    ) : (
-                      <button type="button" className="inline-action-button compact" onClick={startEditingCustomerName}>
-                        Edit
+                      )}
+                    </div>
+                  ) : (
+                    <div className="customer-name-actions">
+                      <button
+                        type="button"
+                        className="inline-action-button compact muted-action"
+                        onClick={() => {
+                          setShowCustomParentName(false);
+                          setManualCustomerName('Your Name');
+                        }}
+                      >
+                        Use Default
                       </button>
-                    )}
-                  </div>
-                ) : null}
+                    </div>
+                  )}
+                </div>
+              </label>
+            ) : (
+              <div className="simple-field parent-name-toggle-field">
+                <span className="simple-field-label">Customer Name</span>
+                <button
+                  type="button"
+                  className="add-parent-name-toggle-btn"
+                  disabled={!hasLookupPhone}
+                  onClick={() => {
+                    setShowCustomParentName(true);
+                    setManualCustomerName('');
+                  }}
+                >
+                  <UiIcon type="plus" /> Add parent name
+                </button>
               </div>
-            </label>
+            )}
           </div>
 
           {lookupMutation.isError ? (

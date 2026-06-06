@@ -4305,3 +4305,35 @@ input:disabled {
   }
 }
 
+/* Add Custom Parent Name Toggle Button */
+.add-parent-name-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px dashed var(--jw-navy);
+  color: var(--jw-navy);
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: auto;
+  margin-top: 0.4rem;
+}
+.add-parent-name-toggle-btn:hover:not(:disabled) {
+  background: rgba(24, 63, 134, 0.05);
+  border-color: var(--jw-navy-deep);
+  color: var(--jw-navy-deep);
+}
+.add-parent-name-toggle-btn:disabled {
+  opacity: 0.5;
+  border-color: #d3dde5;
+  color: var(--jw-text-soft);
+  cursor: not-allowed;
+}
+.add-parent-name-toggle-btn svg {
+  width: 16px;
+  height: 16px;
+}
+

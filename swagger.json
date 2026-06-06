@@ -1,0 +1,3298 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Simbaa API",
+        "description": "API reference for mobile and system integrations.",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://my-default-host.com",
+            "description": "Primary API server"
+        }
+    ],
+    "paths": {
+        "/api/v1/booking-catalog/customization-types/{type}/items": {
+            "get": {
+                "tags": [
+                    "Booking Catalog"
+                ],
+                "summary": "Get active customisation catalog items by type",
+                "description": "Returns active setup catalog items for the selected customisation type. Use this for post-booking food, cake, decor, add-on and other options. Items are returned from the global active setup catalog, not restricted to package-included items.",
+                "operationId": "bookingCatalogCustomizationItems",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "description": "Customisation type",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "cake",
+                            "enum": [
+                                "food",
+                                "cake",
+                                "decor",
+                                "addon",
+                                "other"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Catalog items returned successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "format": "uuid"
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "food",
+                                                            "cake",
+                                                            "decor",
+                                                            "addon",
+                                                            "other"
+                                                        ]
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Chocolate Truffle Cake"
+                                                    },
+                                                    "default_unit_price": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 1500
+                                                    },
+                                                    "pricing_mode": {
+                                                        "type": "string",
+                                                        "example": "additional",
+                                                        "nullable": true
+                                                    },
+                                                    "has_sizes": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "image_path": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "image_url": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "variant_options": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "data": [
+                                        {
+                                            "id": "550e8400-e29b-41d4-a716-446655440020",
+                                            "type": "cake",
+                                            "name": "Chocolate Truffle Cake",
+                                            "default_unit_price": 1500,
+                                            "pricing_mode": "additional",
+                                            "has_sizes": true,
+                                            "description": "Chocolate cake with custom size options.",
+                                            "image_path": "catalog/cakes/chocolate-truffle-cake.jpg",
+                                            "image_url": "http://localhost/api/v1/booking-catalog/images?path=catalog/cakes/chocolate-truffle-cake.jpg",
+                                            "variant_options": [
+                                                {
+                                                    "option_type": "size",
+                                                    "label": "1 Kg",
+                                                    "price": 1500
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/booking-catalog/locations/{location}/available-slots/{date}": {
+            "get": {
+                "tags": [
+                    "Booking Catalog"
+                ],
+                "summary": "Check custom booking time availability",
+                "description": "When slot_start and slot_end are supplied, checks whether that custom time range is available for the selected branch and date. Times must be 30-minute increments and within the branch operating hours. Without slot_start and slot_end, this endpoint keeps returning legacy slot calendar data.",
+                "operationId": "bookingCatalogAvailability",
+                "parameters": [
+                    {
+                        "name": "location",
+                        "in": "path",
+                        "description": "Location ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "date",
+                        "in": "path",
+                        "description": "Event date",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-04-30"
+                        }
+                    },
+                    {
+                        "name": "slot_start",
+                        "in": "query",
+                        "description": "Custom start time in 30-minute increments within branch operating hours.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^\\d{2}:(00|30)$",
+                            "example": "15:30"
+                        }
+                    },
+                    {
+                        "name": "slot_end",
+                        "in": "query",
+                        "description": "Custom end time in 30-minute increments within branch operating hours.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^\\d{2}:(00|30)$",
+                            "example": "17:00"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Availability result returned successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "location_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "date": {
+                                                    "type": "string",
+                                                    "format": "date"
+                                                },
+                                                "slot_start": {
+                                                    "type": "string",
+                                                    "example": "15:30"
+                                                },
+                                                "slot_end": {
+                                                    "type": "string",
+                                                    "example": "17:00"
+                                                },
+                                                "operating_hours": {
+                                                    "properties": {
+                                                        "open": {
+                                                            "type": "string",
+                                                            "example": "10:00"
+                                                        },
+                                                        "close": {
+                                                            "type": "string",
+                                                            "example": "22:00"
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                },
+                                                "is_available": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Selected time is available."
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "data": {
+                                        "location_id": "550e8400-e29b-41d4-a716-446655440001",
+                                        "date": "2026-04-30",
+                                        "slot_start": "15:30",
+                                        "slot_end": "17:00",
+                                        "operating_hours": {
+                                            "open": "10:00",
+                                            "close": "22:00"
+                                        },
+                                        "is_available": true,
+                                        "message": "Selected time is available."
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/bookings": {
+            "post": {
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Create a new booking",
+                "description": "Creates a new booking with custom start and end time. slot_start and slot_end must be 30-minute increments, within the selected branch operating hours, and must not overlap another active booking for the same branch and date.",
+                "operationId": "bookingStore",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "location_id",
+                                    "event_date",
+                                    "slot_start",
+                                    "slot_end",
+                                    "adult_pax_count",
+                                    "child_pax_count"
+                                ],
+                                "properties": {
+                                    "parent_id": {
+                                        "description": "Optional parent ID for admins creating on behalf of parents",
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "location_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "package_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    },
+                                    "child_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    },
+                                    "event_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-04-10"
+                                    },
+                                    "slot_start": {
+                                        "description": "Custom start time in 30-minute increments within branch operating hours.",
+                                        "type": "string",
+                                        "pattern": "^\\d{2}:(00|30)$",
+                                        "example": "15:30"
+                                    },
+                                    "slot_end": {
+                                        "description": "Custom end time in 30-minute increments within branch operating hours.",
+                                        "type": "string",
+                                        "pattern": "^\\d{2}:(00|30)$",
+                                        "example": "17:00"
+                                    },
+                                    "adult_pax_count": {
+                                        "type": "integer",
+                                        "example": 5
+                                    },
+                                    "child_pax_count": {
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "pax_count": {
+                                        "description": "Total PAX. If adult and child counts are provided, this is recalculated by the server.",
+                                        "type": "integer",
+                                        "example": 15
+                                    },
+                                    "initial_requirements": {
+                                        "type": "string",
+                                        "example": "Need projector",
+                                        "nullable": true
+                                    },
+                                    "gst_amount": {
+                                        "description": "Optional client-side preview value; recalculated by the server.",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 12600,
+                                        "nullable": true
+                                    },
+                                    "total_amount": {
+                                        "description": "Optional client-side preview value; recalculated by the server.",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 82600,
+                                        "nullable": true
+                                    },
+                                    "balance_due": {
+                                        "description": "Optional client-side preview value; recalculated by the server.",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 82600,
+                                        "nullable": true
+                                    },
+                                    "customisations": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "type",
+                                                "item_name",
+                                                "quantity",
+                                                "unit_price"
+                                            ],
+                                            "properties": {
+                                                "type": {
+                                                    "type": "string",
+                                                    "example": "food"
+                                                },
+                                                "item_name": {
+                                                    "type": "string",
+                                                    "example": "Cheese Pizza"
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "unit_price": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 15.5
+                                                },
+                                                "duration_minutes": {
+                                                    "type": "integer",
+                                                    "nullable": true
+                                                },
+                                                "notes": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "nullable": true
+                                    },
+                                    "guests": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "name",
+                                                "phone"
+                                            ],
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Amit Shah"
+                                                },
+                                                "phone": {
+                                                    "type": "string",
+                                                    "example": "9876543210"
+                                                },
+                                                "adult_count": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "child_count": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object",
+                                "additionalProperties": false
+                            },
+                            "example": {
+                                "parent_id": "550e8400-e29b-41d4-a716-446655440000",
+                                "location_id": "550e8400-e29b-41d4-a716-446655440001",
+                                "package_id": "550e8400-e29b-41d4-a716-446655440002",
+                                "child_id": "550e8400-e29b-41d4-a716-446655440003",
+                                "event_date": "2026-04-10",
+                                "slot_start": "15:30",
+                                "slot_end": "17:00",
+                                "adult_pax_count": 5,
+                                "child_pax_count": 10,
+                                "pax_count": 15,
+                                "initial_requirements": "Need projector",
+                                "gst_amount": 12600,
+                                "total_amount": 82600,
+                                "balance_due": 82600,
+                                "customisations": [
+                                    {
+                                        "type": "food",
+                                        "item_name": "Cheese Pizza",
+                                        "quantity": 2,
+                                        "unit_price": 15.5,
+                                        "duration_minutes": 30,
+                                        "notes": "No onions"
+                                    }
+                                ],
+                                "guests": [
+                                    {
+                                        "name": "Amit Shah",
+                                        "phone": "9876543210",
+                                        "adult_count": 2,
+                                        "child_count": 1
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Booking created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Booking created successfully."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "location_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "package_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "nullable": true
+                                                },
+                                                "event_date": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "slot_start": {
+                                                    "type": "string",
+                                                    "example": "15:30:00"
+                                                },
+                                                "slot_end": {
+                                                    "type": "string",
+                                                    "example": "17:00:00"
+                                                },
+                                                "adult_pax_count": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "child_pax_count": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "pax_count": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "unconfirmed"
+                                                },
+                                                "deposit_status": {
+                                                    "type": "string",
+                                                    "example": "unpaid"
+                                                },
+                                                "total_amount": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 82600
+                                                },
+                                                "balance_due": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 82600
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "gst_amount": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 12600
+                                        },
+                                        "total_amount": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 82600
+                                        },
+                                        "balance_due": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 82600
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "message": "Booking created successfully.",
+                                    "data": {
+                                        "id": "550e8400-e29b-41d4-a716-446655440010",
+                                        "location_id": "550e8400-e29b-41d4-a716-446655440001",
+                                        "package_id": "550e8400-e29b-41d4-a716-446655440002",
+                                        "event_date": "2026-04-10T00:00:00.000000Z",
+                                        "slot_start": "15:30:00",
+                                        "slot_end": "17:00:00",
+                                        "adult_pax_count": 5,
+                                        "child_pax_count": 10,
+                                        "pax_count": 15,
+                                        "status": "unconfirmed",
+                                        "deposit_status": "unpaid",
+                                        "total_amount": 82600,
+                                        "balance_due": 82600
+                                    },
+                                    "gst_amount": 12600,
+                                    "total_amount": 82600,
+                                    "balance_due": 82600
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/bookings/{booking}": {
+            "patch": {
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Update an existing booking",
+                "description": "Updates booking details with a custom start and end time. slot_start and slot_end must be 30-minute increments, within the selected branch operating hours, and must not overlap another active booking for the same branch and date.",
+                "operationId": "bookingUpdate",
+                "parameters": [
+                    {
+                        "name": "booking",
+                        "in": "path",
+                        "description": "Booking ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "location_id",
+                                    "event_date",
+                                    "slot_start",
+                                    "slot_end",
+                                    "adult_pax_count",
+                                    "child_pax_count"
+                                ],
+                                "properties": {
+                                    "location_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "package_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                    },
+                                    "event_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2026-04-24"
+                                    },
+                                    "slot_start": {
+                                        "description": "Custom start time in 30-minute increments within branch operating hours.",
+                                        "type": "string",
+                                        "pattern": "^\\d{2}:(00|30)$",
+                                        "example": "15:30"
+                                    },
+                                    "slot_end": {
+                                        "description": "Custom end time in 30-minute increments within branch operating hours.",
+                                        "type": "string",
+                                        "pattern": "^\\d{2}:(00|30)$",
+                                        "example": "17:00"
+                                    },
+                                    "adult_pax_count": {
+                                        "type": "integer",
+                                        "example": 6
+                                    },
+                                    "child_pax_count": {
+                                        "type": "integer",
+                                        "example": 14
+                                    },
+                                    "pax_count": {
+                                        "description": "Total PAX. If adult and child counts are provided, this is recalculated by the server.",
+                                        "type": "integer",
+                                        "example": 20
+                                    },
+                                    "initial_requirements": {
+                                        "type": "string",
+                                        "example": "Updated requirement",
+                                        "nullable": true
+                                    },
+                                    "gst_amount": {
+                                        "description": "Optional client-side preview value; recalculated by the server.",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 12600,
+                                        "nullable": true
+                                    },
+                                    "total_amount": {
+                                        "description": "Optional client-side preview value; recalculated by the server.",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 82600,
+                                        "nullable": true
+                                    },
+                                    "balance_due": {
+                                        "description": "Optional client-side preview value; recalculated by the server.",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 82600,
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object",
+                                "additionalProperties": false
+                            },
+                            "example": {
+                                "location_id": "550e8400-e29b-41d4-a716-446655440001",
+                                "package_id": "550e8400-e29b-41d4-a716-446655440002",
+                                "event_date": "2026-04-24",
+                                "slot_start": "15:30",
+                                "slot_end": "17:00",
+                                "adult_pax_count": 6,
+                                "child_pax_count": 14,
+                                "pax_count": 20,
+                                "initial_requirements": "Updated requirement",
+                                "gst_amount": 12600,
+                                "total_amount": 82600,
+                                "balance_due": 82600
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Booking updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Booking updated successfully."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "location_id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "package_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "nullable": true
+                                                },
+                                                "event_date": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "slot_start": {
+                                                    "type": "string",
+                                                    "example": "15:30:00"
+                                                },
+                                                "slot_end": {
+                                                    "type": "string",
+                                                    "example": "17:00:00"
+                                                },
+                                                "adult_pax_count": {
+                                                    "type": "integer",
+                                                    "example": 6
+                                                },
+                                                "child_pax_count": {
+                                                    "type": "integer",
+                                                    "example": 14
+                                                },
+                                                "pax_count": {
+                                                    "type": "integer",
+                                                    "example": 20
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "unconfirmed"
+                                                },
+                                                "deposit_status": {
+                                                    "type": "string",
+                                                    "example": "unpaid"
+                                                },
+                                                "total_amount": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 82600
+                                                },
+                                                "balance_due": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 82600
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "gst_amount": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 12600
+                                        },
+                                        "total_amount": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 82600
+                                        },
+                                        "balance_due": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 82600
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "message": "Booking updated successfully.",
+                                    "data": {
+                                        "id": "550e8400-e29b-41d4-a716-446655440010",
+                                        "location_id": "550e8400-e29b-41d4-a716-446655440001",
+                                        "package_id": "550e8400-e29b-41d4-a716-446655440002",
+                                        "event_date": "2026-04-24T00:00:00.000000Z",
+                                        "slot_start": "15:30:00",
+                                        "slot_end": "17:00:00",
+                                        "adult_pax_count": 6,
+                                        "child_pax_count": 14,
+                                        "pax_count": 20,
+                                        "status": "unconfirmed",
+                                        "deposit_status": "unpaid",
+                                        "total_amount": 82600,
+                                        "balance_due": 82600
+                                    },
+                                    "gst_amount": 12600,
+                                    "total_amount": 82600,
+                                    "balance_due": 82600
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/bookings/{booking}/confirm": {
+            "post": {
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Confirm an unconfirmed booking",
+                "description": "Admin-only confirmation step. Moves a newly created unconfirmed booking to confirmed and keeps the deposit status unpaid.",
+                "operationId": "bookingConfirm",
+                "parameters": [
+                    {
+                        "name": "booking",
+                        "in": "path",
+                        "description": "Booking ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Booking confirmed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Booking confirmed successfully."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "confirmed"
+                                                },
+                                                "deposit_status": {
+                                                    "type": "string",
+                                                    "example": "unpaid"
+                                                },
+                                                "amount_paid": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 0
+                                                },
+                                                "balance_due": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 82600
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "message": "Booking confirmed successfully.",
+                                    "data": {
+                                        "id": "550e8400-e29b-41d4-a716-446655440010",
+                                        "status": "confirmed",
+                                        "deposit_status": "unpaid",
+                                        "amount_paid": 0,
+                                        "balance_due": 82600
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Booking cannot be confirmed"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/bookings/{booking}/razorpay-order": {
+            "post": {
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Create Razorpay order for booking payment",
+                "description": "Creates or reuses a pending Razorpay order for the booking balance due. Android should use the checkout payload to open Razorpay Checkout.",
+                "operationId": "bookingRazorpayOrderCreate",
+                "parameters": [
+                    {
+                        "name": "booking",
+                        "in": "path",
+                        "description": "Booking ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Razorpay order created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Razorpay order created successfully."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "payment": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/bookings/{booking}/razorpay-verify": {
+            "post": {
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Verify Razorpay payment and confirm booking",
+                "description": "Verifies Razorpay signature from Android Checkout. On success, records the payment and confirms the booking.",
+                "operationId": "bookingRazorpayPaymentVerify",
+                "parameters": [
+                    {
+                        "name": "booking",
+                        "in": "path",
+                        "description": "Booking ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "razorpay_order_id",
+                                    "razorpay_payment_id",
+                                    "razorpay_signature"
+                                ],
+                                "properties": {
+                                    "razorpay_order_id": {
+                                        "type": "string",
+                                        "example": "order_NX1234567890AB"
+                                    },
+                                    "razorpay_payment_id": {
+                                        "type": "string",
+                                        "example": "pay_NX1234567890AB"
+                                    },
+                                    "razorpay_signature": {
+                                        "type": "string",
+                                        "example": "9ef4dffbfd84f1318f6739a3ce19f9d85851857ae648f114332d8401e0949a3d"
+                                    }
+                                },
+                                "type": "object",
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Booking payment verified successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Payment verified and booking confirmed successfully."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "payment": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/bookings/guardian-verification-update": {
+            "post": {
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Update child pass guardian verification status",
+                "description": "Marks the pass generated for a child as guardian verified.",
+                "operationId": "bookingGuardianVerificationUpdate",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "entry_exit_log_id"
+                                ],
+                                "properties": {
+                                    "entry_exit_log_id": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "example": "550e8400-e29b-41d4-a716-446655440041"
+                                    },
+                                    "mode": {
+                                        "type": "string",
+                                        "example": "otp",
+                                        "nullable": true,
+                                        "enum": [
+                                            "otp",
+                                            "id"
+                                        ]
+                                    },
+                                    "verification_code": {
+                                        "type": "string",
+                                        "example": "123456",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object",
+                                "additionalProperties": false
+                            },
+                            "example": {
+                                "entry_exit_log_id": "550e8400-e29b-41d4-a716-446655440041"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Guardian verification updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Guardian verification done."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "child_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "nullable": true
+                                                },
+                                                "child_name": {
+                                                    "type": "string",
+                                                    "example": "Aarav",
+                                                    "nullable": true
+                                                },
+                                                "booking_id": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "nullable": true
+                                                },
+                                                "guardian_verification_mode": {
+                                                    "type": "string",
+                                                    "example": "otp"
+                                                },
+                                                "guardian_verified_by": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "example": "550e8400-e29b-41d4-a716-446655440111"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Pass not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/bookings/{booking}/customisations": {
+            "post": {
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Add a booking customisation",
+                "description": "Adds a post-booking food, cake, decor or add-on item and returns the recalculated booking breakdown.",
+                "operationId": "bookingCustomisationStore",
+                "parameters": [
+                    {
+                        "name": "booking",
+                        "in": "path",
+                        "description": "Booking ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "type",
+                                    "item_name",
+                                    "quantity",
+                                    "unit_price"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "example": "cake",
+                                        "enum": [
+                                            "food",
+                                            "cake",
+                                            "decor",
+                                            "addon"
+                                        ]
+                                    },
+                                    "item_name": {
+                                        "type": "string",
+                                        "example": "Chocolate Truffle Cake",
+                                        "maxLength": 255
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "example": 1,
+                                        "maximum": 200,
+                                        "minimum": 1
+                                    },
+                                    "unit_price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 1500,
+                                        "minimum": 0
+                                    },
+                                    "addons_total": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 0,
+                                        "nullable": true,
+                                        "minimum": 0
+                                    },
+                                    "food_total": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 0,
+                                        "nullable": true,
+                                        "minimum": 0
+                                    },
+                                    "cake_total": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 1500,
+                                        "nullable": true,
+                                        "minimum": 0
+                                    },
+                                    "duration_minutes": {
+                                        "type": "integer",
+                                        "example": null,
+                                        "nullable": true,
+                                        "maximum": 600,
+                                        "minimum": 0
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Eggless",
+                                        "nullable": true
+                                    },
+                                    "photo_url": {
+                                        "type": "string",
+                                        "example": null,
+                                        "nullable": true,
+                                        "maxLength": 1024
+                                    }
+                                },
+                                "type": "object",
+                                "additionalProperties": false
+                            },
+                            "example": {
+                                "type": "cake",
+                                "item_name": "Chocolate Truffle Cake",
+                                "quantity": 1,
+                                "unit_price": 1500,
+                                "addons_total": 0,
+                                "food_total": 0,
+                                "cake_total": 1500,
+                                "duration_minutes": null,
+                                "notes": "Eggless",
+                                "photo_url": null
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Booking customisation added successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "booking": {
+                                            "type": "object"
+                                        },
+                                        "calculation_breakdown": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "message": "Booking customisation added successfully.",
+                                    "data": {
+                                        "id": "550e8400-e29b-41d4-a716-446655440030",
+                                        "booking_id": "550e8400-e29b-41d4-a716-446655440010",
+                                        "type": "cake",
+                                        "item_name": "Chocolate Truffle Cake",
+                                        "quantity": 1,
+                                        "unit_price": "1500.00",
+                                        "total_price": "1500.00"
+                                    },
+                                    "booking": {
+                                        "id": "550e8400-e29b-41d4-a716-446655440010",
+                                        "total_amount": "4838.00",
+                                        "balance_due": "4838.00"
+                                    },
+                                    "calculation_breakdown": {
+                                        "adult_pax_count": 2,
+                                        "child_pax_count": 3,
+                                        "adult_buffet_unit_price": 700,
+                                        "child_buffet_unit_price": 400,
+                                        "adult_buffet_total": 1400,
+                                        "child_buffet_total": 1200,
+                                        "buffet_subtotal": 2600,
+                                        "base_amount": 2600,
+                                        "customisation_amount": 1500,
+                                        "subtotal": 4100,
+                                        "gst_rate": 0.18,
+                                        "gst_amount": 738,
+                                        "total_amount": 4838,
+                                        "balance_due": 4838
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/bookings/{booking}/customisations/{customisation}": {
+            "delete": {
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Delete a booking customisation",
+                "description": "Removes a manually added post-booking customisation and returns the recalculated booking breakdown. Package-included customisations cannot be removed.",
+                "operationId": "bookingCustomisationDestroy",
+                "parameters": [
+                    {
+                        "name": "booking",
+                        "in": "path",
+                        "description": "Booking ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "customisation",
+                        "in": "path",
+                        "description": "Customisation ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Booking customisation deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "booking": {
+                                            "type": "object"
+                                        },
+                                        "calculation_breakdown": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "message": "Booking customisation deleted successfully.",
+                                    "booking": {
+                                        "id": "550e8400-e29b-41d4-a716-446655440010",
+                                        "total_amount": "3068.00",
+                                        "balance_due": "3068.00"
+                                    },
+                                    "calculation_breakdown": {
+                                        "buffet_subtotal": 2600,
+                                        "customisation_amount": 0,
+                                        "subtotal": 2600,
+                                        "gst_amount": 468,
+                                        "total_amount": 3068,
+                                        "balance_due": 3068
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Bookings"
+                ],
+                "summary": "Update a booking customisation",
+                "description": "Updates a post-booking customisation item and returns the recalculated booking breakdown.",
+                "operationId": "bookingCustomisationUpdate",
+                "parameters": [
+                    {
+                        "name": "booking",
+                        "in": "path",
+                        "description": "Booking ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "customisation",
+                        "in": "path",
+                        "description": "Customisation ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "type",
+                                    "item_name",
+                                    "quantity",
+                                    "unit_price"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "example": "decor",
+                                        "enum": [
+                                            "food",
+                                            "cake",
+                                            "decor",
+                                            "addon"
+                                        ]
+                                    },
+                                    "item_name": {
+                                        "type": "string",
+                                        "example": "Space Adventure Decor",
+                                        "maxLength": 255
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "example": 1,
+                                        "maximum": 200,
+                                        "minimum": 1
+                                    },
+                                    "unit_price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 2500,
+                                        "minimum": 0
+                                    },
+                                    "addons_total": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 2500,
+                                        "nullable": true,
+                                        "minimum": 0
+                                    },
+                                    "food_total": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 0,
+                                        "nullable": true,
+                                        "minimum": 0
+                                    },
+                                    "cake_total": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 0,
+                                        "nullable": true,
+                                        "minimum": 0
+                                    },
+                                    "duration_minutes": {
+                                        "type": "integer",
+                                        "example": null,
+                                        "nullable": true,
+                                        "maximum": 600,
+                                        "minimum": 0
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Blue theme",
+                                        "nullable": true
+                                    },
+                                    "photo_url": {
+                                        "type": "string",
+                                        "example": null,
+                                        "nullable": true,
+                                        "maxLength": 1024
+                                    }
+                                },
+                                "type": "object",
+                                "additionalProperties": false
+                            },
+                            "example": {
+                                "type": "decor",
+                                "item_name": "Space Adventure Decor",
+                                "quantity": 1,
+                                "unit_price": 2500,
+                                "addons_total": 2500,
+                                "food_total": 0,
+                                "cake_total": 0,
+                                "duration_minutes": null,
+                                "notes": "Blue theme",
+                                "photo_url": null
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Booking customisation updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "booking": {
+                                            "type": "object"
+                                        },
+                                        "calculation_breakdown": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "message": "Booking customisation updated successfully.",
+                                    "data": {
+                                        "id": "550e8400-e29b-41d4-a716-446655440030",
+                                        "type": "decor",
+                                        "item_name": "Space Adventure Decor",
+                                        "quantity": 1,
+                                        "unit_price": "2500.00",
+                                        "total_price": "2500.00"
+                                    },
+                                    "booking": {
+                                        "id": "550e8400-e29b-41d4-a716-446655440010",
+                                        "total_amount": "6018.00",
+                                        "balance_due": "6018.00"
+                                    },
+                                    "calculation_breakdown": {
+                                        "buffet_subtotal": 2600,
+                                        "customisation_amount": 2500,
+                                        "subtotal": 5100,
+                                        "gst_amount": 918,
+                                        "total_amount": 6018,
+                                        "balance_due": 6018
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    },
+                    "500": {
+                        "description": "Server error"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/customers/login/request-otp": {
+            "post": {
+                "tags": [
+                    "Customer Auth"
+                ],
+                "summary": "Request customer login OTP",
+                "description": "Checks whether a customer exists for the provided phone number, stores a generated six-digit OTP, and dispatches it through the configured delivery channel.",
+                "operationId": "customerLoginRequestOtp",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phone"
+                                ],
+                                "properties": {
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "9876543210",
+                                        "maxLength": 30
+                                    }
+                                },
+                                "type": "object",
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP prepared successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "OTP sent successfully."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Customer not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Customer not found for the provided phone number."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/customers/login/verify-otp": {
+            "post": {
+                "tags": [
+                    "Customer Auth"
+                ],
+                "summary": "Verify customer login OTP",
+                "description": "Verifies the customer login OTP and returns a Sanctum bearer token when valid.",
+                "operationId": "customerLoginVerifyOtp",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phone",
+                                    "otp"
+                                ],
+                                "properties": {
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "9876543210",
+                                        "maxLength": 30
+                                    },
+                                    "otp": {
+                                        "type": "string",
+                                        "example": "123456",
+                                        "maxLength": 6,
+                                        "minLength": 6
+                                    },
+                                    "device_name": {
+                                        "type": "string",
+                                        "example": "android-phone",
+                                        "nullable": true,
+                                        "maxLength": 100
+                                    }
+                                },
+                                "type": "object",
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP verified successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "OTP verified successfully."
+                                        },
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "Bearer"
+                                        },
+                                        "access_token": {
+                                            "type": "string",
+                                            "example": "1|exampletokenvalue"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "OTP invalid or validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/customers/login": {
+            "post": {
+                "tags": [
+                    "Customer Auth"
+                ],
+                "summary": "Login customer with phone and password",
+                "description": "Authenticates a customer using phone and password and returns a Sanctum bearer token.",
+                "operationId": "customerLoginStore",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phone",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "9876543210",
+                                        "maxLength": 30
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "customer-password-123"
+                                    },
+                                    "device_name": {
+                                        "type": "string",
+                                        "example": "android-phone",
+                                        "nullable": true,
+                                        "maxLength": 100
+                                    }
+                                },
+                                "type": "object",
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Authenticated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Authenticated successfully."
+                                        },
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "Bearer"
+                                        },
+                                        "access_token": {
+                                            "type": "string",
+                                            "example": "1|exampletokenvalue"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "example": "9f5a2f42-7c88-4f5d-9f90-6a0f13f8dfd2"
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Rahul Sharma"
+                                                },
+                                                "phone": {
+                                                    "type": "string",
+                                                    "example": "9876543210"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "format": "email",
+                                                    "example": "rahul@example.com",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed or credentials are invalid",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The provided credentials are incorrect."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/customers/signup": {
+            "post": {
+                "tags": [
+                    "Customer Auth"
+                ],
+                "summary": "Register a customer by phone and OTP",
+                "description": "Creates a parent guardian and linked customer profile, then returns a Sanctum bearer token.",
+                "operationId": "customerSignupStore",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "phone",
+                                    "emergency_contact_name",
+                                    "emergency_contact_phone",
+                                    "otp"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Rahul Sharma",
+                                        "maxLength": 191
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "9876543210",
+                                        "maxLength": 30
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "rahul@example.com",
+                                        "nullable": true,
+                                        "maxLength": 191
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "221B Baker Street, Bengaluru",
+                                        "nullable": true
+                                    },
+                                    "emergency_contact_name": {
+                                        "type": "string",
+                                        "example": "Anita Sharma",
+                                        "maxLength": 191
+                                    },
+                                    "emergency_contact_phone": {
+                                        "type": "string",
+                                        "example": "9123456780",
+                                        "maxLength": 30
+                                    },
+                                    "otp": {
+                                        "type": "string",
+                                        "example": "123456",
+                                        "maxLength": 6,
+                                        "minLength": 6
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "customer-password-123",
+                                        "nullable": true,
+                                        "minLength": 8
+                                    }
+                                },
+                                "type": "object",
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Customer signup completed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Customer signup completed successfully."
+                                        },
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "Bearer"
+                                        },
+                                        "access_token": {
+                                            "type": "string",
+                                            "example": "1|exampletokenvalue"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "example": "9f5a2f42-7c88-4f5d-9f90-6a0f13f8dfd2"
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Rahul Sharma"
+                                                },
+                                                "phone": {
+                                                    "type": "string",
+                                                    "example": "9876543210"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "format": "email",
+                                                    "example": "rahul@example.com",
+                                                    "nullable": true
+                                                },
+                                                "address": {
+                                                    "type": "string",
+                                                    "example": "221B Baker Street, Bengaluru",
+                                                    "nullable": true
+                                                },
+                                                "emergency_contact_name": {
+                                                    "type": "string",
+                                                    "example": "Anita Sharma"
+                                                },
+                                                "emergency_contact_phone": {
+                                                    "type": "string",
+                                                    "example": "9123456780"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed or OTP is invalid",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invalid OTP. Please retry."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/customers/{customer}": {
+            "get": {
+                "tags": [
+                    "Customers"
+                ],
+                "summary": "Get Customer Profile",
+                "description": "Returns the customer profile, including the parent guardian and children data linked to the parent.",
+                "operationId": "customerShow",
+                "parameters": [
+                    {
+                        "name": "customer",
+                        "in": "path",
+                        "description": "Customer ID (customers.id)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Customer profile retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "example": "customer-uuid"
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Rahul Sharma"
+                                                },
+                                                "phone": {
+                                                    "type": "string",
+                                                    "example": "9876543210"
+                                                },
+                                                "whatsapp_number": {
+                                                    "type": "string",
+                                                    "example": "9876543210",
+                                                    "nullable": true
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "rahul@example.com",
+                                                    "nullable": true
+                                                },
+                                                "parent_guardian": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "example": "parent-uuid"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Rahul Sharma"
+                                                        },
+                                                        "phone": {
+                                                            "type": "string",
+                                                            "example": "9876543210"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "rahul@example.com",
+                                                            "nullable": true
+                                                        },
+                                                        "children": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "string",
+                                                                        "example": "child-uuid"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "Aarav Sharma"
+                                                                    },
+                                                                    "dob": {
+                                                                        "type": "string",
+                                                                        "format": "date",
+                                                                        "example": "2015-08-15"
+                                                                    },
+                                                                    "gender": {
+                                                                        "type": "string",
+                                                                        "example": "male"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden (You may only access your own profile)"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/vendors": {
+            "get": {
+                "tags": [
+                    "Vendor Registration"
+                ],
+                "summary": "List vendors",
+                "description": "Returns vendors with authorization rules based on the authenticated user.",
+                "operationId": "vendorsIndex",
+                "responses": {
+                    "200": {
+                        "description": "List returned",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Vendor profile is required."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Vendor Registration"
+                ],
+                "summary": "Create vendor profile",
+                "description": "Creates a vendor profile for the authenticated user. Admins may create for any vendor.",
+                "operationId": "vendorsStore",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "company_name"
+                                ],
+                                "properties": {
+                                    "company_name": {
+                                        "type": "string"
+                                    },
+                                    "contact_person": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "mobile": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "service_category": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "gstin": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "bank_account": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "bank_ifsc": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "bank_name": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "onboarded_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Vendor profile created."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Vendor profile already exists."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/vendors/{vendor}": {
+            "get": {
+                "tags": [
+                    "Vendor Registration"
+                ],
+                "summary": "Show vendor profile",
+                "operationId": "vendorsShow",
+                "parameters": [
+                    {
+                        "name": "vendor",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Vendor profile",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "You may only view your own vendor profile."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Vendor Registration"
+                ],
+                "summary": "Delete vendor profile",
+                "operationId": "vendorsDestroy",
+                "parameters": [
+                    {
+                        "name": "vendor",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Vendor profile deleted."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "You may only delete your own vendor profile."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Vendor Registration"
+                ],
+                "summary": "Update vendor profile",
+                "operationId": "vendorsUpdate",
+                "parameters": [
+                    {
+                        "name": "vendor",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "company_name": {
+                                        "type": "string"
+                                    },
+                                    "contact_person": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "mobile": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "service_category": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "gstin": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "bank_account": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "bank_ifsc": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "bank_name": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "average_rating": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "nullable": true
+                                    },
+                                    "total_events": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "onboarded_at": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Vendor profile updated."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "You may only update your own vendor profile."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/vendor/services": {
+            "get": {
+                "tags": [
+                    "Vendor Services"
+                ],
+                "summary": "List vendor services",
+                "description": "Returns vendor service listings with optional filters.",
+                "operationId": "vendorServicesIndex",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "price_unit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "unit_type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "vendor_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List returned",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Vendor profile is required."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Vendor Services"
+                ],
+                "summary": "Create vendor service",
+                "operationId": "vendorServicesStore",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "service_name",
+                                    "service_category",
+                                    "service_price",
+                                    "price_unit"
+                                ],
+                                "properties": {
+                                    "vendor_id": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "service_name": {
+                                        "type": "string"
+                                    },
+                                    "service_category": {
+                                        "type": "string",
+                                        "example": "catering"
+                                    },
+                                    "service_price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 1500
+                                    },
+                                    "price_unit": {
+                                        "type": "string",
+                                        "example": "per_package"
+                                    },
+                                    "unit_type": {
+                                        "type": "string",
+                                        "example": "Package",
+                                        "nullable": true
+                                    },
+                                    "service_details": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "service_image": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Service listing saved."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/vendor/services/{listing}": {
+            "delete": {
+                "tags": [
+                    "Vendor Services"
+                ],
+                "summary": "Delete vendor service",
+                "operationId": "vendorServicesDestroy",
+                "parameters": [
+                    {
+                        "name": "listing",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Service listing deleted."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Vendor Services"
+                ],
+                "summary": "Update vendor service",
+                "operationId": "vendorServicesUpdate",
+                "parameters": [
+                    {
+                        "name": "listing",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "service_name",
+                                    "service_category",
+                                    "service_price",
+                                    "price_unit"
+                                ],
+                                "properties": {
+                                    "service_name": {
+                                        "type": "string"
+                                    },
+                                    "service_category": {
+                                        "type": "string",
+                                        "example": "decoration"
+                                    },
+                                    "service_price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 1200
+                                    },
+                                    "price_unit": {
+                                        "type": "string",
+                                        "example": "per_unit"
+                                    },
+                                    "unit_type": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "service_details": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "service_image": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Service listing updated."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Authenticate user and issue token",
+                "description": "Logs in a user using email and password and returns a Sanctum token.",
+                "operationId": "mobileAuthLogin",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "super@zynapte.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password"
+                                    },
+                                    "device_name": {
+                                        "type": "string",
+                                        "example": "iphone-15",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "super@zynapte.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password"
+                                    },
+                                    "device_name": {
+                                        "type": "string",
+                                        "example": "iphone-15",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "super@zynapte.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password"
+                                    },
+                                    "device_name": {
+                                        "type": "string",
+                                        "example": "iphone-15",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Authenticated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Authenticated successfully."
+                                        },
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "Bearer"
+                                        },
+                                        "access_token": {
+                                            "type": "string",
+                                            "example": "1|exampletokenvalue"
+                                        },
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "example": "9f5a2f42-7c88-4f5d-9f90-6a0f13f8dfd2"
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Jane Doe"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "format": "email",
+                                                    "example": "user@example.com"
+                                                },
+                                                "phone_number": {
+                                                    "type": "string",
+                                                    "example": "+919999999999",
+                                                    "nullable": true
+                                                },
+                                                "timezone": {
+                                                    "type": "string",
+                                                    "example": "Asia/Kolkata",
+                                                    "nullable": true
+                                                },
+                                                "roles": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "admin"
+                                                    }
+                                                },
+                                                "permissions": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "lead.list"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed or invalid credentials",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The provided credentials are incorrect."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "bearerFormat": "Token",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Customer Auth",
+            "description": "Public customer authentication endpoints"
+        },
+        {
+            "name": "Customers",
+            "description": "Endpoints for managing customer profiles"
+        },
+        {
+            "name": "Vendor Registration",
+            "description": "Vendor registration management"
+        },
+        {
+            "name": "Vendor Services",
+            "description": "Vendor service listing management"
+        },
+        {
+            "name": "Auth",
+            "description": "Authentication endpoints"
+        },
+        {
+            "name": "Booking Catalog",
+            "description": "Booking Catalog"
+        },
+        {
+            "name": "Bookings",
+            "description": "Bookings"
+        }
+    ]
+}
