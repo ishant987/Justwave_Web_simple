@@ -18,7 +18,7 @@ import type {
   PaymentSplit,
 } from '../types/entryExit';
 import { buildPassPrintDocument } from '../utils/passPrint';
-import { compactDurationLabel, formatAmountCompact, formatDurationLabel } from '../utils/formatters';
+import { compactDurationLabel, formatAmountCompact, formatDurationLabel, formatTime } from '../utils/formatters';
 import {
   normalizeListResponse,
   normalizeText,
@@ -548,6 +548,7 @@ export function NewWalkInPage() {
               durationLabel,
               guardianName,
               phone: passItem.phone || lookupPhone || '-',
+              validTillTime: passItem.pass_expires_at || passItem.booked_exit_time ? formatTime(passItem.pass_expires_at || passItem.booked_exit_time) : undefined,
               printCountLabel: 'Printed 1x',
               qrSrc: nextQrByPassId[passItem.id] || '',
             };

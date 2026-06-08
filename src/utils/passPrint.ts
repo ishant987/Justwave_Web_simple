@@ -4,6 +4,7 @@ export interface PassPrintItem {
   code: string;
   durationLabel: string;
   guardianName: string;
+  validTillTime?: string;
   phone: string;
   printCountLabel?: string;
   qrSrc: string;
@@ -21,6 +22,17 @@ function escapeHtml(value: string): string {
 function renderPrintCount(label?: string) {
   if (!label) return '';
   return `<div class="print-count">${escapeHtml(label)}</div>`;
+}
+
+function renderValidTill(item: PassPrintItem) {
+  if (!item.validTillTime) return '';
+
+  return `
+    <div class="ticket-valid-till ticket-valid-till-right">
+      <span>SCAN VALID TILL</span>
+      <strong>${escapeHtml(item.validTillTime || '-')}</strong>
+    </div>
+  `;
 }
 
 function renderTicket(item: PassPrintItem, index: number, total: number) {
@@ -55,8 +67,15 @@ function renderTicket(item: PassPrintItem, index: number, total: number) {
               <strong>${escapeHtml(item.phone)}</strong>
             </div>
           </div>
+          ${item.validTillTime ? `
+            <div class="ticket-valid-till">
+              <span>PASS VALID TILL</span>
+              <strong>${escapeHtml(item.validTillTime || '-')}</strong>
+            </div>
+          ` : ''}
         </section>
         <section class="ticket-right">
+          ${renderValidTill(item)}
           <div class="ticket-qr-frame">
             ${item.qrSrc ? `<img src="${item.qrSrc}" alt="QR" class="ticket-qr-image" />` : ''}
           </div>
@@ -127,7 +146,7 @@ export function buildPassPrintDocument(items: PassPrintItem[], title: string) {
             display: grid;
             align-content: center;
             justify-items: center;
-            gap: 0.14in;
+            gap: 0.12in;
             min-width: 0;
             overflow: hidden;
           }
@@ -195,6 +214,28 @@ export function buildPassPrintDocument(items: PassPrintItem[], title: string) {
             word-break: break-word;
             color: #000000;
           }
+          .ticket-valid-till {
+            margin-top: 0.28in;
+            display: grid;
+            gap: 0.06in;
+          }
+          .ticket-valid-till-right {
+            margin-top: 0;
+            margin-bottom: 0.12in;
+            text-align: center;
+            justify-items: center;
+          }
+          .ticket-valid-till span {
+            font-size: 16pt;
+            font-weight: 900;
+            color: #000000;
+          }
+          .ticket-valid-till strong {
+            font-size: 20pt;
+            font-weight: 900;
+            line-height: 1.08;
+            color: #000000;
+          }
           .ticket-qr-frame {
             width: 3.15in;
             height: 3.15in;
@@ -209,6 +250,7 @@ export function buildPassPrintDocument(items: PassPrintItem[], title: string) {
             width: 100%;
             height: 100%;
             object-fit: contain;
+            image-rendering: pixelated;
           }
           .ticket-code {
             font-size: 20pt;
