@@ -76,11 +76,15 @@ label {
 .app-shell {
   display: grid;
   grid-template-rows: auto 1fr;
-  grid-template-columns: 346px 1fr;
+  grid-template-columns: var(--sidebar-width, 346px) 1fr;
   width: 100%;
   height: 100%;
   overflow: hidden;
   background: #eef3f9;
+}
+
+.app-shell.sidebar-collapsed {
+  --sidebar-width: 96px;
 }
 
 .sidebar {
@@ -107,6 +111,13 @@ label {
   gap: 1.5rem;
   margin-bottom: 0.55rem;
   padding-top: 0;
+}
+
+.sidebar-brand-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .sidebar-brand-lockup {
@@ -153,6 +164,10 @@ label {
   border: 1px solid rgba(255, 255, 255, 0.78);
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
   transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.nav-link-label {
+  min-width: 0;
 }
 
 .nav-link-icon {
@@ -261,6 +276,49 @@ label {
   border-top: 1px solid rgba(255, 255, 255, 0.16);
 }
 
+.sidebar-user-info {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.sidebar-signout-button {
+  width: 100%;
+  min-height: 56px;
+  border-radius: 16px;
+  border: 1px solid #e3eaf5;
+  background: #ffffff;
+  color: #ff4a4a;
+  font-size: 1rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+}
+
+.sidebar-signout-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.sidebar-collapse-button {
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border-radius: 14px;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.sidebar-collapse-button svg {
+  width: 20px;
+  height: 20px;
+}
+
 .sidebar-footer .muted {
   color: rgba(255, 255, 255, 0.68);
 }
@@ -290,27 +348,6 @@ label {
   font-size: 1rem;
   font-weight: 900;
   flex-shrink: 0;
-}
-
-.sidebar-signout-button {
-  width: 100%;
-  min-height: 56px;
-  border-radius: 16px;
-  border: 1px solid #e3eaf5;
-  background: #ffffff;
-  color: #ff4a4a;
-  font-size: 1rem;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
-}
-
-.sidebar-signout-icon {
-  font-size: 1.2rem;
-  line-height: 1;
 }
 
 .page-content {
@@ -798,7 +835,7 @@ label {
 .history-table-head,
 .history-pass-row {
   display: grid;
-  grid-template-columns: 0.8fr 1.5fr 1.4fr 1.4fr 1fr 0.9fr 0.78fr;
+  grid-template-columns: 0.8fr 1.5fr 1.2fr 0.8fr 1.4fr 1fr 0.9fr 0.78fr;
   gap: 1rem;
   align-items: center;
 }
@@ -949,8 +986,70 @@ label {
   font-weight: 700;
 }
 
+.history-pass-duration-cell {
+  justify-content: flex-start;
+}
+
+.history-pass-duration-cell strong {
+  font-size: 0.98rem;
+  font-weight: 900;
+}
+
 .history-single-line-cell {
   overflow: hidden;
+}
+
+.app-shell.sidebar-collapsed .sidebar {
+  padding-inline: 0.8rem;
+}
+
+.app-shell.sidebar-collapsed .sidebar-brand-row {
+  grid-template-columns: 1fr;
+  justify-items: center;
+}
+
+.app-shell.sidebar-collapsed .sidebar-brand-lockup {
+  padding-bottom: 0;
+}
+
+.app-shell.sidebar-collapsed .sidebar-brand-logo {
+  max-width: 56px;
+}
+
+.app-shell.sidebar-collapsed .nav-link {
+  justify-content: center;
+  padding-inline: 0.85rem;
+}
+
+.app-shell.sidebar-collapsed .nav-link-label {
+  display: none;
+}
+
+.app-shell.sidebar-collapsed .nav-link.active::before {
+  left: 50%;
+  top: auto;
+  bottom: 0.42rem;
+  width: 42%;
+  height: 4px;
+  transform: translateX(-50%);
+}
+
+.app-shell.sidebar-collapsed .sidebar-footer {
+  justify-items: center;
+}
+
+.app-shell.sidebar-collapsed .sidebar-user-info {
+  display: none;
+}
+
+.app-shell.sidebar-collapsed .sidebar-signout-button {
+  width: 56px;
+  min-height: 56px;
+  padding: 0;
+}
+
+.app-shell.sidebar-collapsed .sidebar-signout-label {
+  display: none;
 }
 
 .history-single-line-cell span:last-child {
@@ -1737,7 +1836,7 @@ label {
 
   .history-table-head,
   .history-pass-row {
-    grid-template-columns: 0.8fr 1.4fr 1.3fr 1.3fr 1fr 0.9fr 0.78fr;
+    grid-template-columns: 0.8fr 1.35fr 1.15fr 0.75fr 1.25fr 1fr 0.9fr 0.78fr;
     gap: 1rem;
   }
 }
@@ -1815,7 +1914,7 @@ label {
 
   .history-table-head,
   .history-table-body {
-    min-width: 1100px;
+    min-width: 1280px;
   }
 
   .ticket-details-grid {
@@ -4405,4 +4504,3 @@ input:disabled {
   width: 16px;
   height: 16px;
 }
-

@@ -142,6 +142,11 @@ function formatTimingDate(from?: string | null, to?: string | null) {
   return formatDate(from || to);
 }
 
+function formatValidTillDisplay(to?: string | null) {
+  if (!to) return '-';
+  return `${formatTime(to)} (${formatDate(to)})`;
+}
+
 function findMatchingPassDetails(candidates: EntryExitLog[], row: EntryExitLog | null) {
   if (!row) return null;
 
@@ -609,7 +614,8 @@ export function VisitHistoryPage() {
         <div className="history-table-head">
           <span>Status</span>
           <span>Child</span>
-          <span>Pass Timings</span>
+          <span>Pass Valid Till</span>
+          <span>Duration</span>
           <span>Entry & Exit</span>
           <span>Payment</span>
           <span>Settlement</span>
@@ -646,8 +652,11 @@ export function VisitHistoryPage() {
                 </div>
 
                 <div className="history-detail-cell history-pass-timing-cell">
-                  <strong>{formatTimingRange(passTiming.from, passTiming.to)}</strong>
-                  <span>{formatTimingDate(passTiming.from, passTiming.to)}</span>
+                  <strong>{formatValidTillDisplay(passTiming.to)}</strong>
+                </div>
+
+                <div className="history-detail-cell history-single-line-cell history-pass-duration-cell">
+                  <strong>{formatDurationLabel(selectedPassDetails?.expected_duration_minutes ?? row.expected_duration_minutes)}</strong>
                 </div>
 
                 <div className="history-detail-cell history-pass-timing-cell">

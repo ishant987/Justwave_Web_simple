@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { NavLink, Outlet } from 'react-router-dom';
 import { locationApi } from '../api/locationApi';
@@ -47,6 +48,15 @@ const links = [
 export function AppShell() {
   const { token, user, logout } = useAuth();
   const { flash, clearFlash } = useFlash();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem('jw-sidebar-collapsed') === 'true';
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem('jw-sidebar-collapsed', String(isSidebarCollapsed));
+  }, [isSidebarCollapsed]);
+
   const locationsQuery = useQuery({
     queryKey: ['header-locations'],
     queryFn: () => locationApi.getLocations(token!),
@@ -56,7 +66,7 @@ export function AppShell() {
   const branchName = locations[0]?.name || 'Loading branch...';
 
   return (
-    <div className="app-shell">
+    <div className={isSidebarCollapsed ? 'app-shell sidebar-collapsed' : 'app-shell'}>
       {/* Mobile Top Header */}
       <header className="mobile-top-header">
         <div className="mobile-header-brand">
@@ -83,8 +93,31 @@ export function AppShell() {
       {/* Desktop Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-top">
-          <div className="sidebar-brand-lockup">
-            <img className="sidebar-brand-logo" src="/logo2.svg" alt="JustWave" />
+          <div className="sidebar-brand-row">
+            <div className="sidebar-brand-lockup">
+              <img className="sidebar-brand-logo" src="/logo2.svg" alt="JustWave" />
+            </div>
+            <button
+              type="button"
+              className="sidebar-collapse-button"
+              onClick={() => setIsSidebarCollapsed((current) => !current)}
+              aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                {isSidebarCollapsed ? (
+                  <path
+                    fill="currentColor"
+                    d="M11.293 17.293a1 1 0 0 1 0-1.414L14.172 13H5a1 1 0 1 1 0-2h9.172l-2.879-2.879a1 1 0 1 1 1.415-1.415l4.586 4.586a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.415 0Z"
+                  />
+                ) : (
+                  <path
+                    fill="currentColor"
+                    d="M12.707 6.707a1 1 0 0 1 0 1.414L9.828 11H19a1 1 0 1 1 0 2H9.828l2.879 2.879a1 1 0 1 1-1.415 1.415l-4.586-4.586a1 1 0 0 1 0-1.414l4.586-4.586a1 1 0 0 1 1.415 0Z"
+                  />
+                )}
+              </svg>
+            </button>
           </div>
         </div>
         <nav className="nav-list">
@@ -95,17 +128,20 @@ export function AppShell() {
               className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
             >
               <span className="nav-link-icon">{link.icon}</span>
-              {link.label}
+              <span className="nav-link-label">{link.label}</span>
             </NavLink>
           ))}
         </nav>
         <div className="sidebar-footer">
-          <div>
+          <div className="sidebar-user-info">
             <strong>{user?.name}</strong>
             <p className="muted small">{user?.email}</p>
           </div>
-          <button className="secondary-button" onClick={() => void logout()}>
-            Sign Out
+          <button className="secondary-button sidebar-signout-button" onClick={() => void logout()}>
+            <span className="sidebar-signout-icon" aria-hidden="true">
+              ↪
+            </span>
+            <span className="sidebar-signout-label">Sign Out</span>
           </button>
         </div>
       </aside>
