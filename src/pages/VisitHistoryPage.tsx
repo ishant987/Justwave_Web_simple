@@ -118,8 +118,15 @@ function getTodayDateInputValue() {
 }
 
 function getPassTimingRange(row: EntryExitLog) {
-  const from = row.issued_at || row.created_at;
-  const to = row.pass_expires_at || row.booked_exit_time;
+  const from = row.entry_time || row.issued_at || row.created_at;
+  const to = row.booked_exit_time || row.effective_booked_exit_time || row.pass_expires_at;
+
+  return { from, to };
+}
+
+function getEntryExitRange(row: EntryExitLog) {
+  const from = row.entry_time;
+  const to = row.actual_exit_time;
 
   return { from, to };
 }
@@ -603,6 +610,7 @@ export function VisitHistoryPage() {
           <span>Status</span>
           <span>Child</span>
           <span>Pass Timings</span>
+          <span>Entry & Exit</span>
           <span>Payment</span>
           <span>Settlement</span>
           <span>Actions</span>
@@ -624,6 +632,7 @@ export function VisitHistoryPage() {
               !row.overtime_paid &&
               (overtimeMinutes > 0 || overtimeAmount > 0 || (graceExpired && row.pass_lifecycle_status === 'claimed_inside'));
             const passTiming = getPassTimingRange(row);
+            const entryExitTiming = getEntryExitRange(row);
 
             return (
               <article key={row.id} className="history-pass-row">
@@ -639,6 +648,11 @@ export function VisitHistoryPage() {
                 <div className="history-detail-cell history-pass-timing-cell">
                   <strong>{formatTimingRange(passTiming.from, passTiming.to)}</strong>
                   <span>{formatTimingDate(passTiming.from, passTiming.to)}</span>
+                </div>
+
+                <div className="history-detail-cell history-pass-timing-cell">
+                  <strong>{formatTimingRange(entryExitTiming.from, entryExitTiming.to)}</strong>
+                  <span>{formatTimingDate(entryExitTiming.from, entryExitTiming.to)}</span>
                 </div>
 
                 <div className="history-detail-cell history-single-line-cell">

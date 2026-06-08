@@ -95,6 +95,7 @@ export interface EntryExitLog {
   chargeable_minutes?: number | null;
   grace_minutes?: number | null;
   pass_expires_at?: string | null;
+  effective_booked_exit_time?: string | null;
   pass_lifecycle_status?: string;
   pass_lifecycle_label?: string;
   guardian_verification_mode?: string | null;
