@@ -670,6 +670,13 @@ label {
   margin-bottom: 0.9rem;
 }
 
+.history-filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.7rem;
+}
+
 .history-filter-title {
   display: flex;
   align-items: center;
@@ -706,6 +713,53 @@ label {
   color: #1b6cff;
   font-size: 0.95rem;
   font-weight: 800;
+}
+
+.history-force-exit-button {
+  border: 1px solid #f3b4b4;
+  background: #fff2f2;
+  color: #c81e1e;
+  min-height: 40px;
+  padding: 0 1rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease, border-color 120ms ease;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+}
+
+.history-force-exit-button:hover:not(:disabled) {
+  background: #ffe8e8;
+  border-color: #ef8d8d;
+  transform: translateY(-1px);
+}
+
+.history-force-exit-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.force-exit-child-list {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  border: 1px solid #f4d0d0;
+  background: #fff8f8;
+}
+
+.force-exit-child-list strong {
+  color: #8f1d1d;
+  font-size: 0.95rem;
+}
+
+.force-exit-child-list p {
+  margin: 0;
+  color: #5e2121;
+  font-size: 0.92rem;
+  line-height: 1.45;
 }
 
 .history-filter-grid {
@@ -835,7 +889,7 @@ label {
 .history-table-head,
 .history-pass-row {
   display: grid;
-  grid-template-columns: 0.8fr 1.5fr 1.2fr 0.8fr 1.4fr 1fr 0.9fr 0.78fr;
+  grid-template-columns: 0.95fr 1.55fr 0.86fr 1.45fr 1fr 0.9fr 0.78fr;
   gap: 1rem;
   align-items: center;
 }
@@ -874,6 +928,18 @@ label {
   min-width: 0;
 }
 
+.history-status-stack {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.history-status-meta {
+  color: #6b7a99;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
 .history-status-badge,
 .history-payment-badge,
 .history-entry-type {
@@ -904,6 +970,11 @@ label {
 .history-status-badge.success {
   background: #dbf8e8;
   color: #13855f;
+}
+
+.history-status-badge.danger {
+  background: #ffe9ea;
+  color: #c81e1e;
 }
 
 .history-pass-id {
@@ -1903,6 +1974,16 @@ label {
     display: none;
   }
 
+  .history-filter-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .history-filter-actions .history-clear-button,
+  .history-filter-actions .history-force-exit-button {
+    flex: 1 1 0;
+  }
+
   .history-table-footer {
     flex-direction: column;
     align-items: flex-start;
@@ -2058,7 +2139,7 @@ label {
 }
 
 .occupancy-summary-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
 .occupancy-summary-card {
@@ -2121,6 +2202,10 @@ label {
   gap: 0.8rem;
 }
 
+.occupancy-header-date {
+  min-width: 230px;
+}
+
 .occupancy-table {
   border: 1px solid #e7edf6;
   border-radius: 20px;
@@ -2130,7 +2215,7 @@ label {
 .occupancy-table-head,
 .occupancy-table-row {
   display: grid;
-  grid-template-columns: 1.45fr 1.1fr 1fr 1fr 0.7fr;
+  grid-template-columns: 1.45fr 1.1fr 1fr 1fr 1fr 0.7fr;
   gap: 0.9rem;
   align-items: center;
 }
@@ -2192,6 +2277,17 @@ label {
 
 .occupancy-empty-state {
   padding: 1.35rem;
+}
+
+.occupancy-filter-summary {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.occupancy-filter-summary strong {
+  color: #13274b;
+  font-size: 1rem;
+  font-weight: 900;
 }
 
 .json-preview {
@@ -3126,6 +3222,7 @@ input:disabled {
 .child-card.draft {
   background: #ffffff;
   border-color: #dbe3f0;
+  cursor: pointer;
 }
 
 .child-card select {
@@ -3219,6 +3316,50 @@ input:disabled {
   gap: 0.9rem;
   min-width: 0;
   flex-wrap: wrap;
+}
+
+.child-main-editable {
+  align-items: flex-start;
+  gap: 0.7rem;
+}
+
+.child-name-editor {
+  display: grid;
+  gap: 0.5rem;
+  min-width: min(100%, 320px);
+  flex: 1 1 220px;
+}
+
+.child-name-display {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  flex: 1 1 220px;
+  flex-wrap: wrap;
+}
+
+.child-name-input {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 0;
+  border: 1px solid #cfd9e8;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #16253f;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.child-name-editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.child-edit-button {
+  min-width: 64px;
 }
 
 .child-check {

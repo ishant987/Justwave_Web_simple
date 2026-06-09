@@ -142,11 +142,6 @@ function formatTimingDate(from?: string | null, to?: string | null) {
   return formatDate(from || to);
 }
 
-function formatValidTillDisplay(to?: string | null) {
-  if (!to) return '-';
-  return `${formatTime(to)} (${formatDate(to)})`;
-}
-
 function findMatchingPassDetails(candidates: EntryExitLog[], row: EntryExitLog | null) {
   if (!row) return null;
 
@@ -173,28 +168,29 @@ function hasGraceExpired(row: EntryExitLog) {
 }
 
 function getVisitStatus(row: EntryExitLog) {
-  if (row.pass_lifecycle_status === 'used_checked_out') {
+  const lifecycleStatus = (row.pass_lifecycle_status || '').toLowerCase();
+  const lifecycleLabel = (row.pass_lifecycle_label || '').toLowerCase();
+  const isForceExited =
+    lifecycleStatus === 'force_exited' ||
+    lifecycleStatus === 'force_checkout' ||
+    lifecycleStatus === 'force_checked_out' ||
+    lifecycleLabel.includes('force');
+
+  if (isForceExited) {
     return {
-      label: 'Checked Out',
+      label: 'Force Exited',
+      tone: 'danger',
+    };
+  }
+
+  if (lifecycleStatus === 'used_checked_out' || row.actual_exit_time) {
+    return {
+      label: 'Exited',
       tone: 'success',
     };
   }
 
-  if (row.pass_lifecycle_status === 'claimed_inside') {
-    return {
-      label: 'Inside',
-      tone: 'info',
-    };
-  }
-
-  if (row.actual_exit_time) {
-    return {
-      label: 'Checked Out',
-      tone: 'success',
-    };
-  }
-
-  if (row.entry_time) {
+  if (lifecycleStatus === 'claimed_inside' || row.entry_time) {
     return {
       label: 'Inside',
       tone: 'info',
@@ -226,6 +222,9 @@ export function VisitHistoryPage() {
   const [settlementLookupPhone, setSettlementLookupPhone] = useState('');
   const [settlementPaymentModeById, setSettlementPaymentModeById] = useState<Record<string, PaymentMode>>({});
   const [showAllSettlementKids, setShowAllSettlementKids] = useState(false);
+  const [isForceCheckoutConfirmOpen, setIsForceCheckoutConfirmOpen] = useState(false);
+  const [forceCheckoutMessage, setForceCheckoutMessage] = useState('');
+  const [forceCheckoutTone, setForceCheckoutTone] = useState<'success' | 'warning'>('success');
 
   const visitHistoryQuery = useMemo(() => {
     const params = new URLSearchParams({ per_page: '50' });
@@ -311,7 +310,7 @@ export function VisitHistoryPage() {
       if (statusFilter !== 'all') {
         if (statusFilter === 'pass_issued' && status.label !== 'Pass Issued') return false;
         if (statusFilter === 'inside' && status.label !== 'Inside') return false;
-        if (statusFilter === 'checked_out' && status.label !== 'Checked Out') return false;
+        if (statusFilter === 'checked_out' && status.label !== 'Exited' && status.label !== 'Force Exited') return false;
       }
 
       if (settlementFilter !== 'all') {
@@ -323,6 +322,17 @@ export function VisitHistoryPage() {
       return true;
     });
   }, [activeSearchFilter, rows, settlementFilter, statusFilter, visitDateFilter]);
+  const forceCheckoutTargets = useMemo(
+    () => filteredRows.filter((row) => getVisitStatus(row).label === 'Inside'),
+    [filteredRows],
+  );
+  const forceCheckoutChildNames = useMemo(
+    () =>
+      forceCheckoutTargets
+        .map((row) => row.child_name || row.customer_name || row.parent_name || 'Walk-In Child')
+        .filter(Boolean),
+    [forceCheckoutTargets],
+  );
   const settlementTicketsQuery = useQuery({
     queryKey: ['visit-history-settlement-tickets', settlementLookupPhone],
     queryFn: () => entryExitApi.getOvertimeSettlements(token!, settlementLookupPhone),
@@ -353,6 +363,23 @@ export function VisitHistoryPage() {
     },
   });
 
+  const forceCheckoutAllMutation = useMutation({
+    mutationFn: () => entryExitApi.forceCheckoutAll(token!),
+    onSuccess: async (response) => {
+      const nextMessage = forceCheckoutChildNames.length
+        ? `Force exited: ${forceCheckoutChildNames.join(', ')}`
+        : response.message || 'All children have been force exited.';
+      setForceCheckoutMessage(nextMessage);
+      setForceCheckoutTone('success');
+      setIsForceCheckoutConfirmOpen(false);
+      await query.refetch();
+    },
+    onError: (error) => {
+      setForceCheckoutMessage(error instanceof Error ? error.message : 'Could not force exit all children.');
+      setForceCheckoutTone('warning');
+    },
+  });
+
   const printPassMutation = useMutation({
     mutationFn: (pass: EntryExitLog) => entryExitApi.recordPrint(token!, [pass.id]),
     onSuccess: async (response) => {
@@ -376,6 +403,15 @@ export function VisitHistoryPage() {
     setStatusFilter('all');
     setSettlementFilter('all');
     setCurrentPage(1);
+  }
+
+  function openForceCheckoutConfirm() {
+    setForceCheckoutMessage('');
+    setIsForceCheckoutConfirmOpen(true);
+  }
+
+  function cancelForceCheckoutConfirm() {
+    setIsForceCheckoutConfirmOpen(false);
   }
 
   const totalCount = filteredRows.length;
@@ -545,9 +581,19 @@ export function VisitHistoryPage() {
             </span>
             <p className="history-filter-kicker">Filter Visits</p>
           </div>
-          <button type="button" className="history-clear-button" onClick={clearFilters}>
-            Clear All
-          </button>
+          <div className="history-filter-actions">
+            <button type="button" className="history-clear-button" onClick={clearFilters}>
+              Clear All
+            </button>
+            <button
+              type="button"
+              className="history-force-exit-button"
+              onClick={openForceCheckoutConfirm}
+              disabled={forceCheckoutAllMutation.isPending}
+            >
+              {forceCheckoutAllMutation.isPending ? 'Forcing...' : 'Force Exit All'}
+            </button>
+          </div>
         </div>
 
         <div className="history-filter-grid">
@@ -591,7 +637,7 @@ export function VisitHistoryPage() {
               <option value="all">All Statuses</option>
               <option value="pass_issued">Pass Issued</option>
               <option value="inside">Inside</option>
-              <option value="checked_out">Checked Out</option>
+              <option value="checked_out">Exited</option>
             </select>
           </div>
 
@@ -610,11 +656,18 @@ export function VisitHistoryPage() {
         </div>
       </section>
 
+      {forceCheckoutMessage ? <StatusBanner tone={forceCheckoutTone} message={forceCheckoutMessage} /> : null}
+      {forceCheckoutAllMutation.isError ? (
+        <StatusBanner
+          tone="danger"
+          message={forceCheckoutAllMutation.error instanceof Error ? forceCheckoutAllMutation.error.message : 'Could not force exit all children.'}
+        />
+      ) : null}
+
       <section className="history-table-card">
         <div className="history-table-head">
           <span>Status</span>
           <span>Child</span>
-          <span>Pass Valid Till</span>
           <span>Duration</span>
           <span>Entry & Exit</span>
           <span>Payment</span>
@@ -639,20 +692,19 @@ export function VisitHistoryPage() {
               (overtimeMinutes > 0 || overtimeAmount > 0 || (graceExpired && row.pass_lifecycle_status === 'claimed_inside'));
             const passTiming = getPassTimingRange(row);
             const entryExitTiming = getEntryExitRange(row);
+            const isPassIssued = status.label === 'Pass Issued';
+            const passValidTillTime = passTiming.to ? formatTime(passTiming.to) : '-';
 
             return (
               <article key={row.id} className="history-pass-row">
-                <div className="history-status-cell">
+                <div className="history-status-cell history-status-stack">
                   <span className={`history-status-badge ${status.tone}`}>{status.label}</span>
+                  {isPassIssued ? <span className="history-status-meta">Scan valid till {passValidTillTime}</span> : null}
                 </div>
 
                 <div className="history-detail-cell history-pass-person">
                   <strong>{guestName}</strong>
                   <span>({guardianName})</span>
-                </div>
-
-                <div className="history-detail-cell history-pass-timing-cell">
-                  <strong>{formatValidTillDisplay(passTiming.to)}</strong>
                 </div>
 
                 <div className="history-detail-cell history-single-line-cell history-pass-duration-cell">
@@ -731,6 +783,54 @@ export function VisitHistoryPage() {
           </div>
         </div>
       </section>
+
+      {isForceCheckoutConfirmOpen ? (
+        <div className="modal-backdrop" onClick={cancelForceCheckoutConfirm}>
+          <div className="modal-card" onClick={(event) => event.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <h3>Force Exit All</h3>
+                <p className="muted">This action will checkout every active child and mark the status as force exited.</p>
+              </div>
+            </div>
+
+            <div className="form-stack">
+              <StatusBanner
+                tone="warning"
+                message="Disclaimer: this should only be used when you are sure all currently active children need to be checked out at once. The status change affects all active sessions and cannot be undone from this screen."
+              />
+
+              <div className="force-exit-child-list">
+                <strong>These children will be force exited:</strong>
+                {forceCheckoutChildNames.length ? (
+                  <p>{forceCheckoutChildNames.join(', ')}</p>
+                ) : (
+                  <p className="muted">No active children are currently loaded from the selected filters.</p>
+                )}
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={cancelForceCheckoutConfirm}
+                  disabled={forceCheckoutAllMutation.isPending}
+                >
+                  No
+                </button>
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={() => forceCheckoutAllMutation.mutate()}
+                  disabled={forceCheckoutAllMutation.isPending}
+                >
+                  {forceCheckoutAllMutation.isPending ? 'Processing...' : 'Yes, Force Exit All'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {selectedPass ? (
         <div className="modal-backdrop" onClick={() => setSelectedPass(null)}>

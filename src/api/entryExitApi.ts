@@ -45,6 +45,21 @@ export function updateCustomer(token: string, customerId: string, payload: { nam
   );
 }
 
+export function updateParentChild(
+  token: string,
+  childId: string,
+  payload: { name: string; dob?: string | null; gender?: string | null },
+) {
+  return request<{ data?: { id?: string; name?: string; dob?: string | null; gender?: string | null }; message?: string }>(
+    `/parent/children/${childId}`,
+    {
+      method: 'PUT',
+      body: payload,
+      token,
+    },
+  );
+}
+
 export function getDurationPrices(token: string) {
   return request<{ data?: DurationPrice[] } | DurationPrice[]>(`/entry-exit/duration-prices?price_type=standard`, { token });
 }
@@ -123,6 +138,14 @@ export function getLiveOccupancy(token: string) {
   );
 }
 
+export function forceCheckoutAll(token: string) {
+  return request<{ message?: string }>('/entry-exit/live-occupancy/force-checkout-all', {
+    method: 'POST',
+    body: {},
+    token,
+  });
+}
+
 export function getBillDashboard(token: string, params: BillDashboardQueryParams) {
   const query = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -143,6 +166,7 @@ export const entryExitApi: IEntryExitApi = {
   searchParents,
   getCustomer,
   updateCustomer,
+  updateParentChild,
   getDurationPrices,
   createPass,
   listPasses,
@@ -155,6 +179,7 @@ export const entryExitApi: IEntryExitApi = {
   scanExit,
   verifyExitOtp,
   getLiveOccupancy,
+  forceCheckoutAll,
   getBillDashboard,
   getVisitHistory,
 };

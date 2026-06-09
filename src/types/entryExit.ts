@@ -36,6 +36,8 @@ export interface ChildRecord {
   id: string;
   name: string;
   age?: number;
+  dob?: string | null;
+  gender?: string | null;
 }
 
 export interface ParentLookupResponse {

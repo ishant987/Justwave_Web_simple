@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import QRCode from 'qrcode';
 import { entryExitApi } from '../api/entryExitApi';
@@ -235,6 +235,10 @@ export function NewWalkInPage() {
   const [childDurationById, setChildDurationById] = useState<Record<string, string>>({});
   const [draftChildren, setDraftChildren] = useState<DraftChild[]>([]);
   const [selectedDraftChildIds, setSelectedDraftChildIds] = useState<string[]>([]);
+  const [editingExistingChildId, setEditingExistingChildId] = useState<string | null>(null);
+  const [editingExistingChildName, setEditingExistingChildName] = useState('');
+  const [editingDraftChildId, setEditingDraftChildId] = useState<string | null>(null);
+  const [editingDraftChildName, setEditingDraftChildName] = useState('');
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isTicketOpen, setIsTicketOpen] = useState(false);
   const [createdPasses, setCreatedPasses] = useState<EntryExitLog[]>([]);
@@ -277,6 +281,30 @@ export function NewWalkInPage() {
       setIsEditingCustomerName(false);
       const normalizedPhone = lookupPhone.replace(/\D/g, '').trim();
       if (normalizedPhone.length === 10) {
+        lookupMutation.mutate(normalizedPhone);
+      }
+    },
+  });
+
+  const updateChildMutation = useMutation({
+    mutationFn: ({
+      childId,
+      name,
+      dob,
+      gender,
+    }: {
+      childId: string;
+      name: string;
+      dob?: string | null;
+      gender?: string | null;
+    }) => entryExitApi.updateParentChild(token!, childId, { name, dob, gender }),
+    onSuccess: () => {
+      showFlash('Child name updated successfully.', 'success');
+      setEditingExistingChildId(null);
+      setEditingExistingChildName('');
+
+      const normalizedPhone = lookupPhone.replace(/\D/g, '').trim();
+      if (normalizedPhone.length >= 10) {
         lookupMutation.mutate(normalizedPhone);
       }
     },
@@ -802,6 +830,47 @@ export function NewWalkInPage() {
     }));
   }
 
+  function startEditingExistingChild(child: ChildRecord) {
+    if (insideChildIds.has(child.id)) {
+      return;
+    }
+
+    setEditingExistingChildId(child.id);
+    setEditingExistingChildName(child.name);
+  }
+
+  function cancelEditingExistingChild() {
+    setEditingExistingChildId(null);
+    setEditingExistingChildName('');
+  }
+
+  function saveExistingChildName(child: ChildRecord) {
+    const nextName = editingExistingChildName.trim();
+    if (!nextName) {
+      showFlash('Child name cannot be empty.', 'warning');
+      return;
+    }
+
+    updateChildMutation.mutate({
+      childId: child.id,
+      name: nextName,
+      ...(child.dob ? { dob: child.dob } : {}),
+      ...(child.gender ? { gender: child.gender } : {}),
+    });
+  }
+
+  function handleExistingChildEditorKeyDown(event: KeyboardEvent<HTMLInputElement>, child: ChildRecord) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      saveExistingChildName(child);
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      cancelEditingExistingChild();
+    }
+  }
+
   function handleLookup() {
     const normalizedPhone = lookupPhone.replace(/\D/g, '').trim();
     if (normalizedPhone.length < 10) return;
@@ -934,9 +1003,133 @@ export function NewWalkInPage() {
     );
   }
 
+  function startEditingDraftChild(child: DraftChild) {
+    setEditingDraftChildId(child.id);
+    setEditingDraftChildName(child.name);
+  }
+
+  function cancelEditingDraftChild() {
+    setEditingDraftChildId(null);
+    setEditingDraftChildName('');
+  }
+
+  function saveDraftChildName(childId: string) {
+    const nextName = editingDraftChildName.trim();
+    if (!nextName) {
+      showFlash('Child name cannot be empty.', 'warning');
+      return;
+    }
+
+    setDraftChildren((current) =>
+      current.map((child) => (child.id === childId ? { ...child, name: nextName } : child)),
+    );
+    cancelEditingDraftChild();
+  }
+
   function toggleDraftChild(childId: string) {
     setSelectedDraftChildIds((current) =>
       current.includes(childId) ? current.filter((id) => id !== childId) : [...current, childId],
+    );
+  }
+
+  function handleDraftChildEditorKeyDown(event: KeyboardEvent<HTMLInputElement>, childId: string) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      saveDraftChildName(childId);
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      cancelEditingDraftChild();
+    }
+  }
+
+  function renderDraftChildCard(child: DraftChild) {
+    const isEditing = editingDraftChildId === child.id;
+
+    return (
+      <div
+        key={child.id}
+        className={selectedDraftChildIds.includes(child.id) ? 'child-card draft active' : 'child-card draft'}
+        onClick={() => toggleDraftChild(child.id)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            toggleDraftChild(child.id);
+          }
+        }}
+      >
+        <div className="child-main child-main-editable">
+          <button
+            type="button"
+            className={selectedDraftChildIds.includes(child.id) ? 'child-check active' : 'child-check'}
+            onClick={(event) => {
+              event.stopPropagation();
+              toggleDraftChild(child.id);
+            }}
+            aria-label={`Toggle ${child.name}`}
+          >
+            {selectedDraftChildIds.includes(child.id) ? '✓' : ''}
+          </button>
+          <span className="new-child-pill">New</span>
+
+          <div className="child-name-editor">
+            {isEditing ? (
+              <>
+                <input
+                  className="child-name-input"
+                  value={editingDraftChildName}
+                  onClick={(event) => event.stopPropagation()}
+                  onChange={(event) => setEditingDraftChildName(event.target.value)}
+                  onKeyDown={(event) => handleDraftChildEditorKeyDown(event, child.id)}
+                  autoFocus
+                  aria-label="Edit child name"
+                />
+                <div className="child-name-editor-actions">
+                  <button
+                    type="button"
+                    className="inline-action-button compact"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      saveDraftChildName(child.id);
+                    }}
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-action-button compact muted-action"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      cancelEditingDraftChild();
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="child-name-display">
+                <strong>{child.name}</strong>
+                </div>
+              )}
+            </div>
+          <span className="child-dob-badge">{child.dob}</span>
+        </div>
+        <select
+          value={durationPriceMap[child.durationPriceId] ? child.durationPriceId : effectiveDurationPriceId}
+          onClick={(event) => event.stopPropagation()}
+          onChange={(event) => updateDraftChildDuration(child.id, event.target.value)}
+        >
+          {durationPrices.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.duration_label} - Rs.{item.price.toFixed(2)}
+            </option>
+          ))}
+        </select>
+        <span className="muted">New child</span>
+      </div>
     );
   }
 
@@ -1130,6 +1323,13 @@ export function NewWalkInPage() {
             />
           ) : null}
 
+          {updateChildMutation.isError ? (
+            <StatusBanner
+              tone="danger"
+              message={updateChildMutation.error instanceof Error ? updateChildMutation.error.message : 'Child name update failed.'}
+            />
+          ) : null}
+
           {lookupData?.parent ? (
             <section className="simple-guardian-block">
               <div className="children-header">
@@ -1149,71 +1349,107 @@ export function NewWalkInPage() {
                 <div className="children-grid">
                   {hasChildrenToShow ? (
                     <>
-                      {existingChildren.map((child) => (
-                        <button
-                          type="button"
-                          key={child.id}
-                          className={
-                            insideChildIds.has(child.id)
-                              ? 'child-card inside'
-                              : selectedChildIds.includes(child.id)
-                                ? 'child-card active'
-                                : 'child-card'
-                          }
-                          onClick={() => toggleChild(child)}
-                          disabled={insideChildIds.has(child.id)}
-                        >
-                          <div className="child-main">
-                            <span className={selectedChildIds.includes(child.id) ? 'child-check active' : 'child-check'}>
-                              {selectedChildIds.includes(child.id) ? '✓' : ''}
-                            </span>
-                            <strong>{child.name}</strong>
-                            {insideChildIds.has(child.id) ? <span className="inside-badge">Inside</span> : null}
-                          </div>
-                          <select
-                            value={durationPriceMap[childDurationById[child.id]] ? childDurationById[child.id] : effectiveDurationPriceId}
-                            onClick={(event) => event.stopPropagation()}
-                            onChange={(event) => updateExistingChildDuration(child.id, event.target.value)}
-                            disabled={insideChildIds.has(child.id)}
-                          >
-                            {durationPrices.map((item) => (
-                              <option key={item.id} value={item.id}>
-                                {item.duration_label} - Rs.{item.price.toFixed(2)}
-                              </option>
-                            ))}
-                          </select>
-                        </button>
-                      ))}
+                      {existingChildren.map((child) => {
+                        const isInside = insideChildIds.has(child.id);
+                        const isEditing = editingExistingChildId === child.id;
+                        const cardClassName = isInside
+                          ? 'child-card inside'
+                          : selectedChildIds.includes(child.id)
+                            ? 'child-card active'
+                            : 'child-card';
 
-                      {draftChildren.map((child) => (
-                        <button
-                          type="button"
-                          key={child.id}
-                          className={selectedDraftChildIds.includes(child.id) ? 'child-card draft active' : 'child-card draft'}
-                          onClick={() => toggleDraftChild(child.id)}
-                        >
-                          <div className="child-main">
-                            <span className={selectedDraftChildIds.includes(child.id) ? 'child-check active' : 'child-check'}>
-                              {selectedDraftChildIds.includes(child.id) ? '✓' : ''}
-                            </span>
-                            <span className="new-child-pill">New</span>
-                            <strong>{child.name}</strong>
-                            <span className="child-dob-badge">{child.dob}</span>
-                          </div>
-                          <select
-                            value={durationPriceMap[child.durationPriceId] ? child.durationPriceId : effectiveDurationPriceId}
-                            onClick={(event) => event.stopPropagation()}
-                            onChange={(event) => updateDraftChildDuration(child.id, event.target.value)}
+                        return (
+                          <div
+                            key={child.id}
+                            className={cardClassName}
+                            onClick={() => {
+                              if (!isEditing && !isInside) toggleChild(child);
+                            }}
+                            role="button"
+                            tabIndex={isInside ? -1 : 0}
+                            onKeyDown={(event) => {
+                              if (isInside || isEditing) return;
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                toggleChild(child);
+                              }
+                            }}
                           >
-                            {durationPrices.map((item) => (
-                              <option key={item.id} value={item.id}>
-                                {item.duration_label} - Rs.{item.price.toFixed(2)}
-                              </option>
-                            ))}
-                          </select>
-                          <span className="muted">New child</span>
-                        </button>
-                      ))}
+                            <div className="child-main child-main-editable">
+                              <span
+                                className={selectedChildIds.includes(child.id) ? 'child-check active' : 'child-check'}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  if (!isInside) toggleChild(child);
+                                }}
+                                aria-hidden="true"
+                              >
+                                {selectedChildIds.includes(child.id) ? '✓' : ''}
+                              </span>
+
+                              <div className="child-name-editor">
+                                {isEditing ? (
+                                  <>
+                                    <input
+                                      className="child-name-input"
+                                      value={editingExistingChildName}
+                                      onClick={(event) => event.stopPropagation()}
+                                      onChange={(event) => setEditingExistingChildName(event.target.value)}
+                                      onKeyDown={(event) => handleExistingChildEditorKeyDown(event, child)}
+                                      autoFocus
+                                      aria-label="Edit child name"
+                                    />
+                                    <div className="child-name-editor-actions">
+                                      <button
+                                        type="button"
+                                        className="inline-action-button compact"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          saveExistingChildName(child);
+                                        }}
+                                        disabled={updateChildMutation.isPending}
+                                      >
+                                        {updateChildMutation.isPending ? 'Saving...' : 'Save'}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="inline-action-button compact muted-action"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          cancelEditingExistingChild();
+                                        }}
+                                        disabled={updateChildMutation.isPending}
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div className="child-name-display">
+                                    <strong>{child.name}</strong>
+                                  </div>
+                                )}
+                              </div>
+
+                              {isInside ? <span className="inside-badge">Inside</span> : null}
+                            </div>
+                            <select
+                              value={durationPriceMap[childDurationById[child.id]] ? childDurationById[child.id] : effectiveDurationPriceId}
+                              onClick={(event) => event.stopPropagation()}
+                              onChange={(event) => updateExistingChildDuration(child.id, event.target.value)}
+                              disabled={isInside || isEditing}
+                            >
+                              {durationPrices.map((item) => (
+                                <option key={item.id} value={item.id}>
+                                  {item.duration_label} - Rs.{item.price.toFixed(2)}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        );
+                      })}
+
+                      {draftChildren.map((child) => renderDraftChildCard(child))}
                     </>
                   ) : (
                     <div className="children-empty-state">
@@ -1257,35 +1493,7 @@ export function NewWalkInPage() {
               </p>
               {draftChildren.length ? (
                 <div className="children-grid compact">
-                  {draftChildren.map((child) => (
-                    <button
-                      type="button"
-                      key={child.id}
-                      className={selectedDraftChildIds.includes(child.id) ? 'child-card draft active' : 'child-card draft'}
-                      onClick={() => toggleDraftChild(child.id)}
-                    >
-                      <div className="child-main">
-                        <span className={selectedDraftChildIds.includes(child.id) ? 'child-check active' : 'child-check'}>
-                          {selectedDraftChildIds.includes(child.id) ? '✓' : ''}
-                        </span>
-                        <span className="new-child-pill">New</span>
-                        <strong>{child.name}</strong>
-                        <span className="child-dob-badge">{child.dob}</span>
-                      </div>
-                      <select
-                        value={durationPriceMap[child.durationPriceId] ? child.durationPriceId : effectiveDurationPriceId}
-                        onClick={(event) => event.stopPropagation()}
-                        onChange={(event) => updateDraftChildDuration(child.id, event.target.value)}
-                      >
-                        {durationPrices.map((item) => (
-                          <option key={item.id} value={item.id}>
-                            {item.duration_label} - Rs.{item.price.toFixed(2)}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="muted">New child</span>
-                    </button>
-                  ))}
+                  {draftChildren.map((child) => renderDraftChildCard(child))}
                 </div>
               ) : (
                 <div className="children-empty-state">

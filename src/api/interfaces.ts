@@ -41,6 +41,11 @@ export interface IEntryExitApi {
     customerId: string,
     payload: { name: string; phone: string },
   ): Promise<{ data?: { id?: string; name?: string; phone?: string }; message?: string }>;
+  updateParentChild(
+    token: string,
+    childId: string,
+    payload: { name: string; dob?: string | null; gender?: string | null },
+  ): Promise<{ data?: { id?: string; name?: string; dob?: string | null; gender?: string | null }; message?: string }>;
   getDurationPrices(token: string): Promise<{ data?: DurationPrice[] } | DurationPrice[]>;
   createPass(token: string, payload: PassCreatePayload): Promise<PassCreateResponse>;
   listPasses(token: string, query: string): Promise<PaginatedApiResponse<EntryExitLog> | EntryExitLog[]>;
@@ -62,6 +67,7 @@ export interface IEntryExitApi {
     active_sessions?: EntryExitLog[];
     data?: { occupancy_count?: number; active_sessions?: EntryExitLog[] };
   }>;
+  forceCheckoutAll(token: string): Promise<{ message?: string }>;
   getBillDashboard(token: string, params: BillDashboardQueryParams): Promise<BillDashboardResponse>;
   getVisitHistory(token: string, query: string): Promise<PaginatedApiResponse<EntryExitLog> | EntryExitLog[]>;
 }
