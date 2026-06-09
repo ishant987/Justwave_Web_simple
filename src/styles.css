@@ -2215,7 +2215,7 @@ label {
 .occupancy-table-head,
 .occupancy-table-row {
   display: grid;
-  grid-template-columns: 1.45fr 1.1fr 1fr 1fr 1fr 0.7fr 0.85fr;
+  grid-template-columns: 1.45fr 1.1fr 1fr 1fr 1fr 0.7fr;
   gap: 0.9rem;
   align-items: center;
 }
@@ -2273,12 +2273,6 @@ label {
   color: #1557b0;
   font-size: 0.82rem;
   font-weight: 800;
-}
-
-.occupancy-settle-button {
-  width: 100%;
-  justify-content: center;
-  white-space: nowrap;
 }
 
 .occupancy-empty-state {

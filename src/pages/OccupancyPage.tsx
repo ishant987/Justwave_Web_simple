@@ -5,7 +5,7 @@ import { StatusBanner } from '../components/StatusBanner';
 import { useAuth } from '../hooks/useAuth';
 import type { EntryExitLog, OvertimeSettlementItem, PaymentMode } from '../types/entryExit';
 import { formatAmount, formatDate, formatDateTime, formatTime } from '../utils/formatters';
-import { normalizeListResponse, normalizePhone, readNumber } from '../utils/normalization';
+import { normalizeListResponse, readNumber } from '../utils/normalization';
 
 function getTodayDateInputValue() {
   const today = new Date();
@@ -160,23 +160,6 @@ export function OccupancyPage() {
     }
   }
 
-  function openSettlement(session: EntryExitLog) {
-    const phone = normalizePhone(session.phone);
-    if (!phone) {
-      setSettlementNotice({
-        tone: 'danger',
-        message: 'This pass does not have a phone number, so overtime settlement cannot be loaded.',
-      });
-      return;
-    }
-
-    setSettlementNotice(null);
-    setSettlementPhone(phone);
-    setSettlementTargetId(session.id);
-    setSelectedSettlementIds([session.id]);
-    setSettlementPaymentMode((session.overtime_payment_mode as PaymentMode) || 'cash');
-  }
-
   function closeSettlement() {
     setSettlementPhone('');
     setSettlementTargetId('');
@@ -304,7 +287,6 @@ export function OccupancyPage() {
             <span>Entry Time</span>
             <span>Exit Time</span>
             <span>Status</span>
-            <span>Action</span>
           </div>
 
           <div className="occupancy-table-body">
@@ -322,16 +304,6 @@ export function OccupancyPage() {
                 </span>
                 <span>
                   <span className={`history-status-badge ${getOccupancyStatus(session).tone}`}>{getOccupancyStatus(session).label}</span>
-                </span>
-                <span>
-                  <button
-                    type="button"
-                    className="secondary-button occupancy-settle-button"
-                    onClick={() => openSettlement(session)}
-                    disabled={!normalizePhone(session.phone) || !canSettleOvertime(session)}
-                  >
-                    {canSettleOvertime(session) ? 'Settle' : 'No Overtime'}
-                  </button>
                 </span>
               </div>
             ))}
