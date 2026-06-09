@@ -24,7 +24,7 @@ export function normalizeListResponse<T>(payload: unknown): T[] {
   if (!isRecord(payload)) return [];
   if (typeof payload.id === 'string') return [payload as T];
 
-  for (const key of ['data', 'entry_exit_logs', 'logs', 'passes', 'items', 'results']) {
+  for (const key of ['data', 'entry_exit_logs', 'logs', 'passes', 'items', 'results', 'settlements']) {
     const value = payload[key];
     if (Array.isArray(value)) return value as T[];
     if (isRecord(value)) {

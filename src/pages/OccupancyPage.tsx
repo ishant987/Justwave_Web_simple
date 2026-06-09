@@ -31,7 +31,7 @@ export function OccupancyPage() {
 
   const occupancyQuery = useMemo(() => {
     const params = new URLSearchParams({
-      status: 'all',
+      status: 'active',
       date_from: occupancyDateFilter,
       date_to: occupancyDateFilter,
       per_page: '100',
@@ -51,14 +51,13 @@ export function OccupancyPage() {
     refetchInterval: isTodaySelection ? 15000 : false,
   });
 
-  const sessions = useMemo(() => normalizeListResponse<EntryExitLog>(query.data), [query.data]);
+  const sessions = useMemo(
+    () => normalizeListResponse<EntryExitLog>(query.data).filter((session) => getOccupancyStatus(session).label === 'Inside'),
+    [query.data],
+  );
   const occupancyCount = sessions.length;
   const insideCount = useMemo(
-    () => sessions.filter((session) => getOccupancyStatus(session).label === 'Inside').length,
-    [sessions],
-  );
-  const checkedOutCount = useMemo(
-    () => sessions.filter((session) => getOccupancyStatus(session).label === 'Checked Out').length,
+    () => sessions.length,
     [sessions],
   );
   const overtimeCount = useMemo(
@@ -108,9 +107,9 @@ export function OccupancyPage() {
         </article>
 
         <article className="bill-summary-card amount-today occupancy-summary-card">
-          <span>Checked Out</span>
-          <strong>{checkedOutCount}</strong>
-          <small>Completed on this day</small>
+          <span>Inside</span>
+          <strong>{insideCount}</strong>
+          <small>Children currently inside</small>
         </article>
 
         <article className="bill-summary-card amount-month occupancy-summary-card">
@@ -133,7 +132,7 @@ export function OccupancyPage() {
             <p className="muted">
               {sessions.length
                 ? `${sessions.length} child records loaded for ${formatDate(occupancyDateFilter)}`
-                : 'No child records found for the selected day'}
+                : 'No inside child records found for the selected day'}
             </p>
           </div>
           <div className="occupancy-table-meta">
@@ -199,7 +198,7 @@ export function OccupancyPage() {
 
             {!query.isLoading && !sessions.length ? (
               <div className="occupancy-empty-state">
-                <p className="muted">No child records returned for the selected day.</p>
+                <p className="muted">No inside child records returned for the selected day.</p>
               </div>
             ) : null}
           </div>
