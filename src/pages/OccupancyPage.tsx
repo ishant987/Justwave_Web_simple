@@ -1,11 +1,11 @@
 import { useMemo, useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { entryExitApi } from '../api/entryExitApi';
 import { StatusBanner } from '../components/StatusBanner';
 import { useAuth } from '../hooks/useAuth';
-import type { EntryExitLog } from '../types/entryExit';
-import { formatDate, formatDateTime, formatTime } from '../utils/formatters';
-import { normalizeListResponse } from '../utils/normalization';
+import type { EntryExitLog, OvertimeSettlementItem, PaymentMode } from '../types/entryExit';
+import { formatAmount, formatDate, formatDateTime, formatTime } from '../utils/formatters';
+import { normalizeListResponse, normalizePhone, readNumber } from '../utils/normalization';
 
 function getTodayDateInputValue() {
   const today = new Date();
@@ -24,10 +24,44 @@ function getOccupancyStatus(row: EntryExitLog) {
   return { label: 'Pass Issued', tone: 'warning' as const };
 }
 
+function getOvertimeCharge(row: EntryExitLog | OvertimeSettlementItem) {
+  return readNumber(row.overtime_charge ?? row.bill_overtime_amount);
+}
+
+function canSettleOvertime(row: EntryExitLog | OvertimeSettlementItem) {
+  return !row.overtime_paid && getOvertimeCharge(row) > 0;
+}
+
+function getOvertimeStatus(row: OvertimeSettlementItem) {
+  if (row.overtime_paid || row.settlement_status === 'settled') {
+    return { label: 'Settled', tone: 'success' as const };
+  }
+
+  if (canSettleOvertime(row)) {
+    return { label: 'Due', tone: 'warning' as const };
+  }
+
+  return { label: 'Not Due', tone: 'info' as const };
+}
+
+function getSettlementSummary(row: OvertimeSettlementItem) {
+  const amount = getOvertimeCharge(row);
+  const minutes = readNumber(row.overtime_minutes);
+  return `${formatAmount(amount)} • ${minutes} min`;
+}
+
 export function OccupancyPage() {
   const { token } = useAuth();
   const dateInputRef = useRef<HTMLInputElement | null>(null);
   const [occupancyDateFilter, setOccupancyDateFilter] = useState(() => getTodayDateInputValue());
+  const [settlementPhone, setSettlementPhone] = useState('');
+  const [settlementTargetId, setSettlementTargetId] = useState('');
+  const [selectedSettlementIds, setSelectedSettlementIds] = useState<string[]>([]);
+  const [settlementPaymentMode, setSettlementPaymentMode] = useState<PaymentMode>('cash');
+  const [settlementNotice, setSettlementNotice] = useState<{
+    tone: 'success' | 'warning' | 'danger' | 'info';
+    message: string;
+  } | null>(null);
 
   const occupancyQuery = useMemo(() => {
     const params = new URLSearchParams({
@@ -49,6 +83,21 @@ export function OccupancyPage() {
     queryFn: () => entryExitApi.getVisitHistory(token!, occupancyQuery),
     enabled: !!token && !!occupancyDateFilter,
     refetchInterval: isTodaySelection ? 15000 : false,
+  });
+
+  const overtimeSettlementQuery = useQuery({
+    queryKey: ['occupancy-overtime-settlements', settlementPhone],
+    queryFn: () => entryExitApi.getOvertimeSettlements(token!, settlementPhone),
+    enabled: !!token && !!settlementPhone,
+  });
+
+  const settleMutation = useMutation({
+    mutationFn: async ({ ids, paymentMode }: { ids: string[]; paymentMode: PaymentMode }) => {
+      for (const id of ids) {
+        await entryExitApi.settleOvertime(token!, id, paymentMode);
+      }
+      return ids;
+    },
   });
 
   const sessions = useMemo(
@@ -79,6 +128,26 @@ export function OccupancyPage() {
     () => (query.dataUpdatedAt ? new Date(query.dataUpdatedAt).toISOString() : null),
     [query.dataUpdatedAt],
   );
+  const settlementItems = useMemo(
+    () => normalizeListResponse<OvertimeSettlementItem>(overtimeSettlementQuery.data),
+    [overtimeSettlementQuery.data],
+  );
+  const settlementTargetItem = useMemo(
+    () => settlementItems.find((item) => item.id === settlementTargetId) || null,
+    [settlementItems, settlementTargetId],
+  );
+  const selectedSettlementItems = useMemo(
+    () => settlementItems.filter((item) => selectedSettlementIds.includes(item.id) && canSettleOvertime(item)),
+    [selectedSettlementIds, settlementItems],
+  );
+  const selectedSettlementTotal = useMemo(
+    () => selectedSettlementItems.reduce((total, item) => total + getOvertimeCharge(item), 0),
+    [selectedSettlementItems],
+  );
+  const selectedSettlementMinutes = useMemo(
+    () => selectedSettlementItems.reduce((total, item) => total + readNumber(item.overtime_minutes), 0),
+    [selectedSettlementItems],
+  );
 
   function openDatePicker() {
     const input = dateInputRef.current;
@@ -88,6 +157,66 @@ export function OccupancyPage() {
       input.showPicker();
     } else {
       input.click();
+    }
+  }
+
+  function openSettlement(session: EntryExitLog) {
+    const phone = normalizePhone(session.phone);
+    if (!phone) {
+      setSettlementNotice({
+        tone: 'danger',
+        message: 'This pass does not have a phone number, so overtime settlement cannot be loaded.',
+      });
+      return;
+    }
+
+    setSettlementNotice(null);
+    setSettlementPhone(phone);
+    setSettlementTargetId(session.id);
+    setSelectedSettlementIds([session.id]);
+    setSettlementPaymentMode((session.overtime_payment_mode as PaymentMode) || 'cash');
+  }
+
+  function closeSettlement() {
+    setSettlementPhone('');
+    setSettlementTargetId('');
+    setSelectedSettlementIds([]);
+    setSettlementPaymentMode('cash');
+  }
+
+  function selectOnlyTarget() {
+    if (!settlementTargetItem || !canSettleOvertime(settlementTargetItem)) {
+      setSelectedSettlementIds([]);
+      return;
+    }
+
+    setSelectedSettlementIds([settlementTargetItem.id]);
+  }
+
+  function selectAllDueChildren() {
+    setSelectedSettlementIds(settlementItems.filter((item) => canSettleOvertime(item)).map((item) => item.id));
+  }
+
+  function toggleSelectedSettlement(id: string) {
+    setSelectedSettlementIds((current) => (current.includes(id) ? current.filter((itemId) => itemId !== id) : [...current, id]));
+  }
+
+  async function settleSelectedChildren() {
+    if (!selectedSettlementIds.length) return;
+
+    try {
+      await settleMutation.mutateAsync({ ids: selectedSettlementIds, paymentMode: settlementPaymentMode });
+      await Promise.all([query.refetch(), overtimeSettlementQuery.refetch()]);
+      setSettlementNotice({
+        tone: 'success',
+        message:
+          selectedSettlementIds.length === 1
+            ? 'Overtime settled for 1 child.'
+            : `Overtime settled for ${selectedSettlementIds.length} children.`,
+      });
+      closeSettlement();
+    } catch {
+      // Error banner is shown inside the modal.
     }
   }
 
@@ -175,6 +304,7 @@ export function OccupancyPage() {
             <span>Entry Time</span>
             <span>Exit Time</span>
             <span>Status</span>
+            <span>Action</span>
           </div>
 
           <div className="occupancy-table-body">
@@ -193,6 +323,16 @@ export function OccupancyPage() {
                 <span>
                   <span className={`history-status-badge ${getOccupancyStatus(session).tone}`}>{getOccupancyStatus(session).label}</span>
                 </span>
+                <span>
+                  <button
+                    type="button"
+                    className="secondary-button occupancy-settle-button"
+                    onClick={() => openSettlement(session)}
+                    disabled={!normalizePhone(session.phone) || !canSettleOvertime(session)}
+                  >
+                    {canSettleOvertime(session) ? 'Settle' : 'No Overtime'}
+                  </button>
+                </span>
               </div>
             ))}
 
@@ -204,6 +344,144 @@ export function OccupancyPage() {
           </div>
         </div>
       </section>
+
+      {settlementNotice ? <StatusBanner tone={settlementNotice.tone} message={settlementNotice.message} /> : null}
+
+      {settlementPhone ? (
+        <div className="modal-backdrop" onClick={closeSettlement}>
+          <div className="modal-card occupancy-settlement-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <h3>Settle Overtime</h3>
+                <p className="muted">
+                  Phone: {settlementPhone}
+                  {settlementTargetItem?.parent_name || settlementTargetItem?.customer_name
+                    ? ` • ${settlementTargetItem.parent_name || settlementTargetItem.customer_name}`
+                    : ''}
+                </p>
+              </div>
+              <button type="button" className="secondary-button" onClick={closeSettlement}>
+                Close
+              </button>
+            </div>
+
+            {overtimeSettlementQuery.isLoading ? <StatusBanner tone="info" message="Loading overtime settlement details..." /> : null}
+            {overtimeSettlementQuery.isError ? (
+              <StatusBanner
+                tone="danger"
+                message={overtimeSettlementQuery.error instanceof Error ? overtimeSettlementQuery.error.message : 'Could not load overtime details.'}
+              />
+            ) : null}
+
+            <div className="payment-modal-top occupancy-settlement-top">
+              <div className="payment-pass-box occupancy-settlement-list-box">
+                <div className="payment-box-title">Children linked to this phone</div>
+                <div className="payment-pass-list">
+                  {overtimeSettlementQuery.isLoading ? (
+                    <div className="occupancy-settlement-loader" aria-live="polite" aria-busy="true">
+                      <div className="occupancy-settlement-spinner" />
+                      <div className="occupancy-settlement-loader-copy">
+                        <strong>Loading settlements</strong>
+                        <span>Fetching child names, overtime minutes, and charges...</span>
+                      </div>
+                    </div>
+                  ) : (
+                    settlementItems.map((item) => {
+                      const isSelected = selectedSettlementIds.includes(item.id);
+                      const isDue = canSettleOvertime(item);
+                      const status = getOvertimeStatus(item);
+
+                      return (
+                        <label key={item.id} className={`payment-pass-row occupancy-settlement-row ${isSelected ? 'selected' : ''}`}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelectedSettlement(item.id)}
+                            disabled={!isDue}
+                          />
+                          <span className="occupancy-settlement-main">
+                            <strong>{item.child_name || item.customer_name || item.parent_name || 'Walk-In Child'}</strong>
+                            <small>
+                              {item.parent_name || item.customer_name || '-'}
+                              {item.location_name ? ` • ${item.location_name}` : ''}
+                            </small>
+                            <small>
+                              {status.label} • {getSettlementSummary(item)}
+                            </small>
+                          </span>
+                          <span className="occupancy-settlement-meta">
+                            <strong>{formatAmount(getOvertimeCharge(item))}</strong>
+                            <small>{readNumber(item.overtime_minutes)} min</small>
+                          </span>
+                        </label>
+                      );
+                    })
+                  )}
+
+                  {!settlementItems.length && !overtimeSettlementQuery.isLoading ? (
+                    <div className="occupancy-empty-state">
+                      <p className="muted">No overtime settlements returned for this phone number.</p>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="payment-plan occupancy-settlement-plan">
+                <div className="payment-total-box">
+                  <span>Selected Overtime</span>
+                  <strong>{formatAmount(selectedSettlementTotal)}</strong>
+                  <small>
+                    {selectedSettlementItems.length
+                      ? `${selectedSettlementItems.length} child${selectedSettlementItems.length === 1 ? '' : 'ren'} • ${selectedSettlementMinutes} min`
+                      : 'Select one child or all due children'}
+                  </small>
+                </div>
+
+                <div className="occupancy-settlement-switches">
+                  <button type="button" className="secondary-button" onClick={selectOnlyTarget} disabled={!settlementTargetItem}>
+                    Selected child
+                  </button>
+                  <button type="button" className="secondary-button" onClick={selectAllDueChildren} disabled={!settlementItems.some(canSettleOvertime)}>
+                    All kids due
+                  </button>
+                </div>
+
+                <label className="occupancy-settlement-payment-mode">
+                  Payment Mode
+                  <select value={settlementPaymentMode} onChange={(event) => setSettlementPaymentMode(event.target.value as PaymentMode)}>
+                    <option value="cash">Cash</option>
+                    <option value="upi">UPI</option>
+                    <option value="card">Card</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="other">Other</option>
+                  </select>
+                </label>
+
+                {settleMutation.isError ? (
+                  <StatusBanner
+                    tone="danger"
+                    message={settleMutation.error instanceof Error ? settleMutation.error.message : 'Settlement failed.'}
+                  />
+                ) : null}
+
+                <div className="modal-actions">
+                  <button type="button" className="secondary-button" onClick={closeSettlement}>
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={() => void settleSelectedChildren()}
+                    disabled={!selectedSettlementItems.length || settleMutation.isPending}
+                  >
+                    {settleMutation.isPending ? 'Settling...' : 'Pay'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
