@@ -136,7 +136,7 @@ export function buildPassPrintDocument(items: PassPrintItem[], title: string) {
             display: grid;
             grid-template-rows: auto auto;
             align-content: start;
-            gap: 0.8in;
+            gap: 0.42in;
             min-width: 0;
             overflow: hidden;
           }
@@ -151,7 +151,7 @@ export function buildPassPrintDocument(items: PassPrintItem[], title: string) {
             overflow: hidden;
           }
           .ticket-brand {
-            font-size: 50pt;
+            font-size: 46pt;
             font-weight: 900;
             letter-spacing: 0.02em;
             line-height: 0.95;
@@ -172,45 +172,50 @@ export function buildPassPrintDocument(items: PassPrintItem[], title: string) {
             color: #000000;
           }
           .ticket-admit {
-            margin-top: calc(0.18in + 10px);
-            font-size: 25pt;
+            margin-top: 0.14in;
+            font-size: 22pt;
             font-weight: 900;
             letter-spacing: 0.03em;
             color: #000000;
           }
           .ticket-child-name {
             margin-top: 0.08in;
-            font-size: 56pt;
+            font-size: 40pt;
             font-weight: 900;
-            line-height: 0.95;
+            line-height: 0.92;
             text-transform: uppercase;
             max-width: 100%;
-            word-break: break-word;
+            word-break: normal;
+            overflow-wrap: anywhere;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
             color: #000000;
           }
           .ticket-heading {
             display: grid;
             justify-items: start;
-            gap: 0;
+            gap: 0.02in;
           }
           .ticket-meta-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 0.26in 0.4in;
-            margin-top: 0;
+            gap: 0.2in 0.36in;
+            margin-top: 0.05in;
           }
           .ticket-meta-grid span {
             display: block;
             margin-bottom: 0.05in;
-            font-size: 18pt;
+            font-size: 16pt;
             font-weight: 900;
             color: #000000;
           }
           .ticket-meta-grid strong {
             display: block;
-            font-size: 25pt;
+            font-size: 21pt;
             font-weight: 900;
-            line-height: 1.08;
+            line-height: 1.05;
             word-break: break-word;
             color: #000000;
           }
